@@ -288,11 +288,11 @@ equation
 
     Q_flow_rec = renewable_input.electricity;
 
-    der(counter) = if blk_state==1 then 0 else 1;
+    der(counter) = if time >= t_startup_next then 1 else 0;
     SLinit = E * MWh_per_J "Initial stored energy at TES";
     SLmax = E_max * MWh_per_J "Maximum stored energy at TES";
     SLmin = E_low_l * MWh_per_J "Lowest energy level in the tank";
-    pre_dispatched_heat = pre(optimalDispatch) "Previous heat dispatched";
+    pre_dispatched_heat = pre(Q_flow_dis)/1e6 "Previous heat dispatched";
     pre_blk_state = pre(blk_state);
     pre_startup_next = pre(t_startup_next_fun);
     

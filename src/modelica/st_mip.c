@@ -1,6 +1,6 @@
 #include "linprog/linprog.h"
 
-#include <glpk.h>
+#include "gurobi_c.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -79,7 +79,7 @@ double st_mip(
     double MinRUP = 0.0; // Minimum ramp-up rate
     double MinRDW = 0.0; // Minimum ramp-down rate
     double UPT = upper_threshold * DEmax;
-    double LPT = 1e-3;
+    double LPT = 0.0;
     double M = 10*DEmax; // Big M value
 
     // Print the initial values for debugging purposes
@@ -123,8 +123,22 @@ double st_mip(
     1e-6*P_elec_max_pv / P_elec_pv_ref_size*motab_get_value_wraparound(pvd,    t0+(I)*dt,pv_col)\
     )
 
-    // Initialize the problem object lp
-    glp_prob *P = glp_create_prob();
+    GRBenv   *env   = NULL;
+    GRBmodel *P = NULL;
+    int       error = 0;
+
+    /* Create environment */
+    error = GRBemptyenv(&env);
+    if (error) goto ERROR;
+
+    error = GRBsetstrparam(env, "LogFile", "mip1.log");
+    if (error) goto ERROR;
+
+    error = GRBsetdblparam(env, "MIPGap", 0.0001);
+    if (error) goto ERROR;
+
+    error = GRBstartenv(env);
+    if (error) goto ERROR;
 
     // Define the number of steps in the horizon
     #define N (horizon)
@@ -137,187 +151,192 @@ double st_mip(
     #define YOFF(I) (YON(N) + I)
     #define YPAR(I) (YOFF(N) + I)
 
-    // Add columns for variables, including binary variables
-    int cols = YPAR(N);
-    glp_add_cols(P, cols);
-
-    MSG("Number of cols = %d", cols);
+    /* Create an empty model */
+    error = GRBnewmodel(env, &P, "mip1", 0, NULL, NULL, NULL, NULL, NULL);
+    if (error) goto ERROR;
 
     // Set column names for readability
     #define NAMEMAX 255
-    char sss[NAMEMAX];
+    char vname[NAMEMAX];
+
+    /* VARIABLE BOUNDS AND OBJECTIVES*/
     for(int i = 1; i <= N; ++i) {
-        snprintf(sss, NAMEMAX, "SL%02d", i); glp_set_col_name(P, SL(i), sss); // Stored energy
-        snprintf(sss, NAMEMAX, "DE%02d", i); glp_set_col_name(P, DE(i), sss); // Dispatched energy
-        snprintf(sss, NAMEMAX, "SE%02d", i); glp_set_col_name(P, SE(i), sss); // State of energy
-        snprintf(sss, NAMEMAX, "XE%02d", i); glp_set_col_name(P, XE(i), sss); // Auxiliary variable for energy
-        snprintf(sss, NAMEMAX, "YON%02d", i); glp_set_col_name(P, YON(i), sss); // Disjunct mode for ON state
-        snprintf(sss, NAMEMAX, "YOFF%02d", i); glp_set_col_name(P, YOFF(i), sss);
-        snprintf(sss, NAMEMAX, "YPAR%02d", i); glp_set_col_name(P, YPAR(i), sss);
+        snprintf(vname, NAMEMAX, "SL%02d", i);
+        error = GRBaddvar(P, 0, NULL, NULL, 0.0, SLmin, SLmax, GRB_CONTINUOUS, vname);
+        if (error) goto ERROR;
     }
 
-    // Set the objective function to maximize
-    glp_set_obj_dir(P, GLP_MAX);
     for(int i = 1; i <= N; ++i) {
-        glp_set_obj_coef(P, DE(i), eff_process * LCOH);
+        snprintf(vname, NAMEMAX, "DE%02d", i);
+        error = GRBaddvar(P, 0, NULL, NULL, eff_process * LCOH, 0.0, DEmax, GRB_CONTINUOUS, vname);
+        if (error) goto ERROR;
     }
 
-    /* VARIABLE BOUNDS */
-    MSG("      \t pvd_i \t wnd_i");
     for(int i = 1; i <= N; ++i) {
         double pvd_i = PV(i);
         double wnd_i = WND(i);
         double p_heat_i = (pvd_i + wnd_i) * eff_heater;
         p_heat_i = fmin(p_heat_i, P_elec_max); 
-/*        MSG("%3d: \t %.2f \t %.2f", i, pvd_i, wnd_i); */
-
-        glp_set_col_bnds(P, SL(i), GLP_DB, SLmin, SLmax); // Stored energy bounds
-        glp_set_col_bnds(P, DE(i), GLP_DB, 0, DEmax); // Dispatched energy bounds
-
         if (pvd_i <= 0 && wnd_i <= 0) {
-            glp_set_col_bnds(P, SE(i), GLP_FX, 0.0, 0.0); // State of energy bounds for no input
-            glp_set_col_bnds(P, XE(i), GLP_FX, 0.0, 0.0); // Auxiliary variable bounds for no input
+            snprintf(vname, NAMEMAX, "SE%02d", i);
+            error = GRBaddvar(P, 0, NULL, NULL, 0.0, 0.0, 0.0, GRB_CONTINUOUS, vname);
+            if (error) goto ERROR;
         } else {
-            glp_set_col_bnds(P, SE(i), GLP_DB, 0, p_heat_i); // State of energy bounds
-            glp_set_col_bnds(P, XE(i), GLP_DB, 0, p_heat_i); // Auxiliary variable bounds
+            snprintf(vname, NAMEMAX, "SE%02d", i);
+            error = GRBaddvar(P, 0, NULL, NULL, 0.0, 0.0, p_heat_i, GRB_CONTINUOUS, vname);
+            if (error) goto ERROR;
         }
-
-        // Set bounds for binary variables
-        glp_set_col_bnds(P, YON(i), GLP_DB, 0, 1); // Auxiliary variable bounds
-        glp_set_col_kind(P, YON(i), GLP_BV); // Set variable as binary
-
-        glp_set_col_bnds(P, YOFF(i), GLP_DB, 0, 1); // Auxiliary variable bounds
-        glp_set_col_kind(P, YOFF(i), GLP_BV); // Set variable as binary
-
-        glp_set_col_bnds(P, YPAR(i), GLP_DB, 0, 1); // Auxiliary variable bounds
-        glp_set_col_kind(P, YPAR(i), GLP_BV); // Set variable as binary
     }
 
+    for(int i = 1; i <= N; ++i) {
+        double pvd_i = PV(i);
+        double wnd_i = WND(i);
+        double p_heat_i = (pvd_i + wnd_i) * eff_heater;
+        p_heat_i = fmin(p_heat_i, P_elec_max); 
+        if (pvd_i <= 0 && wnd_i <= 0) {
+            snprintf(vname, NAMEMAX, "XE%02d", i);
+            error = GRBaddvar(P, 0, NULL, NULL, 0.0, 0.0, 0.0, GRB_CONTINUOUS, vname);
+            if (error) goto ERROR;
+        } else {
+            snprintf(vname, NAMEMAX, "XE%02d", i);
+            error = GRBaddvar(P, 0, NULL, NULL, 0.0, 0.0, p_heat_i, GRB_CONTINUOUS, vname);
+            if (error) goto ERROR;
+        }
+    }
+
+    for(int i = 1; i <= N; ++i) {
+        snprintf(vname, NAMEMAX, "YON%02d", i);
+        error = GRBaddvar(P, 0, NULL, NULL, 0.0, 0.0, 1.0, GRB_BINARY, vname);
+        if (error) goto ERROR;
+    }
+
+    for(int i = 1; i <= N; ++i) {
+        snprintf(vname, NAMEMAX, "YOFF%02d", i);
+        error = GRBaddvar(P, 0, NULL, NULL, 0.0, 0.0, 1.0, GRB_BINARY, vname);
+        if (error) goto ERROR;
+    }
+
+    for(int i = 1; i <= N; ++i) {
+        snprintf(vname, NAMEMAX, "YPAR%02d", i);
+        error = GRBaddvar(P, 0, NULL, NULL, 0.0, 0.0, 1.0, GRB_BINARY, vname);
+        if (error) goto ERROR;
+    }
+
+    /* Change objective sense to maximisation */
+    error = GRBsetintattr(P, GRB_INT_ATTR_MODELSENSE, GRB_MAXIMIZE);
+    if (error) goto ERROR;
+
     /* CONSTRAINTS */
-
-    // Mapping the constraint equations
-    #define SEB(I) (I)    // Stored energy balance, 1..N
-    #define EDX(I) (I+N)  // Energy stored and dumped, N+1...2N
-    #define LEB    (1+EDX(N)) // Long-term energy balance, 2N+1
-
-    glp_add_rows(P, LEB);
-
-    MSG("Number of rows = %d", LEB);
-
-    /*
-    1. Dispatched energy balance (N equations)
-        SLi - SLi-1 = SEi - DEi        
-        Change in storage level equals net (stored minus dispatched) energy.
-    */
     for (unsigned i = 1; i <= N; ++i) {
         double pvd_i = PV(i);
         double wnd_i = WND(i);
         double p_heat_i = (pvd_i + wnd_i) * eff_heater;
         p_heat_i = fmin(p_heat_i, P_elec_max);  
 
+        /* 1. Dispatched energy balance (N equations) SLi - SLi-1 = SEi - DEi
+        Change in storage level equals net (stored minus dispatched) energy. */
         if (i == 1) {
-            glp_set_mat_row(P, SEB(i), 3,
-            (const int[]){0, SL(i), SE(i), DE(i)},
-            (const double[]){0, +1.0, -1.0, +1.0});
-            glp_set_row_bnds(P, SEB(i), GLP_FX, SLinit, SLinit);
+            error = GRBaddconstr(P, 3,
+                (int[]){SL(i)-1, SE(i)-1, DE(i)-1},
+                (double[]){1.0, -1.0, 1.0},
+            GRB_EQUAL, SLinit, NULL);
+            if (error) goto ERROR;
         } else {
-            glp_set_mat_row(P, SEB(i), 4,
-            (const int[]){0, SL(i), SL(i - 1), SE(i), DE(i)},
-            (const double[]){0, +1.0, -1.0, -1.0, +1.0});
-            glp_set_row_bnds(P, SEB(i), GLP_FX, 0.0, 0.0);
+            error = GRBaddconstr(P, 4,
+                (int[]){SL(i)-1, SL(i - 1)-1, SE(i)-1, DE(i)-1},
+                (double[]){1.0, -1.0, -1.0, 1.0},
+            GRB_EQUAL, 0.0, NULL);
+            if (error) goto ERROR;
         }
-        snprintf(sss, NAMEMAX, "SEB%02d", i); glp_set_row_name(P, SEB(i), sss);
 
-        /*
-        2. Stored energy balance (N equations)
-            SEi + XEi = ηH·(PVi + WNDi)·Δt       
-            Collected energy is either stored (SE) or dumped (XE).
-        */
-        glp_set_mat_row(P, EDX(i), 2,
-            (const int[]){0, SE(i), XE(i)},
-            (const double[]){0, +1.0, +1.0});
-        glp_set_row_bnds(P, EDX(i), GLP_FX, p_heat_i, p_heat_i);
-        snprintf(sss, NAMEMAX, "EDX%02d", i); glp_set_row_name(P, EDX(i), sss);
+        /* 2. Stored energy balance (N equations) SEi + XEi = ηH·(PVi + WNDi)·Δt
+        Collected energy is either stored (SE) or dumped (XE). */
+        error = GRBaddconstr(P, 2,
+            (int[]){SE(i)-1, XE(i)-1},
+            (double[]){1.0, 1.0},
+        GRB_EQUAL, p_heat_i, NULL);
+        if (error) goto ERROR;
     }
 
-    /*
-    3. Long-term energy balance (1 equation)
-        ∑(DEi - SEi) = 0       
+    /* 3. Long-term energy balance (1 equation)  ∑(DEi - SEi) = 0       
         No net change in storage level over the forecast interval.
         -- or --
-        SL(N) = SLinit.
-    */
-    glp_set_mat_row(P, LEB, 1,
-        (const int[]){0, SL(N)},
-        (const double[]){0, +1.0});
-    glp_set_row_bnds(P, LEB, GLP_FX, SLinit, SLinit);
-    glp_set_row_name(P, LEB, "LEB");
+        SL(N) = SLinit. */
+    error = GRBaddconstr(P, 1,
+        (int[]){SL(N)-1},
+        (double[]){1.0},
+    GRB_EQUAL, SLinit, NULL);
+    if (error) goto ERROR;
 
     // MODE DETECTION (YON,YOFF,YPAR)
     for (unsigned i = 1; i <= N; ++i) {
         // DE(i) >= UPT - M*[1-YON(i)]
-        glp_add_rows(P, 1);
-        glp_set_mat_row(P, glp_get_num_rows(P), 2,
-            (const int[]){0, DE(i), YON(i)},
-            (const double[]){0, 1.0, -M});
-        glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, UPT-M, 0.0);
+        error = GRBaddconstr(P, 2,
+            (int[]){DE(i)-1, YON(i)-1},
+            (double[]){1.0, -M},
+        GRB_GREATER_EQUAL, UPT-M, NULL);
+        if (error) goto ERROR;
+    }
 
+    for (unsigned i = 1; i <= N; ++i) {
         // DE(i) <= UPT + M*[1-YPAR(i)]
-        glp_add_rows(P, 1);
-        glp_set_mat_row(P, glp_get_num_rows(P), 2,
-            (const int[]){0, DE(i), YPAR(i)},
-            (const double[]){0, 1.0, +M});
-        glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, UPT+M);
+        error = GRBaddconstr(P, 2,
+            (int[]){DE(i)-1, YPAR(i)-1},
+            (double[]){1.0, +M},
+        GRB_LESS_EQUAL, UPT+M, NULL);
+        if (error) goto ERROR;
+    }
 
+    for (unsigned i = 1; i <= N; ++i) {
         // DE(i) >= LPT - M*[1-YPAR(i)]
-        glp_add_rows(P, 1);
-        glp_set_mat_row(P, glp_get_num_rows(P), 2,
-            (const int[]){0, DE(i), YPAR(i)},
-            (const double[]){0, 1.0, -M});
-        glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, LPT-M, 0.0);
+        error = GRBaddconstr(P, 2,
+            (int[]){DE(i)-1, YPAR(i)-1},
+            (double[]){1.0, -M},
+        GRB_GREATER_EQUAL, LPT-M, NULL);
+        if (error) goto ERROR;
+    }
 
+    for (unsigned i = 1; i <= N; ++i) {
         // DE(i) <= LPT + M*[1-YOFF(i)]
-        glp_add_rows(P, 1);
-        glp_set_mat_row(P, glp_get_num_rows(P), 2,
-            (const int[]){0, DE(i), YOFF(i)},
-            (const double[]){0, 1.0, +M});
-        glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, LPT+M);
+        error = GRBaddconstr(P, 2,
+            (int[]){DE(i)-1, YOFF(i)-1},
+            (double[]){1.0, +M},
+        GRB_LESS_EQUAL, LPT+M, NULL);
+        if (error) goto ERROR;
+    }
 
-        glp_add_rows(P, 1);
-        glp_set_mat_row(P, glp_get_num_rows(P), 3,
-            (const int[]){0, YON(i), YOFF(i), YPAR(i)},
-            (const double[]){0, 1.0, 1.0, 1.0});
-        glp_set_row_bnds(P, glp_get_num_rows(P), GLP_FX, 1.0, 1.0);
+    for (unsigned i = 1; i <= N; ++i) {
+        error = GRBaddconstr(P, 3,
+            (int[]){YON(i)-1, YOFF(i)-1, YPAR(i)-1},
+            (double[]){1.0, 1.0, 1.0},
+        GRB_EQUAL, 1.0, NULL);
+        if (error) goto ERROR;
     }
 
     // RESTRICTION OF RAMPING RATE
     // DE(1) - pre_dispatched_heat <= MaxRUP
-    glp_add_rows(P, 1);
-    glp_set_mat_row(P, glp_get_num_rows(P), 1,
-        (const int[]){0, DE(1)},
-        (const double[]){0, +1.0});
-    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, MaxRUP+pre_dispatched_heat);
+    error = GRBaddconstr(P, 1,
+        (int[]){DE(1)-1},
+        (double[]){+1.0},
+    GRB_LESS_EQUAL, MaxRUP+pre_dispatched_heat, NULL);
 
-    glp_add_rows(P, 1);
-    glp_set_mat_row(P, glp_get_num_rows(P), 2,
-        (const int[]){0, DE(1), YPAR(1)},
-        (const double[]){0, +1.0, -M});
-    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, -M+pre_dispatched_heat, 0.0);
+    error = GRBaddconstr(P, 2,
+        (int[]){DE(1)-1, YPAR(1)-1},
+        (double[]){+1.0, -M},
+    GRB_GREATER_EQUAL, -M+pre_dispatched_heat, NULL);
 
     for(int i = 2; i <= N; ++i) {
         // DE(i) - DE(i-1) <= MaxRUP
-        glp_add_rows(P, 1);
-        glp_set_mat_row(P, glp_get_num_rows(P), 2,
-            (const int[]){0, DE(i), DE(i-1)},
-            (const double[]){0, +1.0, -1.0});
-        glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, MaxRUP);
+        error = GRBaddconstr(P, 2,
+            (int[]){DE(i)-1, DE(i-1)-1},
+            (double[]){+1.0, -1.0},
+        GRB_LESS_EQUAL, MaxRUP, NULL);
 
         // M*[1-YPAR(i)] + DE(i) - DE(i-1) >= 0
-        glp_add_rows(P, 1);
-        glp_set_mat_row(P, glp_get_num_rows(P), 2,
-            (const int[]){0, DE(i), DE(i-1), YPAR(i)},
-            (const double[]){0, +1.0, -1.0, -M});
-        glp_set_row_bnds(P, glp_get_num_rows(P), GLP_LO, -M, 0.0);
+        error = GRBaddconstr(P, 2,
+            (int[]){DE(i)-1, DE(i-1)-1, YPAR(i)-1},
+            (double[]){+1.0, -1.0, -M},
+        GRB_GREATER_EQUAL, -M, NULL);
     }
 
     // FORBIDEN TRANSITION: ON-->PAR
@@ -326,18 +345,16 @@ double st_mip(
     if (pre_dispatched_heat > UPT) {
         YON_init = 1;
     }
-    glp_add_rows(P, 1);
-    glp_set_mat_row(P, glp_get_num_rows(P), 1,
-        (const int[]){0, YPAR(1)},
-        (const double[]){0, +1.0});
-    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, 1.0-YON_init);
+    error = GRBaddconstr(P, 1,
+        (int[]){YPAR(1)-1},
+        (double[]){+1.0},
+    GRB_LESS_EQUAL, 1.0-YON_init, NULL);
     // YON(i-1) + YPAR(i) <= 1
     for(int i = 2; i <= N; ++i) {
-        glp_add_rows(P, 1);
-        glp_set_mat_row(P, glp_get_num_rows(P), 2,
-            (const int[]){0, YON(i-1), YPAR(i)},
-            (const double[]){0, +1.0, +1.0});
-        glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, 1.0);
+        error = GRBaddconstr(P, 2,
+            (int[]){YON(i-1)-1, YPAR(i)-1},
+            (double[]){+1.0, +1.0},
+        GRB_LESS_EQUAL, 1.0, NULL);
     }
 
     // FORBIDEN TRANSITION: PAR-->OFF
@@ -346,100 +363,85 @@ double st_mip(
     if (pre_dispatched_heat <= UPT && pre_dispatched_heat > LPT) {
         YPAR_init = 1;
     }
-    glp_add_rows(P, 1);
-    glp_set_mat_row(P, glp_get_num_rows(P), 1,
-        (const int[]){0, YOFF(1)},
-        (const double[]){0, +1.0});
-    glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, 1.0-YPAR_init);
+    error = GRBaddconstr(P, 1,
+        (int[]){YOFF(1)-1},
+        (double[]){+1.0},
+    GRB_LESS_EQUAL, 1.0-YPAR_init, NULL);
     // YPAR(i-1) + YOFF(i) <= 1
     for(int i = 2; i <= N; ++i) {
-        glp_add_rows(P, 1);
-        glp_set_mat_row(P, glp_get_num_rows(P), 2,
-            (const int[]){0, YPAR(i-1), YOFF(i)},
-            (const double[]){0, +1.0, +1.0});
-        glp_set_row_bnds(P, glp_get_num_rows(P), GLP_UP, 0.0, 1.0);
+        error = GRBaddconstr(P, 2,
+            (int[]){YPAR(i-1)-1, YOFF(i)-1},
+            (double[]){+1.0, +1.0},
+        GRB_LESS_EQUAL, 1.0, NULL);
     }
 
-    // Message attribute
-    glp_iocp parm;
-    glp_init_iocp(&parm);
-#ifdef ST_LINPROG_DEBUG
-    parm.msg_lev = GLP_MSG_ALL; // GLP_MSG_ERR;
-#else
-    parm.msg_lev = GLP_MSG_OFF;
-#endif
+    /* Optimize model */
+    error = GRBoptimize(P);
+    if (error) goto ERROR;
 
-    // Solve the MIP problem using glp_intopt
-    parm.presolve = GLP_ON;
-    int res = glp_intopt(P, &parm);
-    int printres = 0;
-    char *msg;
+    /* Write model to 'mip1.lp' */
+    error = GRBwrite(P, "mip1.lp");
+    if (error) goto ERROR;
 
-    if(res == 0){
-        MSG("MIP successfully solved");
-        printres = 1;
-    }else{
-        switch(res){
-        case GLP_EBADB: msg = "Invalid initial basis"; break;
-        case GLP_ESING: msg = "Singular matrix"; break;
-        case GLP_ECOND: msg = "Ill-conditioned matrix"; break;
-        case GLP_EBOUND: msg = "Incorrect bounds"; break;
-        case GLP_EFAIL: msg = "Solver failure"; break;
-        case GLP_ENOPFS: msg = "MIP instance has no primal feasible solution"; break;
-        case GLP_ENODFS: msg = "MIP problem instance has no dual feasible solution"; break;
-        default: msg = "unrecognized error code";
+    // Get the optimization result
+    int optimstatus;
+    double objval;
+    error = GRBgetintattr(P, GRB_INT_ATTR_STATUS, &optimstatus);
+    if (error) goto ERROR;
+
+    if (optimstatus == GRB_OPTIMAL) {
+        error = GRBgetdblattr(P, GRB_DBL_ATTR_OBJVAL, &objval);
+        if (error) goto ERROR;
+        MSG("Optimal objective: %.4e\n", objval);
+
+        if (pre_blk_state == 4){
+            blk_state[0] = t0 + t_shutdown_min;
+        } else {
+            blk_state[0] = pre_startup_next;
+        }
+        if (t0 >= blk_state[0]){
+            error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, DE(1)-1, 1, optimalDispatch);
+            if (error) goto ERROR;
+        } else {
+            optimalDispatch[0] = 0.0;
         }
 
-        MSG("glp_intopt returned error code %d (%s)", res, msg);
-        printres = 1;
-        return 0;
-    }
-
-    if(printres){
-        //glp_print_sol(P,"glpksolution.txt");
-
-        // Get the value of the optimal obj. function
-        MSG("OPTIMAL OBJ FUNCTION = %f USD",glp_get_obj_val(P));
-
-    }
-
-    if (pre_blk_state == 4){
-        blk_state[0] = t0 + t_shutdown_min;
-    } else {
-        blk_state[0] = pre_startup_next;
-    }
-    if (t0 >= blk_state[0]){
-        optimalDispatch[0] = glp_mip_col_val(P, DE(1));
-    } else {
-        optimalDispatch[0] = 0.0;
-    }
-    
-
 #ifdef ST_LINPROG_DEBUG
-    MSG("      \t SL \t SE \t XE \t DE \t YON \t YOFF \t YPAR");
-    for(int i = 1; i <= N; ++i){
-        MSG("%3d: \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f", i,
-        glp_mip_col_val(P, SL(i)),
-        glp_mip_col_val(P, SE(i)),
-        glp_mip_col_val(P, XE(i)),
-        glp_mip_col_val(P, DE(i)),
-        glp_mip_col_val(P, YON(i)),
-        glp_mip_col_val(P, YOFF(i)),
-        glp_mip_col_val(P, YPAR(i))
-        );
-    }
+        MSG("      \t SL \t SE \t XE \t DE \t YON \t YOFF \t YPAR");
+        for(int i = 1; i <= N; ++i){
+            double SL_val, SE_val, XE_val, DE_val, YON_val, YOFF_val, YPAR_val;
+            error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, SL(i)-1, 1, &SL_val);
+            if (error) goto ERROR;
+            error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, SE(i)-1, 1, &SE_val);
+            if (error) goto ERROR;
+            error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, XE(i)-1, 1, &XE_val);
+            if (error) goto ERROR;
+            error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, DE(i)-1, 1, &DE_val);
+            if (error) goto ERROR;
+            error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, YON(i)-1, 1, &YON_val);
+            if (error) goto ERROR;
+            error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, YOFF(i)-1, 1, &YOFF_val);
+            if (error) goto ERROR;
+            error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, YPAR(i)-1, 1, &YPAR_val);
+            if (error) goto ERROR;
+            MSG("%3d: \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f", i,
+                SL_val, SE_val, XE_val, DE_val, YON_val, YOFF_val, YPAR_val);
+        }
 #endif
+    } else {
+        MSG("Optimization was stopped with status %d\n", optimstatus);
+    }
 
     MSG("OPTIMAL DISPATCH FOR THE NEXT HOUR: %f", optimalDispatch[0]);
 
-    /* Free all the memory used in this script */
-    glp_delete_prob(P);
-    glp_free_env();
-
-    if(res){
-        MSG("GLPK error %d: %s", res, msg);
-        return -987654321;
+ERROR:
+    if (error) {
+        ERR("Gurobi error: %s\n", GRBgeterrormsg(env));
+        return ST_ERRVAL;
     }
+
+    GRBfreemodel(P);
+    GRBfreeenv(env);
 
     /* End of the code */
 }

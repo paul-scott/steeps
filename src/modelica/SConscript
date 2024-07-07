@@ -1,3 +1,4 @@
+import os
 Import('env')
 
 senv = env.Clone()
@@ -43,12 +44,14 @@ lib2 = penv.SharedLibrary('st_solsticepy',['run_py_func.c'])
 
 #lib5 = penv.SharedLibrary('st_runpy2',['runpy2.c'])
 
+GUROBI_HOME = os.getenv('GUROBI_HOME')
+
 # GLPK-linked bits...
 genv = senv.Clone()
 genv.Append(
-	CPPPATH = ['$GLPK_CPPPATH']
-	,LIBS = ['glpk','st_motab']
-	,LIBPATH=['.','$GLPK_LIBPATH']
+	CPPPATH = ['$GLPK_CPPPATH',f'{GUROBI_HOME}/include']
+	,LIBS = ['glpk','st_motab','gurobi110']
+	,LIBPATH=['.','$GLPK_LIBPATH', f'{GUROBI_HOME}/lib']
 )
 conf= genv.Configure()
 if not conf.CheckHeader('glpk.h'):
