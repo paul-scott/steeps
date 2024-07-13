@@ -30,6 +30,7 @@ double st_mip(
         ,double t_shutdown_min
         ,double * optimalDispatch
         ,double * blk_state
+        ,double * runtime
 );
 
 #endif

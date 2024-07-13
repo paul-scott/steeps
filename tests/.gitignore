@@ -56,3 +56,5 @@ Reference_2.c
 Reference_2*.mat
 PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo
 TestCommandTouched
+*.png
+*.lp

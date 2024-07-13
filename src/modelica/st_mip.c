@@ -52,6 +52,7 @@ double st_mip(
         ,double t_shutdown_min
         ,double * optimalDispatch
         ,double * blk_state
+        ,double * runtime
 ){
     MSG("\n\nt = %f",t0);
 
@@ -73,7 +74,7 @@ double st_mip(
 
     // check that pvd and wnd can cover the required time range
 
-    double LCOH = 78.0; // Levelized cost of heat
+    double LCOH = 3.5/3.6*100.0; // Levelized cost of heat
     double MaxRUP = ramp_up_fraction * DEmax; // Maximum ramp-up rate
     double MaxRDW = ramp_dw_fraction * DEmax; // Maximum ramp-down rate
     double MinRUP = 0.0; // Minimum ramp-up rate
@@ -158,9 +159,7 @@ double st_mip(
     #define YOFF(I) (YON(N) + I)
     #define YPAR(I) (YOFF(N) + I)
     #define ZONOFF(I) (YPAR(N) + I)
-    #define ZONPAR(I) (ZONOFF(N) + I)
-    #define ZPAROFF(I) (ZONPAR(N) + I)
-    #define DEPAR(I) (ZPAROFF(N) + I)
+    #define DEPAR(I) (ZONOFF(N) + I)
 
     /* Create an empty model */
     error = GRBnewmodel(env, &P, "mip1", 0, NULL, NULL, NULL, NULL, NULL);
@@ -235,19 +234,7 @@ double st_mip(
 
     for(int i = 1; i <= N; ++i) {
         snprintf(vname, NAMEMAX, "ZONOFF%02d", i);
-        error = GRBaddvar(P, 0, NULL, NULL, -0.1 * eff_process * LCOH, 0.0, 1.0, GRB_BINARY, vname);
-        if (error) goto ERROR;
-    }
-
-    for(int i = 1; i <= N; ++i) {
-        snprintf(vname, NAMEMAX, "ZONPAR%02d", i);
-        error = GRBaddvar(P, 0, NULL, NULL, 0.0, 0.0, 1.0, GRB_BINARY, vname);
-        if (error) goto ERROR;
-    }
-
-    for(int i = 1; i <= N; ++i) {
-        snprintf(vname, NAMEMAX, "ZPAROFF%02d", i);
-        error = GRBaddvar(P, 0, NULL, NULL, 0.0, 0.0, 1.0, GRB_BINARY, vname);
+        error = GRBaddvar(P, 0, NULL, NULL, -4000.0, 0.0, 1.0, GRB_BINARY, vname);
         if (error) goto ERROR;
     }
 
@@ -413,88 +400,36 @@ double st_mip(
     }
 
     // ************************************
-    // SWITCH DETECTION: ON-->PAR
+    // FORBIDEN TRANSITION: ON-->PAR
     // ************************************
-    //YON(0) >= ZONPAR(1)
+    // YON0 + YPAR(1) <= 1
     error = GRBaddconstr(P, 1,
-        (int[]){ZONPAR(1)-1},
+        (int[]){YPAR(1)-1},
         (double[]){+1.0},
-    GRB_LESS_EQUAL, YON0, NULL);
-    //YON(i-1) >= ZONPAR(i)
-    for(int i = 2; i <= N; ++i) {
-        error = GRBaddconstr(P, 2,
-            (int[]){YON(i-1)-1, ZONPAR(i)-1},
-            (double[]){+1.0, -1.0},
-        GRB_GREATER_EQUAL, 0.0, NULL);
-    }
-    //YPAR(i) >= ZONPAR(i)
-    for(int i = 1; i <= N; ++i) {
-        error = GRBaddconstr(P, 2,
-            (int[]){YPAR(i)-1, ZONPAR(i)-1},
-            (double[]){+1.0, -1.0},
-        GRB_GREATER_EQUAL, 0.0, NULL);
-    }
-    //YON(0)+YPAR(1)-1 <= ZONPAR(1)
-    error = GRBaddconstr(P, 2,
-        (int[]){YPAR(1)-1, ZONPAR(1)-1},
-        (double[]){+1.0, -1.0},
     GRB_LESS_EQUAL, 1.0-YON0, NULL);
-    //YON(i-1)+YPAR(i)-1 <= ZONPAR(i)
+    // YON(i-1) + YPAR(i) <= 1
     for(int i = 2; i <= N; ++i) {
-        error = GRBaddconstr(P, 3,
-            (int[]){YON(i-1)-1, YPAR(i)-1, ZONPAR(i)-1},
-            (double[]){+1.0, +1.0, -1.0},
+        error = GRBaddconstr(P, 2,
+            (int[]){YON(i-1)-1, YPAR(i)-1},
+            (double[]){+1.0, +1.0},
         GRB_LESS_EQUAL, 1.0, NULL);
-    }
-    //ZONPAR(i) = 0
-    for(int i = 1; i <= N; ++i) {
-        error = GRBaddconstr(P, 1,
-            (int[]){ZONPAR(i)-1},
-            (double[]){+1.0},
-        GRB_EQUAL, 0.0, NULL);
     }
 
     // ************************************
-    // SWITCH DETECTION: PAR-->OFF
+    // FORBIDEN TRANSITION: PAR-->OFF
     // ************************************
-    //YPAR(0) >= ZPAROFF(1)
-    double YPAR0 = (pre_dispatched_heat >= LPT && pre_dispatched_heat < UPT) ? 1 : 0;
+    // YPAR0 + YOFF(1) <= 1
+    double YPAR0 = (pre_dispatched_heat < UPT && pre_dispatched_heat > LPT) ? 1 : 0;
     error = GRBaddconstr(P, 1,
-        (int[]){ZPAROFF(1)-1},
+        (int[]){YOFF(1)-1},
         (double[]){+1.0},
-    GRB_LESS_EQUAL, YPAR0, NULL);
-    //YPAR(i) >= ZPAROFF(i)
-    for(int i = 2; i <= N; ++i) {
-        error = GRBaddconstr(P, 2,
-            (int[]){YPAR(i)-1, ZPAROFF(i)-1},
-            (double[]){+1.0, -1.0},
-        GRB_GREATER_EQUAL, 0.0, NULL);
-    }
-    //YOFF(i) >= ZPAROFF(i)
-    for(int i = 1; i <= N; ++i) {
-        error = GRBaddconstr(P, 2,
-            (int[]){YOFF(i)-1, ZPAROFF(i)-1},
-            (double[]){+1.0, -1.0},
-        GRB_GREATER_EQUAL, 0.0, NULL);
-    }
-    //YPAR(0)+YOFF(1)-1 <= ZPAROFF(1)
-    error = GRBaddconstr(P, 2,
-        (int[]){YOFF(1)-1, ZPAROFF(1)-1},
-        (double[]){+1.0, -1.0},
     GRB_LESS_EQUAL, 1.0-YPAR0, NULL);
-    //YPAR(i-1)+YOFF(i)-1 <= ZPAROFF(i)
+    // YPAR(i-1) + YOFF(i) <= 1
     for(int i = 2; i <= N; ++i) {
-        error = GRBaddconstr(P, 3,
-            (int[]){YPAR(i-1)-1, YOFF(i)-1, ZPAROFF(i)-1},
-            (double[]){+1.0, +1.0, -1.0},
+        error = GRBaddconstr(P, 2,
+            (int[]){YPAR(i-1)-1, YOFF(i)-1},
+            (double[]){+1.0, +1.0},
         GRB_LESS_EQUAL, 1.0, NULL);
-    }
-    //ZPAROFF(i) = 0
-    for(int i = 1; i <= N; ++i) {
-        error = GRBaddconstr(P, 1,
-            (int[]){ZPAROFF(i)-1},
-            (double[]){+1.0},
-        GRB_EQUAL, 0.0, NULL);
     }
 
     // ************************************
@@ -537,6 +472,12 @@ double st_mip(
     error = GRBgetintattr(P, GRB_INT_ATTR_STATUS, &optimstatus);
     if (error) goto ERROR;
 
+    double pre_runtime;
+    error = GRBgetdblattr(P, GRB_DBL_ATTR_RUNTIME, &pre_runtime);
+    if (error) goto ERROR;
+    printf("Runtime: %f seconds\n", pre_runtime);
+    runtime[0] = pre_runtime;
+
     if (optimstatus == GRB_OPTIMAL) {
         error = GRBgetdblattr(P, GRB_DBL_ATTR_OBJVAL, &objval);
         if (error) goto ERROR;
@@ -555,9 +496,9 @@ double st_mip(
         }
 
 #ifdef ST_LINPROG_DEBUG
-        MSG("      \t SL \t SE \t XE \t DE \t YON \t YOFF \t YPAR \t ONOFF \t ONPAR \t PAROF \t DEPAR");
+        MSG("      \t SL \t SE \t XE \t DE \t YON \t YOFF \t YPAR \t ONOFF \t DEPAR");
         for(int i = 1; i <= N; ++i){
-            double SL_val, SE_val, XE_val, DE_val, YON_val, YOFF_val, YPAR_val, ZONOFF_val, ZONPAR_val, ZPAROFF_val, DEPAR_val;
+            double SL_val, SE_val, XE_val, DE_val, YON_val, YOFF_val, YPAR_val, ZONOFF_val, DEPAR_val;
             error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, SL(i)-1, 1, &SL_val);
             if (error) goto ERROR;
             error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, SE(i)-1, 1, &SE_val);
@@ -574,14 +515,10 @@ double st_mip(
             if (error) goto ERROR;
             error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, ZONOFF(i)-1, 1, &ZONOFF_val);
             if (error) goto ERROR;
-            error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, ZONPAR(i)-1, 1, &ZONPAR_val);
-            if (error) goto ERROR;
-            error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, ZPAROFF(i)-1, 1, &ZPAROFF_val);
-            if (error) goto ERROR;
             error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, DEPAR(i)-1, 1, &DEPAR_val);
             if (error) goto ERROR;
-            MSG("%3d: \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f", i,
-                SL_val, SE_val, XE_val, DE_val, YON_val, YOFF_val, YPAR_val, ZONOFF_val, ZONPAR_val, ZPAROFF_val, DEPAR_val);
+            MSG("%3d: \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f \t %.1f", i,
+                SL_val, SE_val, XE_val, DE_val, YON_val, YOFF_val, YPAR_val, ZONOFF_val, DEPAR_val);
         }
 #endif
     } else {

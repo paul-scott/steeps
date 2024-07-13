@@ -139,6 +139,7 @@ model WindPVSimpleSystemOptimalDispatch
     Real pre_blk_state;
     Real t_startup_next_fun;
     Real pre_startup_next;
+    Real runtime;
 
 function LPOptimisation
     import SolarTherm.Utilities.Tables.STMotab;
@@ -169,6 +170,7 @@ function LPOptimisation
     input Real t_shutdown_min;
     output Real Dispatch;
     output Real t_startup_next_fun;
+    output Real runtime;
     external "C" st_mip(
              pv_motab
             ,wnd_motab
@@ -196,6 +198,7 @@ function LPOptimisation
             ,t_shutdown_min
             ,Dispatch
             ,t_startup_next_fun
+            ,runtime
         );
     annotation(Library="st_mip");
 end LPOptimisation;
@@ -298,7 +301,7 @@ equation
     
     when counter > 0 then
         time_simul = floor(time);
-        (optimalDispatch,t_startup_next_fun) = LPOptimisation(
+        (optimalDispatch,t_startup_next_fun,runtime) = LPOptimisation(
              pv_motab
             ,wind_motab
             ,renewable_input.P_elec_max/1e6
