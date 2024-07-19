@@ -25,7 +25,7 @@
 
 #define ST_ERRVAL (-999999.)
 
-double st_mip(
+double gurobi_fun(
          MotabData *pvd
         ,MotabData *wnd
         ,double P_elec_max_pv
@@ -46,12 +46,7 @@ double st_mip(
         ,double P_elec_max // Maximum electrical power
         ,double upper_threshold // Minimum energy delivery to the process
         ,double pre_dispatched_heat // Initially pre-dispatched heat
-        ,double pre_Q_flow_dis
-        ,double pre_blk_state
-        ,double pre_startup_next
-        ,double t_shutdown_min
         ,double * optimalDispatch
-        ,double * blk_state
         ,double * runtime
 ){
     MSG("\n\nt = %f",t0);
@@ -82,23 +77,6 @@ double st_mip(
     double UPT = upper_threshold * DEmax;
     double LPT = 0.0;
     double M = 10*DEmax; // Big M value
-
-    // Print the initial values for debugging purposes
-    MSG("t                = %.2f s", t0);
-    MSG("dt               = %.2f s", dt);
-    MSG("P_elec_max       = %.2f MWt", P_elec_max);
-    MSG("eff_heater       = %.2f MWt", eff_heater);
-    MSG("eff_process      = %.2f MWt", eff_process);
-    MSG("DEmax            = %.2f MWth", DEmax);
-    MSG("SLmax            = %.2f MWhth", SLmax);
-    MSG("SLinit           = %.2f MWhth", SLinit);
-    MSG("SLmin            = %.2f MWhth", SLmin);
-    MSG("ramp_up_fraction = %.2f", ramp_up_fraction);
-    MSG("Max ramp-up rate = %.2f", MaxRUP);
-    MSG("Max ramp-dw rate = %.2f", MaxRDW);
-    MSG("DEinit           = %.2f", pre_dispatched_heat);
-    MSG("pre_Q_flow_dis   = %.2f", pre_Q_flow_dis);
-    MSG("pre_blk_state    = %.2f", pre_blk_state);
 
     if(NULL==pvd)return ST_ERRVAL;
     if(NULL==wnd)return ST_ERRVAL;
@@ -135,7 +113,7 @@ double st_mip(
     error = GRBsetstrparam(env, "LogFile", "mip1.log");
     if (error) goto ERROR;
 
-    error = GRBsetdblparam(env, "MIPGap", 0.0001);
+    error = GRBsetdblparam(env, "MIPGap", 0.001);
     if (error) goto ERROR;
 
     error = GRBsetintparam(env, GRB_INT_PAR_OUTPUTFLAG, 0);
@@ -475,7 +453,9 @@ double st_mip(
     double pre_runtime;
     error = GRBgetdblattr(P, GRB_DBL_ATTR_RUNTIME, &pre_runtime);
     if (error) goto ERROR;
+#ifdef ST_LINPROG_DEBUG
     printf("Runtime: %f seconds\n", pre_runtime);
+#endif
     runtime[0] = pre_runtime;
 
     if (optimstatus == GRB_OPTIMAL) {
@@ -483,17 +463,8 @@ double st_mip(
         if (error) goto ERROR;
         MSG("Optimal objective: %.4e\n", objval);
 
-        if (pre_blk_state == 4){
-            blk_state[0] = t0 + t_shutdown_min;
-        } else {
-            blk_state[0] = pre_startup_next;
-        }
-        if (t0 >= blk_state[0]){
-            error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, DE(1)-1, 1, optimalDispatch);
-            if (error) goto ERROR;
-        } else {
-            optimalDispatch[0] = 0.0;
-        }
+        error = GRBgetdblattrarray(P, GRB_DBL_ATTR_X, DE(1)-1, 1, optimalDispatch);
+        if (error) goto ERROR;
 
 #ifdef ST_LINPROG_DEBUG
         MSG("      \t SL \t SE \t XE \t DE \t YON \t YOFF \t YPAR \t ONOFF \t DEPAR");
@@ -537,6 +508,171 @@ ERROR:
     GRBfreeenv(env);
 
     /* End of the code */
+}
+
+double st_mip(
+         MotabData *pvd
+        ,MotabData *wnd
+        ,double P_elec_max_pv
+        ,double P_elec_max_wind
+        ,double P_elec_pv_ref_size
+        ,double P_elec_wind_ref_size
+        ,int horizon // Time horizon for the optimization
+        ,double dt // Time step duration
+        ,double t0 // Initial time
+        ,double eff_heater // Efficiency of the heater
+        ,double eff_process // Efficiency of the process
+        ,double DEmax // Maximum dispatched energy
+        ,double SLmax // Maximum stored energy (storage limit)
+        ,double SLinit // Initial stored energy
+        ,double SLmin // Minimum stored energy
+        ,double ramp_up_fraction // Fraction of DEmax allowed for ramping up
+        ,double ramp_dw_fraction // Fraction of DEmax allowed for ramping up
+        ,double P_elec_max // Maximum electrical power
+        ,double upper_threshold // Minimum energy delivery to the process
+        ,double pre_dispatched_heat // Initially pre-dispatched heat
+        ,double pre_Q_flow_dis
+        ,double pre_blk_state
+        ,double pre_startup_next
+        ,double t_shutdown_min
+        ,double * optimalDispatch
+        ,double * t_start_up_next
+        ,double * runtime
+){
+    double pvdstep, wndstep;
+    assert(0 == motab_check_timestep(pvd,&pvdstep));
+    assert(0 == motab_check_timestep(wnd,&wndstep));
+    
+    static MotabData *pvdcache, *wndcache;
+    if(pvdcache != pvd){
+        pvdcache = pvd;
+        if(pvdstep != dt)ERR("Warning: pv file timestep is %f s, different"
+            " from forecasting timestep %f s (message is only shown once)",pvdstep, dt);
+    }
+    if(wndcache != wnd){
+        wndcache = wnd;
+        if(wndstep != dt)ERR("Warning: wind file timestep is %fs, different"
+            " from forecasting timestep %fs (message is only shown once)",wndstep, dt);
+    }
+
+    // check that pvd and wnd can cover the required time range
+
+    double LCOH = 3.5/3.6*100.0; // Levelized cost of heat
+    double MaxRUP = ramp_up_fraction * DEmax; // Maximum ramp-up rate
+    double MaxRDW = ramp_dw_fraction * DEmax; // Maximum ramp-down rate
+    double MinRUP = 0.0; // Minimum ramp-up rate
+    double MinRDW = 0.0; // Minimum ramp-down rate
+    double UPT = upper_threshold * DEmax;
+    double LPT = 0.0;
+    double M = 10*DEmax; // Big M value
+
+    // Print the initial values for debugging purposes
+    MSG("t                = %.2f s", t0);
+    MSG("dt               = %.2f s", dt);
+    MSG("P_elec_max       = %.2f MWt", P_elec_max);
+    MSG("eff_heater       = %.2f MWt", eff_heater);
+    MSG("eff_process      = %.2f MWt", eff_process);
+    MSG("DEmax            = %.2f MWth", DEmax);
+    MSG("SLmax            = %.2f MWhth", SLmax);
+    MSG("SLinit           = %.2f MWhth", SLinit);
+    MSG("SLmin            = %.2f MWhth", SLmin);
+    MSG("ramp_up_fraction = %.2f", ramp_up_fraction);
+    MSG("Max ramp-up rate = %.2f", MaxRUP);
+    MSG("Max ramp-dw rate = %.2f", MaxRDW);
+    MSG("DEinit           = %.2f", pre_dispatched_heat);
+    MSG("pre_Q_flow_dis   = %.2f", pre_Q_flow_dis);
+    MSG("pre_blk_state    = %.2f", pre_blk_state);
+
+    if(NULL==pvd)return ST_ERRVAL;
+    if(NULL==wnd)return ST_ERRVAL;
+
+    int wind_col = motab_find_col_by_label(wnd,"power");
+    assert(wind_col != -1);
+
+    int pv_col = motab_find_col_by_label(pvd,"power");
+    assert(pv_col != -1);
+
+#define WND1(I) (\
+    /*MSG("WND(%d) at t=%f",I,t0+((I)-1)*dt),*/\
+    1e-6*P_elec_max_wind / P_elec_wind_ref_size*motab_get_value_wraparound(wnd,    t0+(I)*dt,wind_col)\
+    )
+/** as noted above, PV for the ith period (counting from 1) is at t0+i*dt */
+#define PV1(I) (\
+    /*MSG("PV(%d) at t=%f",(I),t0+(I)*dt),*/\
+    1e-6*P_elec_max_pv / P_elec_pv_ref_size*motab_get_value_wraparound(pvd,    t0+(I)*dt,pv_col)\
+    )
+
+    // Define the number of steps in the horizon
+    #define N (horizon)
+
+    // This piece of code determines the next startup time
+    if (pre_blk_state == 4){
+        t_start_up_next[0] = t0 + t_shutdown_min;
+    } else {
+        t_start_up_next[0] = pre_startup_next;
+    }
+    MSG("pre_blk_state: %.f",pre_blk_state);
+    // While in state 1, we check if we can start the plant
+    if (pre_blk_state == 1 && t0 >= t_start_up_next[0]){
+        double SL[N+1];
+        SL[0] = SLinit;
+        int i = 1;
+        int start_ramp_up = 1;
+        while (i <= N) {
+            double pvd_i = PV1(i);
+            double wnd_i = WND1(i);
+            double p_heat_i = (pvd_i + wnd_i) * eff_heater;
+            p_heat_i = fmin(p_heat_i, P_elec_max);
+            SL[i] = SL[i-1] + p_heat_i - MaxRUP * i;
+            if (SL[i] <= SLmin && i<16) {
+                // The plant is not ready to start
+                start_ramp_up = 0;
+                optimalDispatch[0] = 0.0;
+                break;
+            }
+            ++i;
+        }
+        MSG("start_ramp_up: %d",start_ramp_up);
+        if (start_ramp_up == 1){
+            optimalDispatch[0] = pre_dispatched_heat + MaxRUP;
+        }
+    }
+    if (pre_blk_state == 2){
+        optimalDispatch[0] = fmin(pre_dispatched_heat + MaxRUP, DEmax);
+    }
+
+    if ((int)t0 % 86400 == 0) {
+        printf("Day %.1f\n",t0/86400);
+    }
+    runtime[0] = 0;
+
+    if (pre_blk_state == 3){
+    gurobi_fun(
+         pvd
+        ,wnd
+        ,P_elec_max_pv
+        ,P_elec_max_wind
+        ,P_elec_pv_ref_size
+        ,P_elec_wind_ref_size
+        ,horizon // Time horizon for the optimization
+        ,dt // Time step duration
+        ,t0 // Initial time
+        ,eff_heater // Efficiency of the heater
+        ,eff_process // Efficiency of the process
+        ,DEmax // Maximum dispatched energy
+        ,SLmax // Maximum stored energy (storage limit)
+        ,SLinit // Initial stored energy
+        ,SLmin // Minimum stored energy
+        ,ramp_up_fraction // Fraction of DEmax allowed for ramping up
+        ,ramp_dw_fraction // Fraction of DEmax allowed for ramping up
+        ,P_elec_max // Maximum electrical power
+        ,upper_threshold // Minimum energy delivery to the process
+        ,pre_dispatched_heat // Initially pre-dispatched heat
+        ,optimalDispatch
+        ,runtime
+    );
+    }
+
 }
 
 // vim: ts=4:sw=4:noet:tw=80
