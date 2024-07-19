@@ -52,7 +52,7 @@ model WindPVSimpleSystemOptimalDispatch
 
     parameter SI.Energy E_up_u = 0.95*E_max "Upper energy limit";
     parameter SI.Energy E_up_l = 0.93*E_max "Upper energy limit";
-    parameter SI.Energy E_low_u = 1/t_storage*E_max "Lower energy limit";
+    parameter SI.Energy E_low_u = 0.07*E_max "Lower energy limit";
     parameter SI.Energy E_low_l = 0.05*E_max "Lower energy limit";
     parameter SI.Energy E_start = 0.3*E_max "Lower energy limit";
 
