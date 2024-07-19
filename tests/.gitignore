@@ -58,3 +58,4 @@ PhysicalParticleCO21D_1stApproach_SurrogateReceiver_OnTheFlySurrogate.mo
 TestCommandTouched
 *.png
 *.lp
+*_res.csv
