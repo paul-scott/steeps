@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <math.h>
 
-#define ST_LINPROG_DEBUG
+/*#define ST_LINPROG_DEBUG*/
 
 #ifdef ST_LINPROG_DEBUG
 # define MSG(FMT,...) fprintf(stdout,"%s:%d: " FMT "\n",__FILE__,__LINE__,##__VA_ARGS__)
@@ -150,7 +150,7 @@ double gurobi_fun(
     /* VARIABLE BOUNDS AND OBJECTIVES*/
     for(int i = 1; i <= N; ++i) {
         snprintf(vname, NAMEMAX, "SL%02d", i);
-        error = GRBaddvar(P, 0, NULL, NULL, 0.0, SLmin, SLmax, GRB_CONTINUOUS, vname);
+        error = GRBaddvar(P, 0, NULL, NULL, eff_process * LCOH * 0.01, SLmin, SLmax, GRB_CONTINUOUS, vname);
         if (error) goto ERROR;
     }
 
@@ -262,11 +262,11 @@ double gurobi_fun(
         No net change in storage level over the forecast interval.
         -- or --
         SL(N) = SLinit. */
-    error = GRBaddconstr(P, 1,
-        (int[]){SL(N)-1},
-        (double[]){1.0},
-    GRB_EQUAL, SLinit, NULL);
-    if (error) goto ERROR;
+/*    error = GRBaddconstr(P, 1,*/
+/*        (int[]){SL(N)-1},*/
+/*        (double[]){1.0},*/
+/*    GRB_EQUAL, SLinit, NULL);*/
+/*    if (error) goto ERROR;*/
 
     // MODE DETECTION (YON,YOFF,YPAR)
     for (unsigned i = 1; i <= N; ++i) {
