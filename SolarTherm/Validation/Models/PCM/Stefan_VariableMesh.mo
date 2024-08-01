@@ -10,8 +10,8 @@ model Stefan_VariableMesh
     parameter Real L = 0.1 "m"; //Length of a plane wall with length L
     parameter Real A = 1.0 "m^2";
     parameter Integer n3 = 20; //20 //Total Number of nodes used in L for f3
-    parameter Integer n2 = 26; //30 //Total Number of nodes used in L for f2
-    parameter Integer n1 = 36; //45 //Total Number of nodes used in L for f1
+    parameter Integer n2 = 30; //30 //Total Number of nodes used in L for f2
+    parameter Integer n1 = 45; //45 //Total Number of nodes used in L for f1
 
     //Exact Solution Parameters;
     parameter Real pi = 2.0*Modelica.Math.asin(1.0);
@@ -154,7 +154,7 @@ model Stefan_VariableMesh
     Real X_pct2;
     Real X_pct3;
 algorithm
-    when T1[n1] > 1068.1 or T2[n2] > 1068.1 or T3[n3] > 1068.1 then
+    when max(max(T1[n1],T2[n2]),T3[n3]) > T_init + 0.01*(T_wall-T_init) then
       terminate("No longer semi-infinite");
     end when;
 equation
@@ -406,5 +406,5 @@ equation
     X_pct2 = 100.0*X_res2/X_exact;
     X_pct3 = 100.0*X_res3/X_exact;
     
-    annotation(experiment(StopTime = 250, StartTime = 0, Tolerance = 1e-6, Interval = 1.0));
+    annotation(experiment(StopTime = 330, StartTime = 0, Tolerance = 1e-6, Interval = 0.1));
 end Stefan_VariableMesh;

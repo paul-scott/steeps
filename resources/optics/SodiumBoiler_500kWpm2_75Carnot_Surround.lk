@@ -1,0 +1,572 @@
+//FUNCTIONS
+simulate_singleaim = define(resolution) //Simple aim point simulation, returns optical efficiency (decimal) and peak flux
+{
+	var("fluxsim.0.aim_method","Simple aim points"); 
+	//success = simulate_point();
+	//update_geometry();
+	update_interface();
+	success = run_performance({"save_detail"=false});
+	peakflux = get_peakflux(resolution);
+	table_results = get_summary_results();
+	optical_efficiency = 0.01*to_real(table_results{"Solar field optical efficiency"});
+	intercept_efficiency = 0.01*to_real(table_results{"Image intercept efficiency"});
+	attenuation_efficiency = 0.01*to_real(table_results{"Attenuation efficiency"});
+	blocking_efficiency = 0.01*to_real(table_results{"Blocking efficiency"});
+	reflection_efficiency = 0.01*to_real(table_results{"Reflection efficiency"});
+	cosine_efficiency = 0.01*to_real(table_results{"Cosine efficiency"});
+	shading_efficiency = 0.01*to_real(table_results{"Shading efficiency"});
+	efficiencies = [optical_efficiency,intercept_efficiency,attenuation_efficiency,blocking_efficiency,reflection_efficiency,cosine_efficiency,shading_efficiency,var("fluxsim.0.flux_dni"),peakflux,100]; //isp=0
+	
+	table_results = null;
+	return [efficiencies,peakflux];
+	efficiencies = null;
+};
+
+simulate_isp = define(isp,resolution,field_type) //polar field isp aiming with ispy = ispx
+{
+	var("fluxsim.0.aim_method","Image size priority"); 
+	if(field_type == 'polar')
+	{
+		var("fluxsim.0.sigma_limit_x",isp); //set isp setting for x and y
+		var("fluxsim.0.sigma_limit_y",isp);
+	}
+	elseif(field_type == 'surround')
+	{
+		var("fluxsim.0.sigma_limit_y",isp);
+		
+	}
+	//update_geometry();
+	update_interface();
+	global success = run_performance({"save_detail"=false});
+	//success = simulate_point();
+	global peakflux = get_peakflux(resolution);
+	global table_results = get_summary_results();
+	global optical_efficiency = 0.01*to_real(table_results{"Solar field optical efficiency"});
+	global intercept_efficiency = 0.01*to_real(table_results{"Image intercept efficiency"});
+	global attenuation_efficiency = 0.01*to_real(table_results{"Attenuation efficiency"});
+	global blocking_efficiency = 0.01*to_real(table_results{"Blocking efficiency"});
+	global reflection_efficiency = 0.01*to_real(table_results{"Reflection efficiency"});
+	global cosine_efficiency = 0.01*to_real(table_results{"Cosine efficiency"});
+	global shading_efficiency = 0.01*to_real(table_results{"Shading efficiency"});
+	global efficiencies = [optical_efficiency,intercept_efficiency,attenuation_efficiency,blocking_efficiency,reflection_efficiency,cosine_efficiency,shading_efficiency,var("fluxsim.0.flux_dni"),peakflux,isp];
+	
+	//table_results = null;
+	return [efficiencies,peakflux];
+	//efficiencies = null;
+};
+
+optimised_isp = define(tolerated,resolution,field_type) //polar field isp aiming where ispy = ispx and this is maximised such that flux is just below tolerance
+{
+	var("fluxsim.0.aim_method","Image size priority");   /*Simple aim points,Sigma aiming,Probability shift,Image size priority,Keep existing,Freeze tracking*/
+
+	isp=10.00; //set isp to 10 first, if the peak flux is not exceeded then probably simple aimpoint wont exceed it either
+	result = simulate_isp(isp,resolution,field_type); //obtain [opteff,peakflux]
+	peakflux = result[1]; //take peak flux
+	if(peakflux <= tolerated) //if this peak flux is less than tolerated flux then isp of 10 is fine
+	{
+		efficiencies = result[0];
+		isp=10.0;
+	}
+	else //try to optimise this ip value
+	{
+		a=0.0; //Multiple of 2 up to 5 times
+		b=0.0; //Multiple of 0.5 up to 4 times
+		c=0.00; //Multiple of 0.1 up to 5 times
+		d=0.00; //Multiple of 0.01 up to 10 times
+		isp=a+b+c;
+		//Start with multiples of 2 from 
+		peakflux = 0;
+		while(peakflux<tolerated && a <= 10)
+		{
+			a += 2.0;
+			isp=a+b+c+d;
+			result = simulate_isp(isp,resolution,field_type);
+			peakflux = result[1];
+		}
+		a -= 2.0; //when it breaks out of the loop, the isp is between 0 and 2 too high, so revert by 2
+		isp=a+b+c+d;
+		peakflux = 0;
+		while(peakflux<tolerated && b <= 2.0)
+		{
+			b += 0.5;
+			isp=a+b+c+d;
+			result = simulate_isp(isp,resolution,field_type);
+			peakflux = result[1];
+		}
+		b -= 0.5; //when it breaks out of the loop, the isp is between 0 and 0.5 too high, so revert by 0.5
+		isp=a+b+c+d;
+		peakflux = 0;
+		while(peakflux<tolerated && c <= 0.5)
+		{
+			c += 0.1;
+			isp=a+b+c+d;
+			result = simulate_isp(isp,resolution,field_type);
+			peakflux = result[1];
+		}
+		c -= 0.1; //when it breaks out of the loop, the isp is between 0 and 0.1 too high, so revert by 0.1
+		isp=a+b+c+d;
+		peakflux=0;
+		while(peakflux<tolerated && d <= 0.1)
+		{
+			d += 0.01;
+			isp=a+b+c+d;
+			result = simulate_isp(isp,resolution,field_type);
+			peakflux = result[1];
+		}
+		d -= 0.01; //when it breaks out of the loop, the isp is between 0 and 0.01 too high, so revert by 0.01 and that is close enough
+		isp=max(a+b+c+d,0.0);//Cannot be less than zero
+		//The final simulation
+		result = simulate_isp(isp,resolution,field_type);
+		efficiencies = result[0];
+		peakflux = result[1];
+	}
+	return [efficiencies,peakflux,isp];
+	efficiencies = null;
+};
+
+get_peakflux = define(resolution) //returns the peak value of a nested array
+{
+	//fluxmap = get_fl
+	//peakflux=max(max
+	global peakflux=0.0;
+	global fluxmap = get_fluxmap(0);
+	for(i=to_int(0);i<resolution;i=i+1)
+	{
+		if(peakflux<max((fluxmap)[i]))
+		{
+			peakflux=max((fluxmap)[i]);
+		}
+	}
+	return peakflux;
+};
+
+eleazi = define(dec_deg,hra_deg,lat_deg) //converts declination hourangle to elevation and azimuth (degree -> rad -> rad -> degree)
+{
+	dec = dec_deg*pi()/180.0;
+	hra = hra_deg*pi()/180.0;
+	lat = lat_deg*pi()/180.0;
+	
+	ele = asin(sin(dec)*sin(lat)+cos(dec)*cos(lat)*cos(hra));
+	azi = acos(min(max(-1.0,(sin(dec)*cos(lat)-cos(dec)*sin(lat)*cos(hra))/cos(ele)),1.0));
+
+	ele_deg = ele*(180.0/pi());
+	azi_deg = azi*(180.0/pi());
+	
+	if(azi_deg>0.0)
+	{
+		azi_deg = 360.0 - azi_deg;
+	}
+	return [ele_deg,azi_deg];
+};
+
+DNI_Meinel = define(zen_deg) //zenith angle is in degrees
+{
+	zen = zen_deg*pi()/180.0; //convert to radians
+	AM = 1.0/cos(zen);
+	DNI = 1367*0.7^(AM^0.678);
+	return DNI;
+	//Also
+}; 
+//END FUNCTIONS
+
+//SETTINGS
+//Folder C:\Users\zebke\Documents
+
+folder = "C:/Users/u5277975/OneDrive - Australian National University/SolarPILOT/"; //Master Folder
+//folder = "C:/Users/zebke/OneDrive - Australian National University/SolarPILOT/"; //Master Folder
+
+//Plant Location
+latitude = -23.8; //Latitude of plant (degrees) {-23.8}
+
+//Plant Sizing
+P_name = 1.0; //Nameplate powerblock size (MW) {100.0}
+eta_blk = 0.5130; //Gross powerblock efficiency (-) {0.3774}
+eta_gen = 1.0; //Generator efficiency (-) {0.9}
+
+//Receiver Parameters
+T_recv = 1073.0; //Receiver design temperature (K) {706}
+q_max = 500.0; //Flux tolerance (kW/m2) {1000.0}
+aiming_type = "isp_designpt"; //Aiming strategy (string) {"singleaim","isp_fixed","isp_designpt","isp_optimised"}
+resolution = 25; //Fluxmap resolution (int) {25}
+
+//Field Parameters
+field_type = "surround"; //Field type (string) {"polar","surround"}
+
+//Optional Parameters
+fixed_isp = 2.0; //If aiming_strategy is "isp_fixed" then use this value {2.0}
+
+//Table Properties
+rows = 9; //Number of rows in the declination axis (int) {9}
+cols = 25; //Number of cols in the HRA axis (int) {25}
+
+//Constants
+r_flux = 0.53; //Ratio of average receiver flux to peak receiver flux (-)
+h_conv = 20.0; //Receiver convective heat loss coefficient (W/m2K)
+absorptivity = 0.961; //Receiver absorptivity (-)
+emissivity = 0.920; //Receiver emissivity (-)
+eta_optical_guess = 0.63982; //Estimated optical efficiency at design (-)
+he_av = 0.99; //Heliostat avaiablility (-)
+GC = 0.25; //Ground coverage ratio of heliostat mirrors (-)
+EF = 0.97; //Exclusion factor of heliostats (-)
+T_amb = 298.15; //Ambient temperature (K)
+
+//Sweeping Values
+f_tower_min = 50.0; //percentage of Goswami's recommended tower height
+f_tower_max = 69.0;//130.0;
+f_tower_step = 5.0;
+phi_min = 1.24; //Aspect ratio (H/D) or (H/W) depending on surround/polar
+phi_max = 1.25;//2.0;
+phi_step = 0.1;
+SM_min = 1.5;//1.4; //Solar Multiple
+SM_max = 3.8;
+SM_step = 0.1;
+f_recv_min = 70.0; //percentage of Goswami's recommended receiver area
+f_recv_max = 200.0;
+f_recv_step = 5.0;
+
+//Counter
+sim_count = 0;
+
+//Study
+//study = "SM,phi,f_tower,H_base,f_recv,opteff\n";
+
+
+for(SM=SM_min;SM<SM_max+0.01;SM=SM+SM_step){
+for(phi=phi_min;phi<phi_max+0.01;phi=phi+phi_step){
+for(f_tower=f_tower_min;f_tower<f_tower_max+0.01;f_tower=f_tower+f_tower_step){
+
+//BUILD FIELD
+DNI = DNI_Meinel(abs(latitude)); //Calculate DNI from latitude only
+var("solarfield.0.dni_des",DNI); //Set DNI
+var("fluxsim.0.flux_dni",DNI); //Set DNI
+if(latitude<0)
+{
+	azi=0.0;
+	var("receiver.0.rec_azimuth",180.0); //orient the receiver facing south
+}
+else
+{
+	azi=180.0;
+	var("receiver.0.rec_azimuth",0.0);//orient the receiver facing north
+}
+ele = 90.0-abs(latitude);
+//Size the components
+P_gross = P_name/eta_gen; //P_gross is in (MW_e)
+Q_flow_blk_des=P_gross/eta_blk; //Design power block heat input (MW_th)
+Q_flow_rec_des=Q_flow_blk_des*SM; //Design receiver heat output power (MW_th)
+A_recv_guess=(Q_flow_rec_des*DNI)/(q_max*r_flux); //Guess receiver area (Exact area)
+
+//Now split into either polar or surround, determine receiver dimensions correct to 0.01m
+if(field_type == "polar")
+{
+	D_recv=0.01*round((((A_recv_guess/(phi))^0.5)*100)); //use this
+	H_recv=0.01*round(100*phi*D_recv); //use this
+	A_recv=H_recv*D_recv;
+	var("receiver.0.rec_width",D_recv);
+	var("receiver.0.rec_height",H_recv);
+}
+else
+{
+	D_recv=0.01*round((((A_recv_guess/(pi()*phi))^0.5)*100)); //use this
+	H_recv=0.01*round(100*phi*D_recv); //use this
+	A_recv=pi()*H_recv*D_recv;
+	var("receiver.0.rec_diameter",D_recv);
+	var("receiver.0.rec_height",H_recv);
+	var("fluxsim.0.sigma_limit_x",2.0); // 2.0 is the default for surround
+}
+
+Q_loss_rec_des=(1e-6)*((emissivity*(5.67e-8)*A_recv*((T_recv^4)-(T_amb^4)))+(h_conv*A_recv*(T_recv-T_amb))); //in MWe
+Q_abs_rec_des=Q_flow_rec_des+Q_loss_rec_des; //use this because alpha is 1
+Q_inc_rec_des=Q_abs_rec_des/absorptivity;
+A_helio=(1e6*Q_inc_rec_des)/(eta_optical_guess*he_av*DNI);
+A_field=A_helio/(GC*EF);
+
+//Determine recommended tower height
+if(field_type == "polar")
+{
+	r_field=(2.25*A_field/pi())^0.5;
+	H_tower=0.1*round(10*r_field*0.154808); //use this
+}
+else
+{
+	r_field=(1.25*A_field/pi())^0.5;
+	H_tower=0.1*round(10*r_field*0.154808);
+}
+var("solarfield.0.tht",H_tower*f_tower*0.01); //scale tower height by a factor
+
+//So we use the receiver dimensions,tower height, but need a correct Q_abs
+update_interface();
+Q_abs_target = Q_abs_rec_des;
+Q_abs_real = Q_abs_rec_des;
+Q_design_guess=Q_inc_rec_des;
+
+//Now optimise the field to obtain an acceptably close receiver absorbed power (+/-1%)
+relative_error = 0.1; //start with an unacceptable error
+while(relative_error>0.01) //adjust design solar field power to obtain correct Q_abs_real
+{
+	Q_design_guess = Q_design_guess - (Q_abs_real-Q_abs_target);
+	var("solarfield.0.q_des",Q_design_guess);
+	update_interface();
+	success = run_layout(); //generate new field
+	var("fluxsim.0.flux_solar_az_in",azi);
+	var("fluxsim.0.flux_solar_el_in",ele);
+	update_interface();
+	if(aiming_type == "singleaim")
+	{
+		simulate_singleaim(resolution);
+	}
+	elseif(aiming_type == "isp_fixed")
+	{
+		simulate_isp(fixed_isp,resolution,field_type);
+	}
+	else
+	{
+		result = optimised_isp(q_max,resolution,field_type);
+		//efficiencies = result[0];
+		//peakflux = result[1];
+	}
+	table_results = get_summary_results();
+	Q_abs_real=1e-3*to_real(table_results{"Power absorbed by the receiver"}); //the result is given in KW, need to scale to MW
+	relative_error=abs(Q_abs_real-Q_abs_target)/abs(Q_abs_target);
+}
+mkdir(folder+field_type+"/"+to_string(to_int(P_name))+"MWe/"+to_string(round(eta_blk*10000))+"c%/"+to_string(round(T_recv))+"K/"+to_string(round(q_max))+"kWpm2/"+to_string(round(SM*10))+"dSM/"+aiming_type,true);
+mkdir(folder+field_type+"_spt"+"/"+to_string(to_int(P_name))+"MWe/"+to_string(round(eta_blk*10000))+"c%/"+to_string(round(T_recv))+"K/"+to_string(round(q_max))+"kWpm2/"+to_string(round(SM*10))+"dSM/"+aiming_type,true);
+
+//Now we have the correct field so save it
+savepath = folder+field_type+"/"+to_string(to_int(P_name))+"MWe/"+to_string(round(eta_blk*10000))+"c%/"+to_string(round(T_recv))+"K/"+to_string(round(q_max))+"kWpm2/"+to_string(round(SM*10))+"dSM/"+aiming_type+"/";
+sptpath = folder+field_type+"_spt"+"/"+to_string(to_int(P_name))+"MWe/"+to_string(round(eta_blk*10000))+"c%/"+to_string(round(T_recv))+"K/"+to_string(round(q_max))+"kWpm2/"+to_string(round(SM*10))+"dSM/"+aiming_type+"/";
+
+save(sptpath+to_string(round(100.0*phi)) + "%phi_" + to_string(to_int(f_tower)) + "%HT_"+"field.spt");
+//study = study + to_string(phi)+","+ to_string(f_tower)+","+to_string(H_tower)+","+to_string(optical_efficiency)+"\n";
+
+//if(aiming_type=="isp_fixed")
+//{
+//	outln("Attempting to save field to: " + savepath+aiming_type+"_"+to_string(round(isp_used*100))+"c/"+"Field.spt");
+//}
+//else
+//{
+	outln("Attempting to save field to: " + savepath+aiming_type+"/"+"Field_" + to_string(round(100.0*phi)) + "%phi.spt");
+//}
+H_recv_base = H_recv;
+D_recv_base = D_recv;
+//BUILDING FIELD COMPLETE
+
+for(f_recv=f_recv_min;f_recv<f_recv_max+0.1;f_recv=f_recv+5) //examine various receiver scales
+{
+//DETERMINE RECEIVER SIZE
+var("receiver.0.rec_height",sqrt(f_recv/100)*H_recv_base);
+var("receiver.0.rec_diameter", sqrt(f_recv/100)*D_recv_base);//var("receiver.0.rec_width",sqrt(f_recv/100)*D_recv_base);
+var("receiver.0.rec_width",sqrt(f_recv/100)*D_recv_base);
+//BUILD TABLE NOW
+dni_design = DNI_Meinel(abs(latitude));
+var("fluxsim.0.flux_dni",dni_design);
+tablepath = savepath +to_string(round(100.0*phi)) + "%phi_" + to_string(to_int(f_tower)) + "%HT_" + to_string(to_int(f_recv)) + "%Arecv" + "_optics.motab";
+
+dec_step = 47.0/(rows-1);
+hra_step = 360.0/(cols-1);
+N_cases = rows*cols;
+progress = 0;
+outln("Progress = "+to_string(progress)+" / "+to_string(N_cases));
+
+//Prepare Metadata
+//Run the design point case for metadata
+eleazilist = eleazi(0.0,0.0,latitude);
+ele = eleazilist[0];
+azi = eleazilist[1];
+var("fluxsim.0.flux_solar_az_in",azi);
+var("fluxsim.0.flux_solar_el_in",ele);
+var("fluxsim.0.flux_dni",dni_design);
+if(aiming_type=="isp_fixed")
+{
+	outln("fixed_isp");
+	result = simulate_isp(fixed_isp,resolution,field_type);
+}
+elseif(aiming_type=="isp_designpt" || aiming_type=="isp_optimised")
+{
+	result = optimised_isp(q_max,resolution,field_type);
+	isp_used = result[2]; //change the isp value based in design pt. ?????????????????
+}
+else //singleaim
+{
+	outln("single_aimpoint");
+	result = simulate_singleaim(resolution); //this returns [ispy,opteff,peakflux]
+}
+opteff = result[0][0]; //This is the design optical efficiency for metadata. result = [opteff,peakflux]
+
+table_results = get_summary_results();
+N_helio = to_real(table_results{"Simulated heliostat count"});
+A_mirror = var("heliostat.0.reflect_ratio")*var("heliostat.0.height")*var("heliostat.0.width");
+Eff_design = opteff;
+H_recv = var("receiver.0.rec_height");
+if(field_type == "polar")
+{
+	D_recv = var("receiver.0.rec_width");
+}
+else
+{
+	D_recv = var("receiver.0.rec_diameter");
+}
+H_tower = var("solarfield.0.tht");
+slope_error = var("heliostat.0.err_surface_x"); //Make y the same
+meta_list = [N_helio,A_mirror,Eff_design,H_recv,D_recv,H_tower,latitude,slope_error];
+
+//Write the metadata
+tabledata = "#1\n";
+tabledata += "#Comments: Field type: " + field_type + ", Aiming Strategy: " + aiming_type + ", Field Design Power (MWth): "+to_string(var("solarfield.0.q_des")) + ", Date:" + date_time() +  "\n";
+tabledata += "#METALABELS,N_helio,A_mirror,Eff_design,H_recv,D_recv,H_tower,lat,slope_error\n";
+tabledata += "#METAUNITS,real,m2,real,m,m,m,deg,rad\n";
+tabledata += "#METADATA";
+for(meta_id=0;meta_id<=7;meta_id=meta_id+1)
+{
+	if(meta_list[meta_id] == floor(meta_list[meta_id])) //then it is an integer which needs zeros added after
+	{
+		tabledata += ","+to_string(meta_list[meta_id])+".0";
+	}
+	else
+	{
+		tabledata += ","+ to_string(meta_list[meta_id]);
+	}
+}
+tabledata += "\n";	
+//End Metadata
+//Begin Actual table
+//Build the axes lables
+dec = 0.0;
+hra = -180;
+
+//Prepare the empty array
+data = alloc(rows,cols); //and 10?
+
+//Build the table contents now
+dec = -23.5;
+hra = -180;
+col = 0;
+row = 0;
+for(dec;dec<=23.501;dec=dec+dec_step)
+{
+	//tabledata = tabledata + to_string((dec));
+	for(hra=-180;hra<=180.001;hra=hra+hra_step)
+	{
+		eleazilist = eleazi(dec,hra,latitude);
+		ele = eleazilist[0];
+		azi = eleazilist[1];
+		var("fluxsim.0.flux_dni",DNI_Meinel(90.0-abs(ele)));
+		if(col <= floor(cols/2.0)) //if this is during the morning
+		{
+			if(ele>=1.0) //if elevation is below 1 degrees, give a zero
+			{
+				var("fluxsim.0.flux_solar_az_in",azi);
+				var("fluxsim.0.flux_solar_el_in",ele);
+				
+				if(aiming_type=="isp_fixed")
+				{
+					result = simulate_isp(fixed_isp,resolution,field_type);
+				}
+				elseif(aiming_type=="isp_designpt")
+				{
+					result = simulate_isp(isp_used,resolution,field_type);
+				}
+				elseif(aiming_type=="isp_optimised")
+				{
+					result = optimised_isp(q_max,resolution,field_type);
+				}
+				else //singleaim
+				{
+					result = simulate_singleaim(resolution); //this returns [ispy,opteff,peakflux]
+					//newplot(true);
+				}
+				data[row][col] = result[0];
+				//tabledata = tabledata + " " + to_string(data[row][col]);
+				progress += 1;
+				col += 1;
+				//outln("Progress = "+to_string(progress)+" / "+to_string(N_cases));
+			}
+			else
+			{
+				DNI = 0.0;
+				opteff = 0.0;
+				data[row][col] = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]; //set result to zero because sun is below horizon
+				//tabledata = tabledata + " " + to_string(data[row][col]);
+				progress += 1;
+				col += 1;
+				//outln("Progress = "+to_string(progress)+" / "+to_string(N_cases));
+			}
+		}
+		else
+		{
+			data[row][col] = data[row][floor(cols/2.0) - (col - floor(cols/2.0))]; //take the mirrored value
+			//tabledata = tabledata + " " + to_string(data[row][col]);
+			progress += 1;
+			col += 1;
+			outln("Progress = "+to_string(progress)+" / "+to_string(N_cases));
+		}
+	}
+	//tabledata = tabledata + "\n";
+	col = 0;
+	row += 1;
+}
+
+big_string = "";
+efficiency_ID = ["optical_efficiency","intercept_efficiency","attenuation_efficiency","blocking_efficiency", "reflection_efficiency", "cosine_efficiency", "shading_efficiency","DNI_Meinel","peakflux_kW/m2","isp"];
+for(id=0;id<10;id=id+1)
+{
+	//write "float optical_efficiency(10,26)" \n
+	big_string = big_string + "float " + efficiency_ID[id] + "(" + to_string(to_int(rows+1)) + "," + to_string(to_int(cols+1)) + ")" + "\n";
+	
+	//write "0 -180 -165 -150 -135 ..." \n
+	//write 0
+	big_string = big_string + "0 ";
+	for(hra=-180;hra<=180;hra=hra+to_int(360/(cols-1)))
+	{
+		if(abs(hra)<1e-3) //if the hra is very close to zero then print it as a nice string 0
+		{
+			big_string = big_string + "0" + " ";
+		}
+		else
+		{
+			big_string = big_string + to_string(to_int(hra)) + " ";
+		}
+	}
+	big_string = big_string + "\n";
+	
+	//now write the optical lookup data in format -23.5    eff eff eff ...
+	//                                            -17.625  eff eff eff ...
+	//start with the row label
+	row = 0;
+	for(dec=-23.5;dec<=23.5;dec=dec+(47/(rows-1)))
+	{
+		if(abs(dec) <= 0.001) //if the declination is a very small float, set it to zero to print nicely
+		{
+			big_string = big_string + "0.0" + " ";
+		}
+		//write the row label
+		else
+		{
+			big_string = big_string + to_string(dec) + " ";
+		}
+		//now write the lines of code
+		for(col=0;col<cols;col=col+1)
+		{
+			if(data[row][col][id] > 1e-4)
+			{
+				big_string = big_string + to_string(data[row][col][id]) + " ";
+			}
+			else
+			{
+				big_string = big_string + "0.0" + " ";
+			}
+		}
+		big_string = big_string + "\n";
+		row = row + 1;
+	}
+	//add a newline between tables
+	big_string = big_string + "\n";
+}
+
+tabledata = tabledata + big_string;
+
+outln("Attempting to write data to :"+tablepath);
+write_text_file(tablepath,tabledata);
+}
+}}}
+//write_text_file(folder+"study.txt",study);

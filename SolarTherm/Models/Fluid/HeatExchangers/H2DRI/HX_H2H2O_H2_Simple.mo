@@ -32,10 +32,10 @@ model HX_H2H2O_H2_Simple
   parameter SI.SpecificHeatCapacity cp_HA_des = (Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_HA_des, T_H_in_des) - Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_HA_des, T_C_in_des)) / (T_H_in_des - T_C_in_des) "Approximate cp of hot hydrogen stream (J/kgK)";
   
   //If we assume, for water, cp ~ dh/dT,
-  parameter SI.SpecificHeatCapacity cp_HB_des = (Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_HB_des, T_H_in_des) - Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_HB_des, T_C_in_des)) / (T_H_in_des - T_C_in_des) "Approximate cp of hot water vapour stream (J/kgK)";
+  //parameter SI.SpecificHeatCapacity cp_HB_des = (Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_HB_des, T_H_in_des) - Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_HB_des, T_C_in_des)) / (T_H_in_des - T_C_in_des) "Approximate cp of hot water vapour stream (J/kgK)";
   
   //If we assume, for water, cp ~ (cp1 + cp2)/2
-  //parameter SI.SpecificHeatCapacity cp_HB_des = 0.5*(Modelica.Media.Water.IF97_Utilities.cp_pT(p_HB_des, T_H_in_des) + Modelica.Media.Water.IF97_Utilities.cp_pT(p_HB_des, T_C_in_des)) "Approximate cp of hot water vapour stream (J/kgK)";
+  parameter SI.SpecificHeatCapacity cp_HB_des = 0.5*(Modelica.Media.Water.IF97_Utilities.cp_pT(p_HB_des, T_H_in_des) + Modelica.Media.Water.IF97_Utilities.cp_pT(p_HB_des, T_C_in_des)) "Approximate cp of hot water vapour stream (J/kgK)";
   
   parameter SI.SpecificHeatCapacity cp_C_des = (Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_C_des, T_H_in_des) - Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_C_des, T_C_in_des)) / (T_H_in_des - T_C_in_des) "Approximate cp of cold hydrogen stream (J/kgK)";
   parameter SI.ThermalConductance C_H_des = m_flow_HA_des * cp_HA_des + m_flow_HB_des * cp_HB_des "Heat Capacity Rate of the hot stream";
