@@ -1,0 +1,17 @@
+within SolarTherm.Validation.Gan_HBS.Materials.Air_431kPa;
+
+model State "A model which calculates state and properties of Air at 431.493kPa"
+    parameter SI.SpecificEnthalpy h_start;
+    SI.Density rho;
+    SI.SpecificEnthalpy h (start=h_start);
+    SI.Temperature T;
+    SI.DynamicViscosity mu;
+    SI.SpecificHeatCapacity cp;
+    SI.ThermalConductivity k;
+  equation
+    T = SolarTherm.Validation.Gan_HBS.Media.Air_431kPa_Utilities.T_h(h);
+    rho = SolarTherm.Validation.Gan_HBS.Media.Air_431kPa_Utilities.rho_T(T);
+    cp = SolarTherm.Validation.Gan_HBS.Media.Air_431kPa_Utilities.cp_T(T);
+    mu = SolarTherm.Validation.Gan_HBS.Media.Air_431kPa_Utilities.mu_T(T);
+    k = SolarTherm.Validation.Gan_HBS.Media.Air_431kPa_Utilities.k_T(T);
+  end State;

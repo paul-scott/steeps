@@ -1,0 +1,6 @@
+within SolarTherm.Validation;
+
+package Wakayama_HBS
+  annotation(
+    Diagram(coordinateSystem(preserveAspectRatio = false)));
+end Wakayama_HBS;

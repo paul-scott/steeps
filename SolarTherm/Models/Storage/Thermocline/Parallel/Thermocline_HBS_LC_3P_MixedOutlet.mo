@@ -7,53 +7,46 @@ model Thermocline_HBS_LC_3P_MixedOutlet
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
   //Initialise Material Packages
-  replaceable package Medium = SolarTherm.Media.Sodium.Sodium_pT;
+  replaceable package Medium = SolarTherm.Media.Air.Air_CoolProp_1bar;
   replaceable package Fluid_Package = SolarTherm.Materials.PartialMaterial;
   replaceable package Filler_Package_A = SolarTherm.Materials.PartialMaterial;
   replaceable package Filler_Package_B = SolarTherm.Materials.PartialMaterial;
   replaceable package Filler_Package_C = SolarTherm.Materials.PartialMaterial;
-  
-  replaceable package Encapsulation_Package_A = Filler_Package_A; //Defaults to filler material
-  replaceable package Encapsulation_Package_B = Filler_Package_B; //Defaults to filler material
-  replaceable package Encapsulation_Package_C = Filler_Package_C; //Defaults to filler material
+
   //Storage Parameter Settings
   parameter Integer Correlation = 1 "Internal Flow, Gas";
     //Storage Cpacity and Fractions
   parameter SI.Energy E_max = 144.0e9 "Maximum storage capacity of entire group (J)";
   parameter Real frac_1 = 1.0 / 3.0 "Fraction of storage capacity of Tank_A";
   parameter Real frac_2 = frac_1 "Fraction of storage capacity of Tank_B";
+  
     //Aspect ratios (H/D) of tanks
   parameter Real ar_A = 2.0 "Aspect ratio of tank";
   parameter Real ar_B = ar_A "Aspect ratio of tank";
   parameter Real ar_C = ar_A "Aspect ratio of tank";
     //Porosity of tank filler materials
-  //parameter Real eta_A = 0.26 "Porosity";
-  //parameter Real eta_B = eta_A "Porosity";
-  //parameter Real eta_C = eta_A "Porosity";
+  parameter Real eta_A = 0.51 "Porosity";
+  parameter Real eta_B = eta_A "Porosity";
+  parameter Real eta_C = eta_A "Porosity";
     //Hole diameter of filler material
-  parameter Real d_p_A = 0.02 "Filler hole diameter";
-  parameter Real d_p_B = d_p_A "Filler hole diameter";
-  parameter Real d_p_C = d_p_A "Filler hole diameter";
-    //Separation of holes of filler material
-  parameter Real s_p_A = 0.04 "Filler hole separation";
-  parameter Real s_p_B = s_p_A "Filler hole separation";
-  parameter Real s_p_C = s_p_A "Filler hole separation";  
+  parameter Real d_p_A = 0.30 "Filler hole hydraulic diameter (m)";
+  parameter Real d_p_B = d_p_A "Filler hole hydraulic diameter (m)";
+  parameter Real d_p_C = d_p_A "Filler hole hydraulic diameter (m)";
     
-    //Encapsulation thickness
-  //parameter SI.Length t_e_A = d_p_A/(2*N_p_A) "Encapsulation thickness"; //Defaults to equidistant radial
-  //parameter SI.Length t_e_B = d_p_B/(2*N_p_B) "Encapsulation thickness"; //Defaults to equidistant radial
-  //parameter SI.Length t_e_C = d_p_C/(2*N_p_C) "Encapsulation thickness"; //Defaults to equidistant radial
     //Discretization settings
-  parameter Integer N_f_A = 50 "Number of fluid CVs in Tank_A";
-  parameter Integer N_p_A = 5 "Number of filler CVs in Tank_A";
+  parameter Integer N_f_A = 100 "Number of fluid CVs in Tank_A";
   parameter Integer N_f_B = N_f_A "Number of fluid CVs in Tank_B";
-  parameter Integer N_p_B = N_p_A "Number of filler CVs in Tank_B";
   parameter Integer N_f_C = N_f_A "Number of fluid CVs in Tank_B";
-  parameter Integer N_p_C = N_p_A "Number of filler CVs in Tank_B";
+  
     //Heat loss coefficient of tanks
-  parameter SI.CoefficientOfHeatTransfer U_loss_tank_A = 0.1 "W/m2K";
-  parameter SI.CoefficientOfHeatTransfer U_loss_tank_B = U_loss_tank_A "W/m2K";
-  parameter SI.CoefficientOfHeatTransfer U_loss_tank_C = U_loss_tank_A "W/m2K";
+  parameter SI.CoefficientOfHeatTransfer U_loss_top_A = 0.698 "Heat loss coefficient at the top of the tank (W/m2K)";
+  parameter SI.CoefficientOfHeatTransfer U_loss_top_B = U_loss_top_A "W/m2K";
+  parameter SI.CoefficientOfHeatTransfer U_loss_top_C = U_loss_top_A "W/m2K";
+  
+  parameter SI.CoefficientOfHeatTransfer U_loss_bot_A = 1.22 "Heat loss coefficient at the bottom of the tank (W/m2K)";
+  parameter SI.CoefficientOfHeatTransfer U_loss_bot_B = U_loss_bot_A "W/m2K";
+  parameter SI.CoefficientOfHeatTransfer U_loss_bot_C = U_loss_bot_A "W/m2K";
+  
     //Temperature settings
   parameter SI.Temperature T_min = CV.from_deg(515) "Minimum temperature (design) also starting T";
   parameter SI.Temperature T_max = CV.from_deg(715) "Maximum design temperature (design)";
@@ -91,11 +84,11 @@ model Thermocline_HBS_LC_3P_MixedOutlet
   Modelica.Blocks.Interfaces.RealInput p_amb "Ambient Pressure" annotation(
     Placement(visible = true, transformation(origin = {48, 8.88178e-16}, extent = {{10, -10}, {-10, 10}}, rotation = 0), iconTransformation(origin = {46, 0}, extent = {{6, -6}, {-6, 6}}, rotation = 0)));
   //Initialize Tank_A
-  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package_A, redeclare replaceable package Encapsulation_Package = Encapsulation_Package_A, Correlation = Correlation, E_max = E_max * frac_1, ar = ar_A, s_p = s_p_A, d_p = d_p_A, T_min = T_min, T_max = T_max, N_f = N_f_A, U_loss_tank = U_loss_tank_A, z_offset = 0.0, eff_pump=eff_pump);
+  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_Section_Final Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package_A, Correlation = Correlation, E_max = E_max * frac_1, ar = ar_A, eta = eta_A, d_p = d_p_A, T_min = T_min, T_max = T_max, N_f = N_f_A, U_loss_top = U_loss_top_A, U_loss_bot = U_loss_bot_A, z_offset = 0.0, eff_pump=eff_pump);
   //Initialize Tank_B
-  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_Section_Final Tank_B(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package_B, redeclare replaceable package Encapsulation_Package = Encapsulation_Package_B, Correlation = Correlation, E_max = E_max * (frac_2), ar = ar_B, s_p = s_p_B, d_p = d_p_B, T_min = T_min, T_max = T_max, N_f = N_f_B, U_loss_tank = U_loss_tank_B, z_offset = 0.0, eff_pump=eff_pump);
+  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_Section_Final Tank_B(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package_B, Correlation = Correlation, E_max = E_max * (frac_2), ar = ar_B, eta = eta_B, d_p = d_p_B, T_min = T_min, T_max = T_max, N_f = N_f_B, U_loss_top = U_loss_top_B, U_loss_bot = U_loss_bot_B, z_offset = 0.0, eff_pump=eff_pump);
   //Initialize Tank_C
-  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_Section_Final Tank_C(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package_C, redeclare replaceable package Encapsulation_Package = Encapsulation_Package_C, Correlation = Correlation, E_max = E_max * (1.0 - frac_1 - frac_2), ar = ar_C, s_p = s_p_C, d_p = d_p_C, T_min = T_min, T_max = T_max, N_f = N_f_C, U_loss_tank = U_loss_tank_C, z_offset = 0.0, eff_pump=eff_pump);
+  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_Section_Final Tank_C(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package = Filler_Package_C,  Correlation = Correlation, E_max = E_max * (1.0 - frac_1 - frac_2), ar = ar_C, eta = eta_C, d_p = d_p_C, T_min = T_min, T_max = T_max, N_f = N_f_C,  U_loss_top = U_loss_top_C, U_loss_bot = U_loss_bot_C, z_offset = 0.0, eff_pump=eff_pump);
 
   //Cost BreakDown
   parameter Real C_filler = Tank_A.C_filler + Tank_B.C_filler + Tank_C.C_filler;
@@ -129,6 +122,8 @@ model Thermocline_HBS_LC_3P_MixedOutlet
   //Enthaply tolerance to avoid chattering
   parameter SI.SpecificEnthalpy h_tol = 0.005*(Tank_A.h_f_max - Tank_A.h_f_min) "enthalpy tolerance, 0.5% of maximum difference";
   
+  parameter SI.TemperatureDifference T_tol = 1.0;
+  
   //Total pumping losses
   SI.Power W_loss_pump = Tank_A.W_loss_pump + Tank_B.W_loss_pump + Tank_C.W_loss_pump;
   parameter Real eff_pump = 0.8 "Pumping efficiency, fed into physical model";
@@ -143,11 +138,11 @@ algorithm
     if Charge_State == 2 or Charge_State == 3 then
       Charge_State := 4;
     end if;
-  elsewhen Tank_B.T_f[1] < T_recv_set - 1 then
+  elsewhen Tank_B.T_f[1] < T_recv_set - T_tol then
     if Charge_State == 4 or Charge_State == 5 then
       Charge_State := 3;
     end if;
-  elsewhen Tank_C.T_f[1] < T_recv_set - 1 then
+  elsewhen Tank_C.T_f[1] < T_recv_set - T_tol then
     if Charge_State == 2 or Charge_State == 3 then
       Charge_State := 1;
     end if;
@@ -164,7 +159,7 @@ algorithm
 //Tank A no longer able to assist B, proceeds to charge by itself
   when f_chg_guess_1 > 1.0 then
     if Charge_State == 2 then
-      if Tank_B.T_f[1] < T_recv_set - 1 then
+      if Tank_B.T_f[1] < T_recv_set - T_tol then
         Charge_State := 3;
       else
         Charge_State := 4;
@@ -197,11 +192,11 @@ algorithm
     if Discharge_State == 2 or Discharge_State == 3 then
       Discharge_State := 4;
     end if;
-  elsewhen Tank_B.T_f[N_f_B] > T_PB_set + 1 then
+  elsewhen Tank_B.T_f[N_f_B] > T_PB_set + T_tol then
     if Discharge_State == 4 or Discharge_State == 5 then
       Discharge_State := 3;
     end if;
-  elsewhen Tank_A.T_f[N_f_A] > T_PB_set + 1 then
+  elsewhen Tank_A.T_f[N_f_A] > T_PB_set + T_tol then
     if Discharge_State == 2 or Discharge_State == 3 then
       Discharge_State := 1;
     end if;
@@ -218,7 +213,7 @@ algorithm
 //Tank C no longer able to assist B, proceeds to discharge by itself
   when f_disch_guess_1 > 1.0 then
     if Discharge_State == 2 then
-      if Tank_B.T_f[N_f_B] > T_PB_set + 1 then
+      if Tank_B.T_f[N_f_B] > T_PB_set + T_tol then
         Discharge_State := 3;
       else
         Discharge_State := 4;

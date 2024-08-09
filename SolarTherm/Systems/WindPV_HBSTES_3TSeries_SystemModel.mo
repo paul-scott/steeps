@@ -10,7 +10,7 @@ model WindPV_HBSTES_3TSeries_SystemModel "Generic system model with WindPV input
   parameter String schd_input = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/schedule_Qflow_Calciner.motab");
   replaceable package Medium = SolarTherm.Media.Air.Air_amb_p_curvefit;
   replaceable package Fluid = SolarTherm.Materials.Air_amb_p_curvefit;
-  replaceable package Filler = SolarTherm.Materials.Mullite_20pct_porosity;
+  replaceable package Filler = SolarTherm.Materials.Mullite_20pct_porosity_averaged;
   //Parameter Inputs
   parameter Real RM = 2.0 "Renewable Multiple (pre-transmission oversizing)";
   parameter Real HM = 2.0 "Heater Multiple";
@@ -25,13 +25,25 @@ model WindPV_HBSTES_3TSeries_SystemModel "Generic system model with WindPV input
   parameter Real eff_heater = 1.00 "Electrical-to-heat conversion efficiency of the heater";
   //Renewable Parameters
   parameter SI.Power P_renewable_des = RM * P_heater_des;
-  parameter SI.HeatFlowRate Q_heater_des = HM * Q_boiler_des;
+  parameter SI.HeatFlowRate Q_heater_des = HM * Q_process_des;
   parameter SI.Power P_heater_des = Q_heater_des / eff_heater;
   parameter SI.Power PV_ref_size = 50.0e6;
   parameter SI.Power Wind_ref_size = 50.0e6;
+  parameter Real LOF_PV = 1.300;
+  parameter Real LOF_Wind = 1.131;
+  parameter SI.Power P_wind_net = (1.0 - PV_fraction)*P_renewable_des;
+  parameter SI.Power P_PV_net = PV_fraction*P_renewable_des;
+  parameter SI.Power P_wind_gross = P_wind_net*LOF_Wind;
+  parameter SI.Power P_PV_gross = P_PV_net*LOF_PV;
   //Results
   SI.Energy E_supplied(start = 0) "Energy supplied by the boiler to the industrial process (J)";
   SI.Energy E_demand(start = 0) "Energy demanded by the industrial process (J)";
+  SI.Energy E_renewable(start = 0) "Electrical energy produced by the renewable source (J)";
+  SI.Energy E_wind(start = 0) "Electrical energy produced by the wind renewable source (J)";
+  SI.Energy E_pv(start = 0) "Electrical energy produced by the pv renewable source (J)";
+  //SI.Energy E_heater_in(start = 0) "Electrical energy transmitted to the heater (J)";
+  SI.Energy E_heater_raw(start = 0) "Heat energy produced by the heater (after efficiency losses)";
+  SI.Energy E_heater_out(start = 0) "Heat energy transferred to the air (after curtailment)";
   Real Capacity_Factor(start = 0) "Capacity factor of the system";
   //Discretisation and geometry
   parameter Integer N_f = 25;
@@ -46,6 +58,10 @@ model WindPV_HBSTES_3TSeries_SystemModel "Generic system model with WindPV input
   parameter Real U_loss_tank = 0.0;
   parameter Integer Correlation = 1;
   //1=Liq 2=Air
+  
+  //Costs
+  parameter SI.Mass m_filler_pertank = TES.Tank_A.rho_p * (1.0 - TES.Tank_A.eta) * (3.142 * TES.Tank_A.D_tank * TES.Tank_A.D_tank * TES.Tank_A.H_tank/4.0);
+  
   /*
     parameter SI.Temperature T_max = 1100.0 + 273.15 "Maximum temperature (K)";
     parameter SI.Temperature T_process_des = 1000.0 + 273.15 "Design process inlet temperature (K)";
@@ -65,9 +81,9 @@ model WindPV_HBSTES_3TSeries_SystemModel "Generic system model with WindPV input
     */
   //Temperature Controls
   parameter SI.Temperature T_max = 1100.0 + 273.15 "Maximum system temperature (K)";
-  parameter SI.Temperature T_boiler_start = 1050.0 + 273.15 "Temperature above-which TES can start discharge (K)";
+  parameter SI.Temperature T_process_start = 1050.0 + 273.15 "Temperature above-which TES can start discharge (K)";
   //50K buffer
-  parameter SI.Temperature T_boiler_min = 1000.0 + 273.15 "Temperature below-which TES stops discharge (K)";
+  parameter SI.Temperature T_process_min = 1000.0 + 273.15 "Temperature below-which TES stops discharge (K)";
   parameter SI.Temperature T_process_des = 1000.0 + 273.15 "Design process inlet temperature (K)";
   parameter SI.Temperature T_heater_max = 740.0 + 273.15 "Temperature above-which TES stops charging (K)";
   parameter SI.Temperature T_heater_des = 740.0 + 273.15 "Design receiver inlet temperature (K)";
@@ -78,16 +94,17 @@ model WindPV_HBSTES_3TSeries_SystemModel "Generic system model with WindPV input
   //Level-Controls
   parameter SI.Time t_stor_start_dis = 1.0 * 3600.0 "Number of effective storage seconds stored before TES can start discharging (1 hour)";
   //Calculated Parameters
-  parameter Modelica.SIunits.Energy E_max = t_storage * 3600.0 * Q_boiler_des "Maximum tank stored energy (J)";
-  parameter Modelica.SIunits.HeatFlowRate Q_boiler_des = 15.03e6 "Heat-rate to boiler at design (W)";
-  parameter Modelica.SIunits.MassFlowRate m_boiler_des = Q_boiler_des / (h_air_hot_set - h_air_cold_set) "Design boiler input mass flow rate";
-  parameter Modelica.SIunits.Temperature T_hot_set = T_max "Ideal hot temperature of the system";
-  parameter Modelica.SIunits.Temperature T_cold_set = T_min "Ideal cold temperature of the system";
-  parameter Medium.ThermodynamicState state_air_cold_set = Medium.setState_pTX(Medium.p_default, T_cold_set) "Cold air thermodynamic state at design";
-  parameter Medium.ThermodynamicState state_air_hot_set = Medium.setState_pTX(Medium.p_default, T_hot_set) "Hold air thermodynamic state at design";
-  parameter Modelica.SIunits.SpecificEnthalpy h_air_cold_set = Medium.specificEnthalpy(state_air_cold_set) "Cold air specific enthalpy at design";
-  parameter Modelica.SIunits.SpecificEnthalpy h_air_hot_set = Medium.specificEnthalpy(state_air_hot_set) "Hot air specific enthalpy at design";
-  SolarTherm.Models.Storage.Thermocline.Series.Thermocline_HBS_LC_SGroup3_Final TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler, redeclare package Filler_Package_B = Filler, redeclare package Filler_Package_C = Filler, N_f_A = N_f, T_max = T_hot_set, T_min = T_cold_set, Correlation = Correlation, E_max = E_max, d_p_A = d_p, s_p_A = s_p, U_loss_tank_A = U_loss_tank, frac_1 = 1.0 / 3.0) annotation(
+  parameter Modelica.SIunits.Energy E_max = t_storage * 3600.0 * Q_process_des "Maximum tank stored energy (J)";
+  parameter Modelica.SIunits.HeatFlowRate Q_process_des = 15.03e6 "Heat-rate to process at design (W)";
+  parameter Modelica.SIunits.MassFlowRate m_process_des = Q_process_des / (h_air_process_des - h_air_min_des) "Design process input mass flow rate (kg/s)";
+  
+parameter Medium.ThermodynamicState state_air_min_des = Medium.setState_pTX(Medium.p_default, T_min) "Thermodynamic state of air at the minimum system temperature T_min.";
+  parameter Medium.ThermodynamicState state_air_max_des = Medium.setState_pTX(Medium.p_default, T_max) "Thermodynamic state of air at the maximum system temperature T_min.";
+  parameter Medium.ThermodynamicState state_air_process_des = Medium.setState_pTX(Medium.p_default, T_process_des) "Thermodynamic state of air at the design process inlet T_process_des.";
+  parameter Modelica.SIunits.SpecificEnthalpy h_air_min_des = Medium.specificEnthalpy(state_air_min_des) "Specific enthalpy of air at minimum system temperature T_min (J/kg)";
+  parameter Modelica.SIunits.SpecificEnthalpy h_air_max_des = Medium.specificEnthalpy(state_air_max_des) "Specific enthalpy of air at maximum system temperature T_max (J/kg)";
+  parameter Modelica.SIunits.SpecificEnthalpy h_air_process_des = Medium.specificEnthalpy(state_air_process_des) "Specific enthalpy of air at design process inlet temperature T_process_des (J/kg)";
+  SolarTherm.Models.Storage.Thermocline.Series.Thermocline_HBS_LC_SGroup3_Final TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package_A = Filler, redeclare package Filler_Package_B = Filler, redeclare package Filler_Package_C = Filler, N_f_A = N_f, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, d_p_A = d_p, s_p_A = s_p, U_loss_tank_A = U_loss_tank, frac_1 = 1.0 / 3.0) annotation(
     Placement(visible = true, transformation(origin = {32, 0}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpCold(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {-18, -78}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
@@ -101,22 +118,29 @@ model WindPV_HBSTES_3TSeries_SystemModel "Generic system model with WindPV input
     Placement(visible = true, transformation(origin = {-5, 0}, extent = {{-9, -12}, {9, 12}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression p_amb(y = 101325) annotation(
     Placement(visible = true, transformation(origin = {107, 2.22045e-16}, extent = {{11, -12}, {-11, 12}}, rotation = 0)));
-  SolarTherm.Models.Control.WindPV_Thermocline_Control Control(redeclare package HTF = Medium, E_max = E_max, Q_boiler_des = Q_boiler_des, T_boiler_min = T_boiler_min, T_boiler_start = T_boiler_start, T_heater_max = T_heater_max, T_heater_start = T_heater_start, T_target = T_max, util_storage_des = util_storage_des, h_target = h_air_hot_set, level_mid = level_storage_mid, m_0 = 1e-8, m_boiler_des = m_boiler_des, m_min = 1e-8, m_tol = 0.01 * m_boiler_des, t_stor_start_dis = t_stor_start_dis, t_wait = 1.0 * 3600.0) annotation(
-    Placement(visible = true, transformation(origin = {114, 26}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Fluid.HeatExchangers.Boiler_Basic Process(redeclare package Medium = Medium, T_cold_set = T_cold_set, T_hot_set = T_hot_set) annotation(
+  SolarTherm.Models.Control.WindPV_Thermocline_Control Control(redeclare package HTF = Medium, E_max = E_max, Q_boiler_des = Q_process_des, T_boiler_min = T_process_min, T_boiler_start = T_process_start, T_heater_max = T_heater_max, T_heater_start = T_heater_start, T_target = T_max, util_storage_des = util_storage_des, h_target = h_air_max_des, level_mid = level_storage_mid, m_0 = 1e-8, m_boiler_des = m_process_des*(h_air_process_des-h_air_min_des)/(h_air_max_des-h_air_min_des), m_min = 1e-8, m_tol = 0.01 * m_process_des, t_stor_start_dis = t_stor_start_dis, t_wait = 1.0 * 3600.0) annotation(
+    Placement(visible = true, transformation(origin = {114, 26}, extent = {{-10, -10}, {10, 10}}, rotation = 0))); //m_boiler_des needs to be scaled down to the mass flow rate at the overdesigned temperature T_max.
+  SolarTherm.Models.Fluid.HeatExchangers.Boiler_Basic Process(redeclare package Medium = Medium, T_cold_set = T_min, T_hot_set = T_process_des) annotation(
     Placement(visible = true, transformation(origin = {158, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.CSP.CRS.Receivers.Basic_Heater basic_Heater(redeclare package Medium = Medium, P_heater_des = P_heater_des, Q_heater_des = Q_heater_des, eff_heater = eff_heater, T_cold_set = T_cold_set, T_hot_set = T_hot_set) annotation(
+  SolarTherm.Models.CSP.CRS.Receivers.Basic_Heater basic_Heater(redeclare package Medium = Medium, P_heater_des = P_heater_des, Q_heater_des = Q_heater_des, eff_heater = eff_heater, T_cold_set = T_min, T_hot_set = T_max) annotation(
     Placement(visible = true, transformation(origin = {-46, 10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable PV_input(fileName = PV_file, tableName = "Power", tableOnFile = true, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative) annotation(
     Placement(visible = true, transformation(origin = {-124, 34}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Blocks.Math.Add Grid_Sum(k1 = P_renewable_des * PV_fraction / PV_ref_size, k2 = P_renewable_des * (1.0 - PV_fraction) / Wind_ref_size) annotation(
+  Modelica.Blocks.Math.Add Grid_Sum(k1 = P_PV_gross / PV_ref_size, k2 = P_wind_gross / Wind_ref_size) annotation(
     Placement(visible = true, transformation(origin = {-84, 18}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable Wind_input(fileName = Wind_file, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, tableName = "Power", tableOnFile = true) annotation(
     Placement(visible = true, transformation(origin = {-124, 4}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  Modelica.Blocks.Sources.RealExpression ConstantDemand(y = Q_boiler_des) annotation(
+  Modelica.Blocks.Sources.RealExpression ConstantDemand(y = Q_process_des) annotation(
     Placement(visible = true, transformation(origin = {182, 42}, extent = {{16, -10}, {-16, 10}}, rotation = 0)));
 equation
+  der(E_pv) = Grid_Sum.k1*Grid_Sum.u1;
+  der(E_wind) = Grid_Sum.k2*Grid_Sum.u2;
+  der(E_renewable) = Grid_Sum.y;
+  //der(E_heater_in) = basic_Heater.P_heater_out;
+  der(E_heater_raw) = basic_Heater.Q_heater_raw;
+  der(E_heater_out) = basic_Heater.Q_out;
   der(E_supplied) = Process.Q_flow;
+  
   der(E_demand) = Control.Q_demand;
   if time > 86400.0 then
     Capacity_Factor = E_supplied / E_demand;

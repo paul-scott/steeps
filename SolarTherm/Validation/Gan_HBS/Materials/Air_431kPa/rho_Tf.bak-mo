@@ -1,0 +1,9 @@
+within SolarTherm.Validation.Gan_HBS.Materials.Air_431kPa;
+
+function rho_Tf "Density of air vs Temperature"
+    input SI.Temperature T;
+    input Real f = 0 "Liquid mass melt fraction (No effect on result)";
+    output SI.Density rho;
+  algorithm
+    rho := SolarTherm.Validation.Gan_HBS.Media.Air_431kPa_Utilities.rho_T(T);
+  end rho_Tf;
