@@ -9,8 +9,8 @@ model GridInput
 	parameter Modelica.SIunits.Power P_elec_pv_ref_size = 50e6 "PV farm reference size";
 	parameter Modelica.SIunits.Power P_elec_wind_ref_size = 50e6 "Wind farm reference size";
 	parameter Real renewable_multiple = 2 "Oversizing factor with respect to the heat input";
-	final parameter Modelica.SIunits.Power P_elec_max_pv = pv_fraction*renewable_multiple*P_elec_max "Maximum PV capacity";
-	final parameter Modelica.SIunits.Power P_elec_max_wind = (1-pv_fraction)*renewable_multiple*P_elec_max "Maximum Wind farm capacity";
+	final parameter Modelica.SIunits.Power P_elec_max_pv = pv_fraction*P_elec_max "Maximum PV capacity";
+	final parameter Modelica.SIunits.Power P_elec_max_wind = (1-pv_fraction)*P_elec_max "Maximum Wind farm capacity";
 
 	Modelica.Blocks.Sources.CombiTimeTable P_elec_ref_pv(
 		fileName = pv_file, 

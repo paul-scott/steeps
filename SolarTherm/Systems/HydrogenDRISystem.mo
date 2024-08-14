@@ -12,17 +12,26 @@ model HydrogenDRISystem
     extends Modelica.Icons.Example;
 
     // Renewable energy input
-    parameter String pv_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/dummy_pv.motab");
-    parameter String wind_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/dummy_wind.motab");
+    parameter String pv_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/pv_gen_Pilbara 3_1.0MWe.motab");
+    parameter String wind_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/wind_gen_Pilbara 3_320.0MWe.motab");
+    parameter String schedule_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Schedules/mip_schedule.motab");
     parameter STMotab.STMotab pv_motab = STMotab.STMotab(pv_file);
     parameter STMotab.STMotab wind_motab = STMotab.STMotab(wind_file);
-    parameter Modelica.SIunits.Power pv_ref_size = 50e6 "PV farm reference size";
-    parameter Modelica.SIunits.Power wind_ref_size = 50e6 "Wind farm reference size";
+    parameter Modelica.SIunits.Power pv_ref_size = 1e6 "PV farm reference size";
+    parameter Modelica.SIunits.Power wind_ref_size = 320e6 "Wind farm reference size";
     parameter Modelica.SIunits.Power P_elec_min = 1e6;
-    parameter Modelica.SIunits.Efficiency pv_fraction = 0.5 "Fraction of pv capacity at design";
-    parameter Real renewable_multiple = 2 "Oversizing factor of renewable power to process power demand";
+    parameter Modelica.SIunits.Efficiency pv_fraction = 1 "Fraction of pv capacity at design";
+    parameter Real renewable_multiple = 39.03883123206496 "Oversizing factor of renewable power to process power demand";
     parameter Modelica.SIunits.Power P_elec_max = renewable_multiple * P_process_des "Maximum Combined PV/Wind electrical output";
-    parameter Modelica.SIunits.HeatFlowRate P_process_des = 50e6 "Process power demand at design";
+    parameter Modelica.SIunits.HeatFlowRate P_process_des = 77500e3 "Process power demand at design";
+
+	Modelica.Blocks.Sources.CombiTimeTable scheduler(
+		tableOnFile=true,
+		tableName="power",
+		smoothness=Modelica.Blocks.Types.Smoothness.ConstantSegments,
+		columns=2:10,
+		fileName=schedule_file)
+		annotation (Placement(transformation(extent={{-90,50},{-70,70}})));	
 
     SolarTherm.Models.Sources.GridInput renewable_input(
         P_elec_max = P_elec_max, 
@@ -69,6 +78,7 @@ model HydrogenDRISystem
     SI.Mass m_h2_stor;  // Declarado aquí
 
     Boolean full "True if the storage tank is full";
+    Real P_elec_in;
 
 function dispatch
     input Real t;
@@ -99,6 +109,8 @@ algorithm
     end when;
 
 equation
+    //t,P_curt,P_direct,P_EES_in,P_EES_out,H2_st_in,H2_st_out,P_ely,pv_out,wind_out
+    P_elec_in = scheduler.y[1] + scheduler.y[2] + scheduler.y[3] + scheduler.y[7];
     connect(renewable_input.curtail,curtail.y);
     connect(renewable_input.P_schedule,P_curtail.y);
     (P_ren_curtail, P_direct, P_EES_in, P_EES_out, m_h2_stor_in, m_h2_stor_out) = dispatch(time);
