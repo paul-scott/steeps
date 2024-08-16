@@ -10,7 +10,7 @@ model HBSTES_Reference_2_ComponentLevel
   package Filler_Package = SolarTherm.Materials.Mullite_20pct_porosity;
   //These parameters are varied
   parameter Real HM = 2.0 "Heater Multiple";
-  parameter SI.Time t_discharge = 10.0 * 3600.0 "Rated discharging period (s)";
+  parameter SI.Time t_discharge = 12.0 * 3600.0 "Rated discharging period (s)";
   //Numerical Discretisation Settings
   parameter Integer N_f = 50;
   //parameter Integer N_p = 5; //Not used
@@ -19,23 +19,24 @@ model HBSTES_Reference_2_ComponentLevel
   parameter Real ar = 4.8 "Tank H/D ratio (m)";
   parameter Real eta = 0.51 "Packed-bed porosity";
   //parameter SI.Length s_p = 0.04 "Separation of holes in the filler (m)";
-  parameter SI.CoefficientOfHeatTransfer U_loss_top = 0.588 "Heat loss coefficient at the top of the tank (W/m2K)";
-  parameter SI.CoefficientOfHeatTransfer U_loss_bot = 4.286 "Heat loss coefficient at the bottom of the tank (W/m2K)";
+  parameter SI.CoefficientOfHeatTransfer U_loss_top = 0.000 "Heat loss coefficient at the top of the tank (W/m2K)";
+  parameter SI.CoefficientOfHeatTransfer U_loss_bot = 0.000 "Heat loss coefficient at the bottom of the tank (W/m2K)";
   //Temperature Controls
   parameter SI.Temperature T_max = 1300.0 + 273.15 "Maximum temperature (K)";
   parameter SI.Temperature T_process_des = 1000.0 + 273.15 "Design process inlet temperature (K)";
   parameter SI.Temperature T_high_set = 1000.0 + 273.15 "TES hot blend temperature temperature (K)";
   parameter SI.Temperature T_process_min = 1000.0 + 273.15 "Minimum tolerated outlet temperature to process (K)";
-  parameter SI.Temperature T_heater_max = 500.0 + 273.15 "Maximum tolerated outlet temperature to heater (K)";
-  parameter SI.Temperature T_low_set = 500.0 + 273.15 "TES cold blend temperature (K)";
+  parameter SI.Temperature T_heater_max = 400.0 + 273.15 "Maximum tolerated outlet temperature to heater (K)";
+  parameter SI.Temperature T_low_set = 400.0 + 273.15 "TES cold blend temperature (K)";
   parameter SI.Temperature T_heater_des = 200.0 + 273.15 "Design receiver inlet temperature (K)";
   parameter SI.Temperature T_min = 200.0 + 273.15 "Minimum temperature (K)";
   parameter Integer Correlation = 1; //Gas Internal flow
   //parameter SI.SpecificEnthalpy h_tol = 0.05*(TES.Tank_A.h_f_max - TES.Tank_A.h_f_min);
   //Tank Geometry
-  parameter SI.Power Q_process_des = 27.53e6 "Design required process heat-rate (W_th)";
+  parameter Real f_oversize = 2.0 "Oversize factor of storage capacity";
+  parameter SI.Power Q_process_des = E_max/(t_discharge*f_oversize) "Design required process heat-rate (W_th)";//E_max/t_discharge
   parameter SI.Power Q_heater_des = HM * Q_process_des "Design heater output heat-rate (W_th)";
-  parameter SI.Energy E_max = Q_process_des*t_discharge "Ideal storage capacity (J_thermal)"; //Note 3 tanks
+  parameter SI.Energy E_max = 2.9043e12*1.0*f_oversize "Ideal storage capacity (J_thermal)"; //Note 3 tanks
   parameter SI.Time t_charge = t_discharge / (HM - 1.0) "Charging period (s)";
   parameter SI.MassFlowRate m_charge_des = (Q_heater_des - Q_process_des) / (h_f_max - h_f_min) "Design charging mass flow rate assuming design temperature outlet (kg/s)";
   parameter SI.MassFlowRate m_discharge_des = Q_process_des / (h_f_max - h_f_min)  "Design discharging mass flow rate assuming design temperature outlet (kg/s)";
@@ -254,7 +255,7 @@ equation
   connect(p_amb.y, TES.p_amb) annotation(
     Line(points = {{29, -4}, {12, -4}}, color = {0, 0, 127}));
   annotation(
-    experiment(StopTime = 5400000, StartTime = 0, Tolerance = 1e-4, Interval = 60),
+    experiment(StopTime = 86400, StartTime = 0, Tolerance = 1e-4, Interval = 60),
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
 end HBSTES_Reference_2_ComponentLevel;

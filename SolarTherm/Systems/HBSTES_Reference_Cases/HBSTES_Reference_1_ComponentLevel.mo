@@ -10,7 +10,7 @@ model HBSTES_Reference_1_ComponentLevel
   package Filler_Package = SolarTherm.Materials.Mullite_20pct_porosity;
   //These parameters are varied
   parameter Real HM = 2.0 "Heater Multiple";
-  parameter SI.Time t_discharge = 10.0 * 3600.0 "Rated discharging period (s)";
+  parameter SI.Time t_discharge = 12.0 * 3600.0 "Rated discharging period (s)";
   //Numerical Discretisation Settings
   parameter Integer N_f = 50;
   //parameter Integer N_p = 5; //Not used
@@ -20,22 +20,22 @@ model HBSTES_Reference_1_ComponentLevel
   parameter Real eta = 0.51 "Packed-bed porosity";
   //parameter SI.Length s_p = 0.04 "Separation of holes in the filler (m)";
   parameter SI.CoefficientOfHeatTransfer U_loss_top = 0.588 "Heat loss coefficient at the top of the tank (W/m2K)";
-  parameter SI.CoefficientOfHeatTransfer U_loss_bot = 4.286 "Heat loss coefficient at the bottom of the tank (W/m2K)";
+  parameter SI.CoefficientOfHeatTransfer U_loss_bot = 2.0 "Heat loss coefficient at the bottom of the tank (W/m2K)";
   //Temperature Controls
   parameter SI.Temperature T_max = 1300.0 + 273.15 "Maximum temperature (K)";
   parameter SI.Temperature T_process_des = 1000.0 + 273.15 "Design process inlet temperature (K)";
   parameter SI.Temperature T_high_set = 1000.0 + 273.15 "TES hot blend temperature temperature (K)";
   parameter SI.Temperature T_process_min = 1000.0 + 273.15 "Minimum tolerated outlet temperature to process (K)";
-  parameter SI.Temperature T_heater_max = 500.0 + 273.15 "Maximum tolerated outlet temperature to heater (K)";
-  parameter SI.Temperature T_low_set = 500.0 + 273.15 "TES cold blend temperature (K)";
+  parameter SI.Temperature T_heater_max = 400.0 + 273.15 "Maximum tolerated outlet temperature to heater (K)";
+  parameter SI.Temperature T_low_set = 400.0 + 273.15 "TES cold blend temperature (K)";
   parameter SI.Temperature T_heater_des = 200.0 + 273.15 "Design receiver inlet temperature (K)";
   parameter SI.Temperature T_min = 200.0 + 273.15 "Minimum temperature (K)";
   parameter Integer Correlation = 1; //Gas Internal flow
   //parameter SI.SpecificEnthalpy h_tol = 0.05*(TES.Tank_A.h_f_max - TES.Tank_A.h_f_min);
   //Tank Geometry
-  parameter SI.Power Q_process_des = E_max/t_discharge "Design required process heat-rate (W_th)";//E_max/t_discharge
+  parameter SI.Power Q_process_des = 27.53e6;//E_max/t_discharge "Design required process heat-rate (W_th)";//E_max/t_discharge
   parameter SI.Power Q_heater_des = HM * Q_process_des "Design heater output heat-rate (W_th)";
-  parameter SI.Energy E_max = 2.9043e12*3.0 "Ideal storage capacity (J_thermal)"; //Note 3 tanks
+  parameter SI.Energy E_max = 2.9043e12 "Ideal storage capacity (J_thermal)"; //Note 3 tanks
   parameter SI.Time t_charge = t_discharge / (HM - 1.0) "Charging period (s)";
   parameter SI.MassFlowRate m_charge_des = (Q_heater_des - Q_process_des) / (h_f_max - h_f_min) "Design charging mass flow rate assuming design temperature outlet (kg/s)";
   parameter SI.MassFlowRate m_discharge_des = Q_process_des / (h_f_max - h_f_min)  "Design discharging mass flow rate assuming design temperature outlet (kg/s)";
@@ -77,7 +77,7 @@ model HBSTES_Reference_1_ComponentLevel
     Placement(visible = true, transformation(origin = {46, 44}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.mass_loop_breaker mass_loop_breaker annotation(
     Placement(visible = true, transformation(origin = {-2, 50}, extent = {{-24, -24}, {24, 24}}, rotation = -90)));
-  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_HBS_LC_3P_MixedOutlet TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, redeclare package Filler_Package_C = Filler_Package, N_f_A = N_f, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, ar_A = ar, d_p_A = d_p, eta_A = eta, U_loss_top_A = U_loss_top, U_loss_bot_A = U_loss_bot, T_PB_set=T_high_set,T_recv_set=T_low_set) annotation(
+  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_SingleTank_Final TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, ar = ar, d_p = d_p, eta = eta, U_loss_top = U_loss_top, U_loss_bot = U_loss_bot) annotation(
     Placement(visible = true, transformation(origin = {-2, -4}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
   //Mass flow Signals starts in charging state //,h_tol=h_tol
   SI.MassFlowRate m_Heater_signal(start = m_charge_des);
@@ -86,6 +86,7 @@ model HBSTES_Reference_1_ComponentLevel
   Real T_top_degC;
   Real T_bot_degC;
   Real T_outlet_degC;
+  Real T_inlet_degC;
   //Energies and Exergies for final cycle calculation
   SI.Energy E_chg(start = 0) "Charged energy into storage";
   SI.Energy E_dis(start = 0) "Discharged energy into storage";
@@ -193,10 +194,13 @@ equation
   if TES.fluid_a.m_flow > 1.0e-3 then
 //there is mass flow
     T_outlet_degC = TES.fluid_bot.T - 273.15;
+    T_inlet_degC = TES.fluid_top.T - 273.15;
   elseif TES.fluid_a.m_flow < (-1.0e-3) then
     T_outlet_degC = TES.fluid_top.T - 273.15;
+    T_inlet_degC = TES.fluid_bot.T - 273.15;
   else
     T_outlet_degC = 25.0;
+    T_inlet_degC = 25.0;
   end if;
   if time > 9.0 * t_cycle and time < 9.0 * t_cycle + t_charge then
 //last charging phase
@@ -254,7 +258,7 @@ equation
   connect(p_amb.y, TES.p_amb) annotation(
     Line(points = {{29, -4}, {12, -4}}, color = {0, 0, 127}));
   annotation(
-    experiment(StopTime = 5400000, StartTime = 0, Tolerance = 1e-4, Interval = 60),
+    experiment(StopTime = 54000000, StartTime = 0, Tolerance = 1e-4, Interval = 60),
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
 end HBSTES_Reference_1_ComponentLevel;

@@ -29,7 +29,7 @@ model Thermocline_HBS_LC_3P_MixedOutlet
   parameter Real eta_B = eta_A "Porosity";
   parameter Real eta_C = eta_A "Porosity";
     //Hole diameter of filler material
-  parameter Real d_p_A = 0.30 "Filler hole hydraulic diameter (m)";
+  parameter Real d_p_A = 0.03 "Filler hole hydraulic diameter (m)";
   parameter Real d_p_B = d_p_A "Filler hole hydraulic diameter (m)";
   parameter Real d_p_C = d_p_A "Filler hole hydraulic diameter (m)";
     
@@ -120,9 +120,10 @@ model Thermocline_HBS_LC_3P_MixedOutlet
   Fluid_Package.State fluid_bot "Fluid entering/exiting bottom";
   
   //Enthaply tolerance to avoid chattering
-  parameter SI.SpecificEnthalpy h_tol = 0.005*(Tank_A.h_f_max - Tank_A.h_f_min) "enthalpy tolerance, 0.5% of maximum difference";
+  parameter SI.SpecificEnthalpy h_tol = 0.05*(Tank_A.h_f_max - Tank_A.h_f_min) "enthalpy tolerance, 0.5% of maximum difference";
   
-  parameter SI.TemperatureDifference T_tol = 1.0;
+  parameter SI.TemperatureDifference T_tol = 5.0;
+  parameter Real f_tol = 0.05;
   
   //Total pumping losses
   SI.Power W_loss_pump = Tank_A.W_loss_pump + Tank_B.W_loss_pump + Tank_C.W_loss_pump;
@@ -169,7 +170,7 @@ algorithm
 //Tank B no longer able to assist C, proceeds to charge itself if below set T
 //new
 //new
-  when f_chg_guess_1 < 0.99 then
+  when f_chg_guess_1 < 1.00 - f_tol then
     if Charge_State == 3 then
       Charge_State := 2;
     end if;
@@ -177,7 +178,7 @@ algorithm
 //Tank B now able to assist C
 //new
 //new
-  when f_chg_guess_2 < 0.99 then
+  when f_chg_guess_2 < 1.00 - f_tol then
     if Charge_State == 5 then
       Charge_State := 4;
     end if;
@@ -224,7 +225,7 @@ algorithm
 //new
 //new
 //new
-  when f_disch_guess_1 < 0.99 then
+  when f_disch_guess_1 < 1.00 - f_tol then
     if Discharge_State == 3 then
       Discharge_State := 2;
     end if;
@@ -232,7 +233,7 @@ algorithm
 //Tank B is now able to assist A
 //new
 //new
-  when f_disch_guess_2 < 0.99 then
+  when f_disch_guess_2 < 1.00 - f_tol then
     if Discharge_State == 5 then
       Discharge_State := 4;
     end if;
@@ -246,28 +247,35 @@ equation
   //Figure out assisted mass fraction
   //Tank B assists A discharging, Tank C assist B discharging
   //Discharge
+   
     if Tank_B.h_f[N_f_B] > Tank_A.h_f[N_f_A] + h_tol then //100.0 then
-      f_disch_guess_1 = (h_PB_set - Tank_A.h_f[N_f_A]) / (Tank_B.h_f[N_f_B] - Tank_A.h_f[N_f_A]);
+      //f_disch_guess_1 = (h_PB_set - Tank_A.h_f[N_f_A]) / (Tank_B.h_f[N_f_B] - Tank_A.h_f[N_f_A]);
+      f_disch_guess_1 = (h_PB_set - Tank_A.h_f[N_f_A]) / min(h_tol, (Tank_B.h_f[N_f_B] - Tank_A.h_f[N_f_A]) );
     else //Cannot Assist
       f_disch_guess_1 = 0.0;
     end if;
 
+    
     if Tank_C.h_f[N_f_C] > Tank_B.h_f[N_f_B] + h_tol then //100.0 then
-      f_disch_guess_2 = (h_PB_set - Tank_B.h_f[N_f_B]) / (Tank_C.h_f[N_f_C] - Tank_B.h_f[N_f_B]);
+      //f_disch_guess_2 = (h_PB_set - Tank_B.h_f[N_f_B]) / (Tank_C.h_f[N_f_C] - Tank_B.h_f[N_f_B]);
+      f_disch_guess_2 = (h_PB_set - Tank_B.h_f[N_f_B]) / min(h_tol,  (Tank_C.h_f[N_f_C] - Tank_B.h_f[N_f_B]));
     else //Cannot Assist
       f_disch_guess_2 = 0.0;
     end if;
 
   //Tank A assists B charging, Tank B assists C charging
   //Charge
+   
     if Tank_A.h_f[1] < Tank_B.h_f[1] - h_tol then //100.0 then
-      f_chg_guess_2 = (h_recv_set - Tank_B.h_f[1]) / (Tank_A.h_f[1] - Tank_B.h_f[1] );
+      //f_chg_guess_2 = (h_recv_set - Tank_B.h_f[1]) / (Tank_A.h_f[1] - Tank_B.h_f[1] );
+      f_chg_guess_2 = (h_recv_set - Tank_B.h_f[1]) /  max(-1.0*h_tol, (Tank_A.h_f[1] - Tank_B.h_f[1] ));
     else
       f_chg_guess_2 = 0.0;
     end if;
 
     if Tank_B.h_f[1] < Tank_C.h_f[1] - h_tol then //100.0 then
-      f_chg_guess_1 = (h_recv_set - Tank_C.h_f[1]) / (Tank_B.h_f[1] - Tank_C.h_f[1] );
+      //f_chg_guess_1 = (h_recv_set - Tank_C.h_f[1]) / (Tank_B.h_f[1] - Tank_C.h_f[1] );
+      f_chg_guess_1 = (h_recv_set - Tank_C.h_f[1]) /  max(-1.0*h_tol, (Tank_B.h_f[1] - Tank_C.h_f[1] ));
     else
       f_chg_guess_1 = 0.0;
     end if;

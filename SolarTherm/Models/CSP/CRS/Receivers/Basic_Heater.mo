@@ -25,14 +25,14 @@ model Basic_Heater
         origin={44,84},extent={{-12,-12},{12,12}},
         rotation=-90), iconTransformation(
         
-        origin={-112, -52},extent={{12, -12}, {-12, 12}},
+        origin={-112, 38},extent={{12, -12}, {-12, 12}},
         rotation=180)));
     
   Modelica.Blocks.Interfaces.RealOutput Q_heater_raw "Heat-rate that the heater is currently able to deliver to the fluid" annotation(
-    Placement(visible = true, transformation(origin = {108, 2}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {111, 1}, extent = {{11, -11}, {-11, 11}}, rotation = 180)));
+    Placement(visible = true, transformation(origin = {108, 2}, extent = {{-18, -18}, {18, 18}}, rotation = 0), iconTransformation(origin = {111, 75}, extent = {{11, -11}, {-11, 11}}, rotation = 180)));
 
   Modelica.Blocks.Interfaces.BooleanInput curtail "Does the heater output need to be curtailed based on system controller?" annotation (Placement(
-        visible = true,transformation(extent = {{-126, -88}, {-86, -48}}, rotation = 0),iconTransformation(extent = {{-124, -100}, {-100, -76}}, rotation = 0)));
+        visible = true,transformation(extent = {{-126, -88}, {-86, -48}}, rotation = 0),iconTransformation(extent = {{-124, 84}, {-100, 108}}, rotation = 0)));
         
   Medium.BaseProperties state_in "Inlet fluid thermodynamic state";
 equation
@@ -92,5 +92,5 @@ equation
 <li>by Zebedee Kee, Receiver used in Packed Bed Storage Annual System Model. Only Radiative Losses. </li>
 </ul>
 </html>"),
-    Icon(graphics = {Line(origin = {-60, -2}, points = {{-40, 0}, {40, 0}}, thickness = 0.5), Line(origin = {-76, -48}, points = {{-24, -40}, {24, -40}, {24, -4}}, color = {255, 0, 255}, pattern = LinePattern.Dash, thickness = 0.5), Line(origin = {-76, -27}, points = {{-24, -25}, {24, -25}, {24, 25}}, pattern = LinePattern.Dash, thickness = 0.5), Line(origin = {2.62, 0.31}, points = {{6.00532, 33.005}, {-9.99468, 1.00502}, {10.0053, 1.00502}, {-7.99468, -32.995}}, thickness = 1.25),  Line(origin = {43.48, 0}, points = {{-19, 0}, {57, 0}}, thickness = 0.5)}, coordinateSystem(initialScale = 0.1)));
+    Icon(coordinateSystem(initialScale = 0.1), graphics = {Text(origin = {10, 10}, lineColor = {0, 0, 255}, extent = {{-149, -114}, {129, -146}}, textString = "%name")}));
 end Basic_Heater;
