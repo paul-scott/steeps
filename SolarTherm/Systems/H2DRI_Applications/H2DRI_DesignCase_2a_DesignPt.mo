@@ -15,11 +15,16 @@ model H2DRI_DesignCase_2a_DesignPt
   replaceable package Material_Fe2O3 = SolarTherm.Materials.Fe2O3;
   
   //Chemical Constants
+  
   parameter SI.MolarMass M_Fe2O3 = SolarTherm.Models.Chemistry.ChemTable.Fe2O3.M;
+  parameter SI.MolarMass M_Fe3O4 = SolarTherm.Models.Chemistry.ChemTable.Fe3O4.M;
+  parameter SI.MolarMass M_FeO = SolarTherm.Models.Chemistry.ChemTable.FeO.M;
+  parameter SI.MolarMass M_Fe = SolarTherm.Models.Chemistry.ChemTable.Fe.M;
   parameter SI.MolarMass M_H2O = SolarTherm.Models.Chemistry.ChemTable.H2O.M;
   parameter SI.MolarMass M_H2 = SolarTherm.Models.Chemistry.ChemTable.H2.M;
 //Plant Constants e.g. reference/feedstock conditions
   parameter SI.Pressure p_des = 100000.0 "Design pressure of the plant (Pa)";
+  parameter SI.Temperature T_amb_des = 25.0 + 273.15 "Design ambient temperature (K)";
   parameter SI.Temperature T_H2_feedstock_des = 25.0+273.15 "Design feedstock H2 temperature (K)";
   parameter SI.Temperature T_Fe2O3_feedstock_des = 25.0+273.15 "Design feedstock Fe2O3 temperature (K)";
   parameter SI.SpecificEnthalpy h_H2_feedstock_des = Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_des,T_H2_feedstock_des) "Specific Enthalpy of feedstock H2 (J/kg)";
@@ -47,11 +52,11 @@ model H2DRI_DesignCase_2a_DesignPt
   
   parameter SI.MolarEnthalpy Q_loss_per_mol_des = 34.57e3 "Design Heat loss per mole of Fe2O3 (J/mol) Note factor of 2.0 due to stoichiometry";
   
-  parameter Real eff_reactor = 0.8 "Thermal efficiency of the reactor at design point (-).";
+  //parameter Real eff_reactor = 0.8 "Thermal efficiency of the reactor at design point (-).";
   
   parameter SI.MolarEnthalpy H_rxn_per_mol_des = 2.0*SolarTherm.Models.Chemistry.H2DRI.Isothermal.Overall_Rxn_Enthalpy(T_reactants_des,p_des);
  
-  parameter SI.MolarEnthalpy Q_loss_per_mol_des2 = Q_loss_des/n_flow_Fe2O3_des "Design Heat loss per mole of Fe2O3 (J/mol) Note factor of 2.0 due to stoichiometry";
+  //parameter SI.MolarEnthalpy Q_loss_per_mol_des2 = Q_loss_des/n_flow_Fe2O3_des "Design Heat loss per mole of Fe2O3 (J/mol) Note factor of 2.0 due to stoichiometry";
   parameter SI.HeatFlowRate Q_loss_des = n_flow_Fe2O3_des*Q_loss_per_mol_des;
   
   
@@ -66,7 +71,7 @@ model H2DRI_DesignCase_2a_DesignPt
   parameter SI.SpecificEnthalpy h_H2_inlet_des = Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_des,T_inlet_des);
   parameter SI.SpecificEnthalpy h_Fe2O3_inlet_des = SolarTherm.Media.SolidParticles.Fe2O3_utilities.h_T(T_inlet_des);
   
-  parameter SI.Temperature T_condenser_out_des = Modelica.Media.Water.IF97_Utilities.BaseIF97.Basic.tsat(p_H2O_offgas_des) "Design saturation temperature of the condenser (K)";
+  parameter SI.Temperature T_condenser_out_des = Modelica.Media.Water.IF97_Utilities.BaseIF97.Basic.tsat(p_H2O_offgas_des) - 1.0 "Design saturation temperature of the condenser (K)";
   parameter SI.SpecificEnthalpy h_H2_condenser_out_des = Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_des,T_condenser_out_des) "Design specific enthalpy of H2 leaving the condenser (J/kg)";
   
   
@@ -82,14 +87,14 @@ model H2DRI_DesignCase_2a_DesignPt
 
   //GGHX Outlet design temperature
   parameter SI.SpecificEnthalpy h_H2_GGHX_max=Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_des,T_products_des) "Design specific enthalpy of H2 leaving the GGHX cold stream assuming it had been heated to the maximum possible temperature i.e. reactor product temperature (J/kg)";
-  parameter SI.SpecificEnthalpy h_H2_PGHX2_max=Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_des,T_Fe2O3_hot_des);
+  
   
   
   
   //GGHX Calculations where f_split_GGHX worth of offgas gets diverted to
   parameter SI.SpecificEnthalpy h_H2_pre1_des=h_H2_mix_des + eff_GGHX_des*(h_H2_GGHX_max-h_H2_mix_des) "Design of H2 leaving the GGHX cold stream after considering HX effectiveness and assuming C_C is C_min (J/kg)";
   
-  parameter SI.SpecificHeatCapacity cp_Hot_H2O_GGHX = 0.5*(Modelica.Media.Water.IF97_Utilities.cp_pT(p_H2O_offgas_des, T_products_des) + Modelica.Media.Water.IF97_Utilities.cp_pT(p_H2O_offgas_des, max(100.0, T_H2_mix_des))) "cp of the hot H2O entering the GGHX (J/kgK)";
+  parameter SI.SpecificHeatCapacity cp_Hot_H2O_GGHX = 0.5*(Modelica.Media.Water.IF97_Utilities.cp_pT(p_H2O_offgas_des, T_products_des) + Modelica.Media.Water.IF97_Utilities.cp_pT(p_H2O_offgas_des, Modelica.Media.Water.IF97_Utilities.BaseIF97.Basic.tsat(p_H2O_offgas_des)+1.0)) "cp of the hot H2O entering the GGHX (J/kgK)";
   
   parameter SI.SpecificHeatCapacity cp_Hot_H2_GGHX = (Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_H2_offgas_des, T_products_des) - Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_H2_offgas_des, T_H2_mix_des)) / (T_products_des - T_H2_mix_des) "cp of the hot H2 entering the GGHX (J/kgK)";
   
@@ -101,26 +106,53 @@ model H2DRI_DesignCase_2a_DesignPt
   
   parameter Real f_split_GGHX = C_C_GGHX/(m_flow_H2_excess*cp_Hot_H2_GGHX + m_flow_H2O_des*cp_Hot_H2O_GGHX) "Fraction of off-gas flow that is diverted to the GGHX in order to match C_C and C_H of that HX component";  //results in C_r_GGHX
   
+  parameter SI.HeatFlowRate Q_flow_GGHX_des = m_flow_H2_des*eff_GGHX_des*(h_H2_GGHX_max-h_H2_mix_des) "Design heat transfer rate inside GGHX (J/s)";
+  
+  parameter SI.ThermalConductance C_min_GGHX_des = C_C_GGHX;
+  
+  //Calculate temperature of cooled off-gas exiting GGHX
+  SI.Temperature T_condenser2_in_des(start = 500.0) "Temperature of cooled offgas exiting GGHX and entering condenser2 (K)";
+  
   
   //PGHX1 Calculations, where (1-f_split_GGHX) worth of gas gets diverted to.
   //The mass flow rates of hot H2 and hot H2O are (1-f_split_GGHX)*m_flow_H2_excess and (1-f_split_GGHX)*m_flow_H2O_des respectively
   //The hot and cold temperatures in this case are T_products_des and T_Fe2O3_feedstock_des
   //T_Fe2O3_feedstock_des
-  parameter SI.SpecificHeatCapacity cp_Hot_H2O_PGHX1 = 0.5*(Modelica.Media.Water.IF97_Utilities.cp_pT(p_H2O_offgas_des, T_products_des) + Modelica.Media.Water.IF97_Utilities.cp_pT(p_H2O_offgas_des, max(100.0, T_Fe2O3_feedstock_des))) "cp of the hot H2O entering the PGHX1 (J/kgK)";
+  parameter SI.SpecificHeatCapacity cp_Hot_H2O_PGHX1 = 0.5*(Modelica.Media.Water.IF97_Utilities.cp_pT(p_H2O_offgas_des, T_products_des) + Modelica.Media.Water.IF97_Utilities.cp_pT(p_H2O_offgas_des, max(Modelica.Media.Water.IF97_Utilities.BaseIF97.Basic.tsat(p_H2O_offgas_des)+1.0,T_H2_mix_des))) "cp of the hot H2O entering the PGHX1 (J/kgK)";
   parameter SI.SpecificHeatCapacity cp_Hot_H2_PGHX1 = (Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_H2_offgas_des, T_products_des) - Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_H2_offgas_des, T_Fe2O3_feedstock_des)) / (T_products_des - T_H2_mix_des) "cp of the hot H2 entering the PGHX1 (J/kgK)";
   
   parameter SI.SpecificHeatCapacity cp_Cold_Fe2O3_PGHX1 = (Material_Fe2O3.h_Tf(T_products_des,0.0) - Material_Fe2O3.h_Tf(T_Fe2O3_feedstock_des,0.0))/(T_products_des - T_Fe2O3_feedstock_des) "cp of the cold Fe2O3 entering the PGHX1 (J/kgK)";
   
   parameter SI.ThermalConductance C_H_PGHX1 = (1-f_split_GGHX)*m_flow_H2_excess*cp_Hot_H2_PGHX1 + (1-f_split_GGHX)*m_flow_H2O_des*cp_Hot_H2O_PGHX1 "Heat capacity rate of the hot off-gas entering PGHX1 (W/K)";
   
-  //The mass flow rate of Fe2O3 feedstock entering the PGHX1 is adjusted to match C_C_PGHX1 to C_H_PGHX1
-  parameter SI.MassFlowRate m_flow_Fe2O3_feedstock = C_H_PGHX1/cp_Cold_Fe2O3_PGHX1 "Design mass flow rate of cold Fe2O3 feedstock entering PGHX1 (kg/s)";
+  //The mass flow rate of Fe2O3 feedstock entering the PGHX1 is set to m_flow_Fe2O3_des
+  parameter SI.MassFlowRate m_flow_Fe2O3_feedstock = m_flow_Fe2O3_des "Design mass flow rate of cold Fe2O3 feedstock entering PGHX1 (kg/s)";//C_H_PGHX1/cp_Cold_Fe2O3_PGHX1 ;
+  
+  //It is likely that C_C_PGHX1 is the C_min_PGHX, check that anyway
+  parameter SI.ThermalConductance C_C_PGHX1 = m_flow_Fe2O3_feedstock*cp_Cold_Fe2O3_PGHX1;
+  
+  parameter SI.ThermalConductance C_min_PGHX1 = min(C_C_PGHX1,C_H_PGHX1);
+  
+  parameter SI.HeatFlowRate Q_flow_PGHX1_des = eff_PGHX1_des*C_min_PGHX1*(T_products_des-T_Fe2O3_feedstock_des);
+  
   
   //What is the enthalpy of Fe2O3 exiting the PGHX1 and entering Med Tank?
   parameter SI.SpecificEnthalpy h_Fe2O3_feedstock_des = Material_Fe2O3.h_Tf(T_Fe2O3_feedstock_des,0.0) "Specific enthalpy of Fe2O3 feedstock (J/kg)";
-  parameter SI.SpecificEnthalpy h_Fe2O3_PGHX1_max = Material_Fe2O3.h_Tf(T_products_des,0.0) "Maximum possible specific enthalpy of Fe2O3 leaving PGHX1 assuming 100% effectiveness (J/kg)";
-  parameter SI.SpecificEnthalpy h_Fe2O3_med1_des = h_Fe2O3_feedstock_des + eff_PGHX1_des*(h_Fe2O3_PGHX1_max - h_Fe2O3_feedstock_des) "Specific enthalpy of Fe2O3 leaving PGHX1 and entering the med tank (J/kg)";
+  //parameter SI.SpecificEnthalpy h_Fe2O3_PGHX1_max = Material_Fe2O3.h_Tf(T_products_des,0.0) "Maximum possible specific enthalpy of Fe2O3 leaving PGHX1 assuming 100% effectiveness (J/kg)";
+  parameter SI.SpecificEnthalpy h_Fe2O3_med1_des = h_Fe2O3_feedstock_des + Q_flow_PGHX1_des/m_flow_Fe2O3_feedstock "Specific enthalpy of Fe2O3 leaving PGHX1 and entering the med tank (J/kg)";
+  
+  //h_Fe2O3_feedstock_des + eff_PGHX1_des*(h_Fe2O3_PGHX1_max - h_Fe2O3_feedstock_des) ;
   parameter SI.Temperature T_Fe2O3_med1_des = SolarTherm.Media.SolidParticles.Fe2O3_utilities.T_h(h_Fe2O3_med1_des) "Temperature of Fe2O3 leaving PGHX1 and entering the med tank (K)";
+  
+  //What is the temperature of off-gas entering Condenser 1?
+  //First calculate Q_flow_PGHX1_des
+  
+  //parameter SI.HeatFlowRate Q_flow_PGHX1_des = ((1-f_split_GGHX)*m_flow_H2_excess*cp_Hot_H2_PGHX1 + (1-f_split_GGHX)*m_flow_H2O_des*cp_Hot_H2O_PGHX1)*(T_products_des-T_Fe2O3_feedstock_des)*eff_PGHX1_des;
+  //parameter SI.HeatFlowRate Q_flow_PGHX1_des = m_flow_Fe2O3_feedstock*eff_PGHX1_des*(h_Fe2O3_PGHX1_max - h_Fe2O3_feedstock_des) "Design heat transfer rate in PGHX1 (J/s)";
+  //Now the model will try to find the temperature of cooled offgas leaving PGHX1
+  SI.Temperature T_condenser1_in_des(start = 500.0) "Temperature of cooled offgas leaving PGHX1 and entering Condenser1 (K)";
+   
+  
   
   
   
@@ -129,7 +161,6 @@ model H2DRI_DesignCase_2a_DesignPt
   //Storage Temperatures
   parameter SI.Temperature T_H2_pre1_des = Modelica.Media.IdealGases.SingleGases.H2.temperature_ph(p_des,h_H2_pre1_des) "Design temperature of the H2 leaving the GGHX";
   
-  parameter SI.Temperature T_H2_pre2_des = Modelica.Media.IdealGases.SingleGases.H2.temperature_ph(p_des,h_H2_pre2_des) "Design temperature of the H2 leaving PGHX2";
   
   //Flow Rates
   parameter SI.MassFlowRate m_flow_Fe2O3_des = 1.4297448*m_flow_Fe_des "Design required Fe2O3 flow rate (kg/s)";
@@ -161,6 +192,10 @@ model H2DRI_DesignCase_2a_DesignPt
   parameter SI.SpecificEnthalpy h_Fe2O3_med2_des = h_Fe2O3_hot_des - eff_PGHX2_des*(h_Fe2O3_hot_des - SolarTherm.Media.SolidParticles.Fe2O3_utilities.h_T(T_H2_pre1_des)) "Specific enthalpy of Fe2O3 leaving PGHX2 and entering the Medium temperature tank (J/kg)";
   parameter SI.Temperature T_Fe2O3_med2_des = SolarTherm.Media.SolidParticles.Fe2O3_utilities.T_h(h_Fe2O3_med2_des) "Temperature of Fe2O3 leaving PGHX2 and entering the Medium temperature tank (K)";
   
+  parameter SI.SpecificEnthalpy h_H2_PGHX2_max=Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_des,T_Fe2O3_hot_des) "Design specific enthalpy of H2 leaving the PGHX2 cold stream assuming it had been heated to the maximum possible temperature i.e. reactor product temperature (J/kg)";
+  
+  parameter SI.Temperature T_H2_pre2_des = Modelica.Media.IdealGases.SingleGases.H2.temperature_ph(p_des,h_H2_pre2_des) "Design temperature of the H2 leaving PGHX2 after considering PGHX2 effectiveness";
+  
   //What is the expected temperature of materials entering the med tank assuming they get mixed well?
   parameter SI.SpecificEnthalpy h_Fe2O3_med_des = (m_flow_Fe2O3_feedstock*h_Fe2O3_med1_des + m_flow_Fe2O3_PGHX2*h_Fe2O3_med2_des)/(m_flow_Fe2O3_feedstock + m_flow_Fe2O3_PGHX2) "Expected specific enthalpy of the med tank (J/kg)";
   parameter SI.Temperature T_Fe2O3_med_des = SolarTherm.Media.SolidParticles.Fe2O3_utilities.T_h(h_Fe2O3_med_des) "Expected specific enthalpy of the med tank (K)";
@@ -170,6 +205,100 @@ model H2DRI_DesignCase_2a_DesignPt
   parameter SI.HeatFlowRate H_flow_inlet_des = m_flow_Fe2O3_des*h_Fe2O3_inlet_des + m_flow_H2_des*h_H2_inlet_des;
   
   parameter SI.Temperature T_Fe2O3_hot_guess = (H_flow_inlet_des+m_flow_H2_des*(h_H2_pre1_des*eff_PGHX2_des - h_H2_pre1_des) +261521.6*m_flow_Fe2O3_des+762976.9*m_flow_H2_des*eff_PGHX2_des)/(895.7669*m_flow_Fe2O3_des+15214.199*m_flow_H2_des*eff_PGHX2_des);
+  
+  //Condenser1
+  SI.HeatFlowRate Q_flow_cooling_condenser1 = (1.0-f_split_GGHX)*m_flow_H2_excess*(Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_H2_offgas_des, T_condenser1_in_des)-Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_des, T_condenser_out_des)) + (1.0-f_split_GGHX)*m_flow_H2O_des*(Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_condenser1_in_des) - Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_condenser_out_des));
+  
+  SI.HeatFlowRate Q_flow_cooling_condenser2 = f_split_GGHX*m_flow_H2_excess*(Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_H2_offgas_des, T_condenser2_in_des)-Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_des, T_condenser_out_des)) + f_split_GGHX*m_flow_H2O_des*(Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_condenser2_in_des) - Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_condenser_out_des));
+  
+  //Electrical Heater
+  //The design mass flow rate of the electrical heater is (m_flow_Fe2O3_des+m_flow_Fe2O3_PGHX2)
+  //There is a heater multiple, assume 2.0 for now.
+  //Heater efficiency, let's say 0.95 for now.
+  //Initial temperature should be T_Fe2O3_med_des and it is heated up to T_Fe2O3_hot_des.\
+  parameter Real HM = 2.0 "Heater Multiple";
+  parameter Real eff_heater = 0.95 "Heater electrical to thermal efficiency";
+  
+  parameter SI.HeatFlowRate Q_flow_heater_curtail = (m_flow_Fe2O3_des+m_flow_Fe2O3_PGHX2)*(h_Fe2O3_hot_des - h_Fe2O3_med_des) "Heating rate required during steady operation where the hot tank is full (J/s)";
+  parameter SI.HeatFlowRate Q_flow_heater_max = HM*Q_flow_heater_curtail "Maximum heat output rate of the heater (J/s)";
+  
+  parameter SI.Power P_heater_curtail = Q_flow_heater_curtail/eff_heater "Heater power input when curtailed (W)";
+  
+  parameter SI.Power P_heater_max = Q_flow_heater_max/eff_heater "Maximum heater power input (W)";
+  
+    
+    
+  //Cost and Sizing Parameters
+  parameter Real CEPCI = 816.0 "CEPCI index of the year used in the study e.g. 816.0 for year 2022";
+  //PGHX1 assume C_r is 1.0
+  parameter SI.CoefficientOfHeatTransfer U_GGHX_des = 10.0 "Overall heat transfer coefficient in the GGHX (W/m2K)";
+   
+  parameter Real NTU_GGHX_des = eff_GGHX_des/(1.0 - eff_GGHX_des) "Design NTU of the GGHX (-)";
+  parameter SI.ThermalConductance UA_GGHX_des = C_min_GGHX_des*NTU_GGHX_des "Design UA of the GGHX (W/K)";
+  parameter SI.Area A_GGHX_des = UA_GGHX_des/U_GGHX_des "Design heat transfer area of the GGHX (m2)"; 
+  parameter Real FOB_GGHX = div(A_GGHX_des, 185.8)*(CEPCI/500.0)*150945.38 + (CEPCI/500.0)*6200.0*((10.764*rem(A_GGHX_des,185.8))^0.42) "Free-on-board cost of the GGHX component, based on a Spiral-Plate HX (USD_year)";
+   
+  //H2 Blower cost, based on cast iron, 3psig (1.22 bar absolute)
+  parameter SI.Density rho_H2_mix_des = Modelica.Media.IdealGases.SingleGases.H2.density_pT(p_des,T_H2_mix_des) "Density of H2 after the mixer (kg/m3)";
+  parameter SI.VolumeFlowRate V_flow_H2_mix_des = m_flow_H2_des/rho_H2_mix_des "Volumetric flow rate of H2 in the blower fan (m3/s)";
+  parameter Real N_blower_quo = div(V_flow_H2_mix_des, 23.6) "Number of maximum-sized blower fans (max 23.6 m3/s vol flow rate)";
+  parameter SI.VolumeFlowRate V_blower_rem = rem(V_flow_H2_mix_des, 23.6) "Remaining volumetric flow rate of the blowers (m3/s)";
+  
+  parameter Real FOB_blower = if V_blower_rem > 2.36 then N_blower_quo*(CEPCI/460.0)*23.0*(2119.0*23.6)^0.82 + (CEPCI/460.0)*23.0*(2119.0*V_blower_rem)^0.82 else N_blower_quo*(CEPCI/460.0)*23.0*(2119.0*23.6)^0.82 + (CEPCI/460.0)*516.0*(2119.0*V_blower_rem)^0.46 "Free-on-board cost of the blowers, cast iron, (USD_year)";
+  
+  //Hot Tank Cost
+  parameter SI.Time t_stor_Fe2O3_hot = 10.0*3600.0 "Number of seconds of storage of hot-tank Fe2O3 (s)";
+  //parameter Real ar_tank_hot = 2.0 "Aspect ratio of hot tank (-)";
+  
+  parameter Real porosity_Fe2O3_material = 1.0 - (4300.0/Material_Fe2O3.rho_Tf(900.0+273.15,0.0)) "Material porosity of Fe2O3 based on measurements at 900degC obtained from Mahdiar (-)";
+  parameter Real porosity_Fe2O3_packing = 0.20 "Packing porosity of Fe2O3 packed bed (-)";
+  parameter SI.Density rho_Fe2O3_hot = Material_Fe2O3.rho_Tf(T_Fe2O3_hot_des,0.0) "Density of pure, dense Fe2O3 at the hot tank temperature (kg/m3)";
+  
+  parameter SI.Volume V_tank_hot = (m_flow_Fe2O3_des+m_flow_Fe2O3_PGHX2)*t_stor_Fe2O3_hot/(rho_Fe2O3_hot*(1.0-porosity_Fe2O3_material)*(1.0-porosity_Fe2O3_packing));
+  
+  parameter Real r_LM_tank = 0.23 "Labor to material ratio of bins and hoppers for bulk solids";
+  parameter Real f_mat_tank = (1.0/r_LM_tank)/(1.0 + 1.0/r_LM_tank) "Material cost fraction for a reference carbon steel tank";
+  
+  parameter Real f_alloy_tank_hot = 2.5 "Material factor alloy cost, 2.5 for SS";
+  
+  parameter Real FOB_tank_hot = (1.0-f_mat_tank)*((CEPCI/1000.0)*350000.0*(V_tank_hot/350.0)^0.65) + f_mat_tank*f_alloy_tank_hot*((CEPCI/1000.0)*350000.0*(V_tank_hot/350.0)^0.65) "FOB cost of the hot Fe2O3 storage tank (USD_year)";
+  
+  //Med Tank Cost
+  parameter SI.Time t_stor_Fe2O3_med = 10.0*3600.0 "Number of seconds of storage of med-tank Fe2O3 (s)";
+  parameter SI.Density rho_Fe2O3_med = Material_Fe2O3.rho_Tf(T_Fe2O3_med_des,0.0) "Density of pure, dense Fe2O3 at the hot tank temperature (kg/m3)";
+  parameter SI.Volume V_tank_med = (m_flow_Fe2O3_des+m_flow_Fe2O3_PGHX2)*t_stor_Fe2O3_med/(rho_Fe2O3_med*(1.0-porosity_Fe2O3_material)*(1.0-porosity_Fe2O3_packing));
+  
+  parameter Real f_alloy_tank_med = 1.0 "Material factor alloy cost, 1.0 for CS";
+  
+  parameter Real FOB_tank_med = (1.0-f_mat_tank)*((CEPCI/1000.0)*350000.0*(V_tank_med/350.0)^0.65) + f_mat_tank*f_alloy_tank_med*((CEPCI/1000.0)*350000.0*(V_tank_med/350.0)^0.65) "FOB cost of the medium temp Fe2O3 storage tank (USD_year)";
+  
+  //Reactor Cost
+  //Formula is (816/1000)*14000000*(m_flow_Fe2O3_des^0.53) where m_flow is up to 1000kg/s (for the first stage)
+  //Formula is (816/1000)*14000000*(m_flow_Fe3O4_des^0.53) where m_flow is up to 1000kg/s (for the second stage)
+  //Formula is (816/1000)*14000000*(m_flow_FeO_des^0.53) where m_flow is up to 1000kg/s (for the third stage)
+  parameter SI.MassFlowRate m_flow_Fe3O4_des = (2.0*m_flow_Fe2O3_des*M_Fe3O4)/(3.0*M_Fe2O3);
+  parameter SI.MassFlowRate m_flow_FeO_des = (2.0*m_flow_Fe2O3_des*M_FeO)/(M_Fe2O3);
+  
+  parameter Real FOB_reactor = (CEPCI/1000.0)*(14.0e6*(m_flow_Fe2O3_des^0.53 + m_flow_Fe3O4_des^0.53 + m_flow_FeO_des^0.53)) "FOB Cost of the reactors (USD_year)";
+  
+  //Heater Cost
+  parameter Real pri_heater = 0.150 "Cost per W of heater. Assumed to be 200 USD_2022/kW";
+  parameter Real FOB_heater = (CEPCI/816.0)*pri_heater*P_heater_max "FOB cost of the electrical heater (USD_year)";
+  
+  //Condenser Q_flow_cooling = U_condenser_des*A_condenser1*(T_condenser1_in_des-T_amb_des)
+  parameter SI.CoefficientOfHeatTransfer U_condenser1_des = 700.0 "W/m2K";
+  parameter SI.CoefficientOfHeatTransfer U_condenser2_des = 700.0 "W/m2K";
+  SI.Area A_condenser1 = Q_flow_cooling_condenser1/(U_condenser1_des*(T_condenser1_in_des-T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
+  SI.Area A_condenser2 = Q_flow_cooling_condenser2/(U_condenser2_des*(T_condenser2_in_des-T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
+  
+  Real FOB_condenser1 = (CEPCI/500.0)*5000.0*((10.764*A_condenser1)^0.40);
+  Real FOB_condenser2 = (CEPCI/500.0)*5000.0*((10.764*A_condenser2)^0.40);
+  
+  
+  
+  
+  
+  
   
   //Reactor Physical Design
   //Input parameters and assumptions
@@ -221,10 +350,17 @@ model H2DRI_DesignCase_2a_DesignPt
   //parameter Real C_reactor_final = BFM*IDC*C_reactor;
   
   //parameter SI.Time t_residence = V_reactor_total/V_flow_Fe2O3_reactor;
+
+  
 equation
 
   m_flow_Fe2O3_des*h_Fe2O3_hot_des + m_flow_H2_des*h_H2_pre2_des = m_flow_Fe2O3_des*SolarTherm.Media.SolidParticles.Fe2O3_utilities.h_T(T_mix_actual) + m_flow_H2_des*Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(1.0e5,T_mix_actual);
   
+  //Calculate Temperature of H2 and H2O leaving PGHX1 and entering condenser 1:
+  Q_flow_PGHX1_des = (1.0 - f_split_GGHX)*m_flow_H2_excess*(Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_H2_offgas_des, T_products_des)-Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_H2_offgas_des, T_condenser1_in_des)) + (1.0 - f_split_GGHX)*m_flow_H2O_des*(Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_products_des)-Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_condenser1_in_des));
+  
+  //Calculate Temperature of H2 and H2O leaving GGHX and entering condenser 2
+  Q_flow_GGHX_des = f_split_GGHX*m_flow_H2_excess*(Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_H2_offgas_des, T_products_des)-Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_H2_offgas_des, T_condenser2_in_des)) +  f_split_GGHX*m_flow_H2O_des*(Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_products_des)-Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_condenser2_in_des));
 
 annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false, extent = {{-150, -100}, {150, 100}})),
