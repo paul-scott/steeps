@@ -347,7 +347,7 @@ model Hybrid_CSP_PV_Particle_HotH2_Burner_OptDispatch2
   parameter SI.Mass m_max = m_dot_pcl_DP_H2_HX * t_storage * 3600 "Max particles mass in tanks [kg]";
   parameter SI.Energy E_max = t_storage * 3600 * (m_max * (h_hot_set - h_cold_set)) "Maximum tank stored energy [J]";
   //m_flow_blk * t_storage * 3600 "Max particles mass in tanks [kg]";
-  parameter SI.Volume V_max = m_max / ((rho_hot_set + rho_cold_set) / 2) / packing_factor "Volume needed to host particles in the tank with certain packing factor value";
+  parameter SI.Volume V_max = m_max / (rho_s) / packing_factor "Volume needed to host particles in the tank with certain packing factor value";
   parameter Real tank_ar = 1.17 "[ST] storage aspect ratio";
   parameter SI.Diameter D_storage = H_storage / tank_ar "Storage tank diameter";
   parameter Real X_dome = 1 / (4 * tank_ar ^ 2) - 1 / (8 * tank_ar ^ 3) + 1 / (12 * tank_ar ^ 3);
