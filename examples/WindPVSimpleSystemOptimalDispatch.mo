@@ -23,13 +23,14 @@ model WindPVSimpleSystemOptimalDispatch
     parameter Modelica.SIunits.Efficiency pv_fraction = 0.5 "Maximum hot salt mass flow rate";
     parameter Real renewable_multiple = 2 "Renewable energy to process heat demand factor";
     parameter Real heater_multiple = 1.5 "Heater energy to process heat demand factor";
+    parameter Modelica.SIunits.Power P_grid_max = renewable_multiple * heater_multiple * Q_process_des "Maximum hot salt mass flow rate";
     parameter Modelica.SIunits.Power P_elec_max = heater_multiple * Q_process_des/eff_heater "Maximum heater electrical input";
     parameter Modelica.SIunits.Power nu_process_min = 0.80 "Minimum operation threshold";
     parameter Modelica.SIunits.HeatFlowRate Q_process_des = 50e6 "Process heat demand at design";
     parameter Modelica.SIunits.Efficiency eff_heater = 0.99 "Electric heater efficiency";
 
     SolarTherm.Models.Sources.GridInput renewable_input(
-        P_elec_max = P_elec_max, 
+        P_elec_max = P_grid_max, 
         P_elec_min = P_elec_min, 
         P_elec_pv_ref_size = pv_ref_size, 
         P_elec_wind_ref_size = wind_ref_size, 
