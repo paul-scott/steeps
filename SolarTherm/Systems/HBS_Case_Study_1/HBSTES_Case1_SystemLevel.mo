@@ -149,11 +149,11 @@ parameter Medium.ThermodynamicState state_air_min_des = Medium.setState_pTX(Medi
   parameter SI.Length L_piping3 = 1.5*TES.Tank_A.D_tank + 0.75*TES.Tank_A.H_tank "Length of piping 3 (m)";
   parameter SI.Length L_piping4 = 1.5*TES.Tank_A.D_tank "Length of piping 4 (m)";
   parameter SI.Length L_piping5 = 1.5*TES.Tank_A.H_tank "Length of piping 5 (m)";
-  parameter Real FCIpL_piping1 = (I_year/816.0)*408.865 "FCI cost per metre of piping 1 (USD/m)";
-  parameter Real FCIpL_piping2 = (I_year/816.0)*1108.64 "FCI cost per metre of piping 2 (USD/m)";
-  parameter Real FCIpL_piping3 = (I_year/816.0)*1883.08 "FCI cost per metre of piping 3 (USD/m)";
-  parameter Real FCIpL_piping4 = (I_year/816.0)*1190.25"FCI cost per metre of piping 4 (USD/m)";
-  parameter Real FCIpL_piping5 = (I_year/816.0)*51.8656 "FCI cost per metre of piping 5 (USD/m)";
+  parameter Real FCIpL_piping1 = (I_year/816.0)*479.77 "FCI cost per metre of piping 1 (USD/m)";
+  parameter Real FCIpL_piping2 = (I_year/816.0)*1299.45 "FCI cost per metre of piping 2 (USD/m)";
+  parameter Real FCIpL_piping3 = (I_year/816.0)*2060.85 "FCI cost per metre of piping 3 (USD/m)";
+  parameter Real FCIpL_piping4 = (I_year/816.0)*1291.48"FCI cost per metre of piping 4 (USD/m)";
+  parameter Real FCIpL_piping5 = (I_year/816.0)*60.21 "FCI cost per metre of piping 5 (USD/m)";
   //Costs
   //TES
   parameter Real I_year = 816.0 "CEPCI for 2022";

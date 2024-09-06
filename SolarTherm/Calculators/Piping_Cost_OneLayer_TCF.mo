@@ -58,9 +58,9 @@ model Piping_Cost_OneLayer_TCF
   SI.Length t1(min = 0.0, start = 1e-3) "Thickness of Insulation";
   //SI.Length t2(min = 1e-6, start = 0.8) "Thickness of Insulation";
   Real CpL_1 "Cost per length of piping due to inner layer (USD/m)";
-  Real CpL_duct "Cost per length of piping due to outer duct layer (USD/m)";
+  Real CpL_duct "FCI Cost per length of piping due to outer duct layer (USD/m)";
   Real Penalty "Very large cost penalty for invalid design (USD/m)";
-  Real CpL_total "Cost per length of total piping (USD/m)";
+  Real CpL_total "FCI Cost per length of total piping (USD/m)";
   //parameter Real QpL = CN.pi*d1*h_amb*(373.15-T4) "Heat loss rate per unit length (W/m)";
   Real QpL(min = 1e-12);
 algorithm
@@ -86,7 +86,7 @@ QpL=(2.0*CN.pi/log(r1/r2))*(((E/1)*(T2^1-T1^1))+((F/2)*(T2^2-T1^2))+((G/3)*(T2^3
   QpL = CN.pi * d2 * h_amb * (T2 - T3);
   CpL_1 = CN.pi * (r2 ^ 2 - r1 ^ 2) * c2;
   //CpL_2 = CN.pi * (r3 ^ 2 - r2 ^ 2) * c2;
-   CpL_duct = (816.0/1000.0)*F_m_duct*120.1539*(d1^2.14); //Use the inner diameter
+   CpL_duct = 1.18*(816.0/1000.0)*F_m_duct*120.1539*(d1^2.14); //Use the inner diameter
   CpL_total = CpL_1 + CpL_duct + Penalty;
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false)),

@@ -75,7 +75,7 @@ model Piping_Cost_TwoLayer_CS_TCF
   
   Real CpL_1 "Cost per length of piping due to inner layer (USD/m)";
   Real CpL_2 "Cost per length of piping due to outer layer (USD/m)";
-  Real CpL_duct "Cost per length of piping due to outer duct layer (USD/m)";
+  Real CpL_duct "FCI Cost per length of piping due to outer duct layer (USD/m)";
   Real Penalty "Very large cost penalty for invalid design (USD/m)";
   
   Real CpL_total "Cost per length of total piping (USD/m)";
@@ -112,7 +112,7 @@ equation
 
   CpL_1 = CN.pi*(r2^2-r1^2)*c1;
   CpL_2 = CN.pi*(r3^2-r2^2)*c2;
-  CpL_duct = (816.0/1000.0)*F_m_duct*120.1539*(d3^2.14);
+  CpL_duct = 1.18*(816.0/1000.0)*F_m_duct*120.1539*(d3^2.14);
   CpL_total = CpL_1 + CpL_2 + CpL_duct + Penalty;
 
 annotation(
