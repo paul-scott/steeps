@@ -11,7 +11,7 @@ protected
 algorithm
   if Re <= 2300.0 then //Laminar
     Nu := 3.66;
-    f := 16.0/Re;
+    f := 16.0/max(Re, 1.0e-6);
     
   elseif Re >= 4000.0 then //Turbulent
     f := (0.790*log(Re) - 1.64)^(-2.0);
