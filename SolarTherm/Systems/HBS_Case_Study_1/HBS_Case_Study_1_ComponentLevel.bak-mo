@@ -1,0 +1,8 @@
+within SolarTherm.Systems.HBS_Case_Study_1;
+
+model HBS_Case_Study_1_ComponentLevel
+equation
+
+annotation(
+    Diagram(coordinateSystem(preserveAspectRatio = false)));
+end HBS_Case_Study_1_ComponentLevel;

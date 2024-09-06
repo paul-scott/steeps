@@ -133,8 +133,13 @@ model H2DRI_DesignCase_2a_DesignPt
   
   parameter SI.ThermalConductance C_min_PGHX1 = min(C_C_PGHX1,C_H_PGHX1);
   
+  parameter SI.ThermalConductance C_max_PGHX1 = max(C_C_PGHX1,C_H_PGHX1);
+  
+  parameter Real C_r_PGHX1 = C_min_PGHX1/C_max_PGHX1;
+  
   parameter SI.HeatFlowRate Q_flow_PGHX1_des = eff_PGHX1_des*C_min_PGHX1*(T_products_des-T_Fe2O3_feedstock_des);
   
+  parameter Real NTU_PGHX1_des = (1.0/(C_r_PGHX1-1.0))*log((eff_PGHX1_des-1.0)/(eff_PGHX1_des*C_r_PGHX1-1.0)) "For PGHX1, C_r is unlikely to be one";
   
   //What is the enthalpy of Fe2O3 exiting the PGHX1 and entering Med Tank?
   parameter SI.SpecificEnthalpy h_Fe2O3_feedstock_des = Material_Fe2O3.h_Tf(T_Fe2O3_feedstock_des,0.0) "Specific enthalpy of Fe2O3 feedstock (J/kg)";
@@ -200,6 +205,12 @@ model H2DRI_DesignCase_2a_DesignPt
   parameter SI.SpecificEnthalpy h_Fe2O3_med_des = (m_flow_Fe2O3_feedstock*h_Fe2O3_med1_des + m_flow_Fe2O3_PGHX2*h_Fe2O3_med2_des)/(m_flow_Fe2O3_feedstock + m_flow_Fe2O3_PGHX2) "Expected specific enthalpy of the med tank (J/kg)";
   parameter SI.Temperature T_Fe2O3_med_des = SolarTherm.Media.SolidParticles.Fe2O3_utilities.T_h(h_Fe2O3_med_des) "Expected specific enthalpy of the med tank (K)";
   
+  parameter SI.HeatFlowRate Q_flow_PGHX2_des = m_flow_Fe2O3_PGHX2*eff_PGHX2_des*(h_Fe2O3_hot_des - SolarTherm.Media.SolidParticles.Fe2O3_utilities.h_T(T_H2_pre1_des)) "Design heat transfer rate across PGHX2 (J/s)";
+  
+  parameter Real NTU_PGHX2_des = eff_PGHX2_des/(1.0-eff_PGHX2_des) "For PGHX2, C_r is one";
+  
+  parameter SI.ThermalConductance C_H_PGHX2 = m_flow_Fe2O3_PGHX2*cp_Fe2O3_PGHX2;
+  
   
   //Linear Guess
   parameter SI.HeatFlowRate H_flow_inlet_des = m_flow_Fe2O3_des*h_Fe2O3_inlet_des + m_flow_H2_des*h_H2_inlet_des;
@@ -231,12 +242,13 @@ model H2DRI_DesignCase_2a_DesignPt
   //Cost and Sizing Parameters
   parameter Real CEPCI = 816.0 "CEPCI index of the year used in the study e.g. 816.0 for year 2022";
   //PGHX1 assume C_r is 1.0
-  parameter SI.CoefficientOfHeatTransfer U_GGHX_des = 10.0 "Overall heat transfer coefficient in the GGHX (W/m2K)";
+  parameter SI.CoefficientOfHeatTransfer U_GGHX_des = 30.0 "Overall heat transfer coefficient in the GGHX (W/m2K)";
    
   parameter Real NTU_GGHX_des = eff_GGHX_des/(1.0 - eff_GGHX_des) "Design NTU of the GGHX (-)";
   parameter SI.ThermalConductance UA_GGHX_des = C_min_GGHX_des*NTU_GGHX_des "Design UA of the GGHX (W/K)";
   parameter SI.Area A_GGHX_des = UA_GGHX_des/U_GGHX_des "Design heat transfer area of the GGHX (m2)"; 
   parameter Real FOB_GGHX = div(A_GGHX_des, 185.8)*(CEPCI/500.0)*150945.38 + (CEPCI/500.0)*6200.0*((10.764*rem(A_GGHX_des,185.8))^0.42) "Free-on-board cost of the GGHX component, based on a Spiral-Plate HX (USD_year)";
+  parameter Real FCI_GGHX = FOB_GGHX*1.05*2.4541;
    
   //H2 Blower cost, based on cast iron, 3psig (1.22 bar absolute)
   parameter SI.Density rho_H2_mix_des = Modelica.Media.IdealGases.SingleGases.H2.density_pT(p_des,T_H2_mix_des) "Density of H2 after the mixer (kg/m3)";
@@ -245,6 +257,8 @@ model H2DRI_DesignCase_2a_DesignPt
   parameter SI.VolumeFlowRate V_blower_rem = rem(V_flow_H2_mix_des, 23.6) "Remaining volumetric flow rate of the blowers (m3/s)";
   
   parameter Real FOB_blower = if V_blower_rem > 2.36 then N_blower_quo*(CEPCI/460.0)*23.0*(2119.0*23.6)^0.82 + (CEPCI/460.0)*23.0*(2119.0*V_blower_rem)^0.82 else N_blower_quo*(CEPCI/460.0)*23.0*(2119.0*23.6)^0.82 + (CEPCI/460.0)*516.0*(2119.0*V_blower_rem)^0.46 "Free-on-board cost of the blowers, cast iron, (USD_year)";
+  
+  parameter Real FCI_blower = FOB_blower*1.05*2.5;
   
   //Hot Tank Cost
   parameter SI.Time t_stor_Fe2O3_hot = 10.0*3600.0 "Number of seconds of storage of hot-tank Fe2O3 (s)";
@@ -256,22 +270,16 @@ model H2DRI_DesignCase_2a_DesignPt
   
   parameter SI.Volume V_tank_hot = (m_flow_Fe2O3_des+m_flow_Fe2O3_PGHX2)*t_stor_Fe2O3_hot/(rho_Fe2O3_hot*(1.0-porosity_Fe2O3_material)*(1.0-porosity_Fe2O3_packing));
   
-  parameter Real r_LM_tank = 0.23 "Labor to material ratio of bins and hoppers for bulk solids";
-  parameter Real f_mat_tank = (1.0/r_LM_tank)/(1.0 + 1.0/r_LM_tank) "Material cost fraction for a reference carbon steel tank";
-  
-  parameter Real f_alloy_tank_hot = 2.5 "Material factor alloy cost, 2.5 for SS";
-  
-  parameter Real FOB_tank_hot = (1.0-f_mat_tank)*((CEPCI/1000.0)*350000.0*(V_tank_hot/350.0)^0.65) + f_mat_tank*f_alloy_tank_hot*((CEPCI/1000.0)*350000.0*(V_tank_hot/350.0)^0.65) "FOB cost of the hot Fe2O3 storage tank (USD_year)";
+  parameter Real FOB_tank_hot = (CEPCI/500)*2.1*570.0*(35.315*V_tank_hot)^0.46 "FOB cost of the hot Fe2O3 storage tank (USD_year)";
+  parameter Real FCI_tank_hot = FOB_tank_hot*1.05*2.744;
   
   //Med Tank Cost
   parameter SI.Time t_stor_Fe2O3_med = 10.0*3600.0 "Number of seconds of storage of med-tank Fe2O3 (s)";
   parameter SI.Density rho_Fe2O3_med = Material_Fe2O3.rho_Tf(T_Fe2O3_med_des,0.0) "Density of pure, dense Fe2O3 at the hot tank temperature (kg/m3)";
   parameter SI.Volume V_tank_med = (m_flow_Fe2O3_des+m_flow_Fe2O3_PGHX2)*t_stor_Fe2O3_med/(rho_Fe2O3_med*(1.0-porosity_Fe2O3_material)*(1.0-porosity_Fe2O3_packing));
-  
-  parameter Real f_alloy_tank_med = 1.0 "Material factor alloy cost, 1.0 for CS";
-  
-  parameter Real FOB_tank_med = (1.0-f_mat_tank)*((CEPCI/1000.0)*350000.0*(V_tank_med/350.0)^0.65) + f_mat_tank*f_alloy_tank_med*((CEPCI/1000.0)*350000.0*(V_tank_med/350.0)^0.65) "FOB cost of the medium temp Fe2O3 storage tank (USD_year)";
-  
+    
+  parameter Real FOB_tank_med = (CEPCI/500)*1.0*570.0*(35.315*V_tank_hot)^0.46 "FOB cost of the medium temp Fe2O3 storage tank (USD_year)";
+  parameter Real FCI_tank_med = FOB_tank_med*1.05*4.0;
   //Reactor Cost
   //Formula is (816/1000)*14000000*(m_flow_Fe2O3_des^0.53) where m_flow is up to 1000kg/s (for the first stage)
   //Formula is (816/1000)*14000000*(m_flow_Fe3O4_des^0.53) where m_flow is up to 1000kg/s (for the second stage)
@@ -280,10 +288,12 @@ model H2DRI_DesignCase_2a_DesignPt
   parameter SI.MassFlowRate m_flow_FeO_des = (2.0*m_flow_Fe2O3_des*M_FeO)/(M_Fe2O3);
   
   parameter Real FOB_reactor = (CEPCI/1000.0)*(14.0e6*(m_flow_Fe2O3_des^0.53 + m_flow_Fe3O4_des^0.53 + m_flow_FeO_des^0.53)) "FOB Cost of the reactors (USD_year)";
+  parameter Real FCI_reactor = FOB_reactor*1.05*2.0;
   
   //Heater Cost
   parameter Real pri_heater = 0.150 "Cost per W of heater. Assumed to be 200 USD_2022/kW";
   parameter Real FOB_heater = (CEPCI/816.0)*pri_heater*P_heater_max "FOB cost of the electrical heater (USD_year)";
+  parameter Real FCI_heater = FOB_heater*1.05*4.0;
   
   //Condenser Q_flow_cooling = U_condenser_des*A_condenser1*(T_condenser1_in_des-T_amb_des)
   parameter SI.CoefficientOfHeatTransfer U_condenser1_des = 700.0 "W/m2K";
@@ -291,10 +301,23 @@ model H2DRI_DesignCase_2a_DesignPt
   SI.Area A_condenser1 = Q_flow_cooling_condenser1/(U_condenser1_des*(T_condenser1_in_des-T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
   SI.Area A_condenser2 = Q_flow_cooling_condenser2/(U_condenser2_des*(T_condenser2_in_des-T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
   
-  Real FOB_condenser1 = (CEPCI/500.0)*5000.0*((10.764*A_condenser1)^0.40);
-  Real FOB_condenser2 = (CEPCI/500.0)*5000.0*((10.764*A_condenser2)^0.40);
+  Real FOB_condenser1 = (CEPCI/500.0)*10000.0*((10.764*A_condenser1)^0.40);
+  Real FOB_condenser2 = (CEPCI/500.0)*10000.0*((10.764*A_condenser2)^0.40);
   
+  Real FCI_condenser1 = FOB_condenser1*1.05*2.4541;
+  Real FCI_condenser2 = FOB_condenser2*1.05*2.4541;
   
+  //Cost of PGHX1
+  parameter SI.ThermalConductance U_PGHX1_des = 373.96 "Overall heat transfer coefficient of PGHX1 (W/K)";
+  parameter SI.Area A_PGHX1_des = C_min_PGHX1*NTU_PGHX1_des/U_PGHX1_des;
+  parameter Real FOB_PGHX1 = (CEPCI/708.8)*(1909.21*A_PGHX1_des);
+  parameter Real FCI_PGHX1 = FOB_PGHX1*1.05*1.8688;
+  
+  //Cost of PGHX2
+  parameter SI.ThermalConductance U_PGHX2_des = 533.96 "Overall heat transfer coefficient of PGHX2 (W/K)";
+  parameter SI.Area A_PGHX2_des = C_H_PGHX2*NTU_PGHX2_des/U_PGHX2_des;
+  parameter Real FOB_PGHX2 = (CEPCI/708.8)*(1856.0*A_PGHX2_des);
+  parameter Real FCI_PGHX2 = FOB_PGHX2*1.05*1.8688;
   
   
   

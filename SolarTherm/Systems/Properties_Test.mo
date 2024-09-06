@@ -13,12 +13,13 @@ model Properties_Test
   
   SI.SpecificHeatCapacity cp "cp of substance (J/kgK)";
   
-  
+  SI.Density rho_Fe2O3 "Density of pure Fe2O3 (kg/m3)";
   
 equation
-  T = 298.15 + time;
+  T = 765.15 + time;
   cp = Modelica.Media.Water.IF97_Utilities.cp_pT(p,T);
   T_sat = Modelica.Media.Water.IF97_Utilities.BaseIF97.Basic.tsat(p);
+  rho_Fe2O3 = SolarTherm.Media.SolidParticles.Fe2O3_utilities.rho_T(T);
   
 annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false)));

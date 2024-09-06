@@ -88,11 +88,11 @@ model Thermocline_HBS_LC_SingleTank_Final
 
   //Cost BreakDown
   parameter Real C_filler = Tank_A.C_filler;
-  parameter Real C_fluid = Tank_A.C_fluid;
-  parameter Real C_total = Tank_A.C_section;
+  parameter Real C_fluid = 0.0;
+  parameter Real C_total = 0.0;
   parameter Real C_tank = Tank_A.C_tank;
   parameter Real C_insulation = Tank_A.C_insulation;
-  parameter Real C_encapsulation = Tank_A.C_encapsulation;
+  parameter Real C_encapsulation = 0.0;
   //Theoretical Tank Level
   Modelica.Blocks.Interfaces.RealOutput Level "Theoretical Tank Level"
                                           annotation (Placement(visible = true,transformation(

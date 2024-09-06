@@ -108,14 +108,7 @@ model Thermocline_HBS_LC_Section_Final
   parameter Real eff_pump = 1.00 "Pump electricity to work efficiency";
   SI.Pressure p_drop_total "Sum of all pressure drops";
   SI.Power W_loss_pump "losses due to pressure drop";
-  //Cost breakdown
-  parameter Real C_fluid = max(rho_f_max, rho_f_min) * eta * (CN.pi * D_tank * D_tank * H_tank / 4.0) * Fluid_Package.cost;
-  parameter Real C_section = C_fluid + C_filler + C_insulation + C_tank + C_encapsulation;
-  //parameter Real C_insulation = if U_loss_tank > 1e-3 then (16.72/U_loss_tank + 0.04269)*A_loss_tank else 0.0;
-  parameter Real C_insulation = 0.0;//if U_loss_tank > 1e-3 then CpA_external_insulation(T_max, U_loss_tank) * A_loss_tank else 0.0;
-  parameter Real C_tank = C_shell(max(rho_f_max, rho_f_min), H_tank, D_tank, Tank_Package.sigma_yield(T_max), Tank_Package.rho_Tf(298.15, 0.0), 4.0);
-  parameter Real C_filler = rho_p * (1.0 - eta) * (CN.pi * D_tank * D_tank * H_tank / 4.0) * Filler_Package.cost;
-  parameter Real C_encapsulation = 0.0;
+  
   //Filler Surface Area Correction
   parameter Real f_surface = 1.0 "Don't touch this";
   //Initialise Filler surface temperature
@@ -125,6 +118,27 @@ model Thermocline_HBS_LC_Section_Final
   Real Nu[N_f] "Nusselt";
   Real Re[N_f] "Reynolds";
   parameter SI.Mass m_p[N_f] = fill((1.0-eta)*CN.pi*D_tank*D_tank*H_tank*rho_p/(4.0*N_f), N_f) "Masses of each particle";
+  
+  //Cost breakdown
+  parameter Real C_fluid = 0.0 "Air is free for now...";
+  parameter Real C_section = C_fluid + C_filler + C_insulation + C_tank + C_encapsulation "FOB Cost of this individual tank (USD_2022)";
+  //parameter Real C_insulation = if U_loss_tank > 1e-3 then (16.72/U_loss_tank + 0.04269)*A_loss_tank else 0.0;
+  parameter Real C_insulation = (816.0/795.1)*(41.13214 + (20.7285/U_loss_top) - 6.57723*(298.15/(U_loss_top*T_max)) - 8.7688*((T_max/298.15)^2.0) + 1.479653*((T_max/298.15)^3.0))*A_insulation "FOB Cost of tank insulation (USD_2022)";
+  
+  parameter SI.Length t_insulation = (0.401802 + (0.202476/U_loss_top) - 0.06425*(298.15/(U_loss_top*T_max)) - 0.08566*((T_max/298.15)^2.0) + 0.014454*((T_max/298.15)^3.0)) "Thickness of insulation (m)";
+  
+  parameter SI.Area A_insulation = 0.5*CN.pi*(D_tank+2.0*t_insulation)^2 + CN.pi*(D_tank+2.0*t_insulation)*(H_tank+2.0*t_insulation) "Outer surface area of insulation (m2)";
+  
+  parameter Real C_tank = (816.0/500.0)*570.0*(35.315*V_vessel)^0.46 "FOB cost of a carbon steel bin based on Seider (USD_2022)";
+  
+  parameter SI.Volume V_vessel = 0.25*CN.pi*((D_tank+2.0*t_insulation)^2)*(H_tank+2.0*t_insulation) "Volume of the metal vessel after considering insulation (m3)";
+  parameter Real C_filler = (816.0/795.1)*sum(m_p)*Filler_Package.cost "FOB cost of checkerbrick material (USD_2022)";
+  
+  parameter Real C_encapsulation = 0.0;
+  
+  
+  
+  
 protected
   //Initialise Particle
   SI.Temperature T_p[N_f](start = T_p_start) "Temperature of particle elements";
@@ -164,6 +178,12 @@ protected
   Filler_Package.State filler[N_f] "Filler object array";
   //.State encapsulation[N_f] "Encapsulation object array";
   Real der_h_f[N_f] "rate of change of h_f calculated explicitly";
+  
+  
+  
+  
+  
+  
 algorithm
 //Fluid Equations
   if State == 1 then

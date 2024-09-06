@@ -1,0 +1,3 @@
+within SolarTherm.Systems.HBS_Case_Study_1;
+
+package Filler_Package = SolarTherm.Materials.Mullite_20pct_porosity;

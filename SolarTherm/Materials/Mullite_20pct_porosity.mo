@@ -1,7 +1,7 @@
 within SolarTherm.Materials;
 //Mullite properties 298.15 < T (K) < 1500. Stoichiometry of 3Al2O3.2SiO2 ~72wt% is assumed which is typical of sintered mullite. 
 package Mullite_20pct_porosity
-  extends SolarTherm.Materials.PartialMaterial(MM = 426.0524e-3, T_melt = 1840.0+273.15, cost = 0.65);
+  extends SolarTherm.Materials.PartialMaterial(MM = 426.0524e-3, T_melt = 1840.0+273.15, cost = 0.55);
   import SolarTherm.Utilities.Interpolation.Interpolate1D;
   
   redeclare model State "A model which calculates state and properties"
