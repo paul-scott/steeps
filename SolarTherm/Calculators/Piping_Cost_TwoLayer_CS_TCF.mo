@@ -7,7 +7,7 @@ model Piping_Cost_TwoLayer_CS_TCF
   
   //Input Parameters
   parameter SI.Temperature T1 = 1100.0 + 273.15 "Inner Pipe temperature (K)";
-  parameter SI.MassFlowRate m_flow_gas = 26.6 "Maximum mass flow rate of air (kg/s)";  
+  parameter SI.MassFlowRate m_flow_gas = 54.8*2/2 "Maximum mass flow rate of air (kg/s)";  
   
   parameter SI.Temperature T2_Max = 1260.0 + 273.15 "Maximum tolerable insulation temperature (K)";
   

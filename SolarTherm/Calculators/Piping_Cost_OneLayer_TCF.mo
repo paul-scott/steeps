@@ -86,7 +86,7 @@ QpL=(2.0*CN.pi/log(r1/r2))*(((E/1)*(T2^1-T1^1))+((F/2)*(T2^2-T1^2))+((G/3)*(T2^3
   QpL = CN.pi * d2 * h_amb * (T2 - T3);
   CpL_1 = CN.pi * (r2 ^ 2 - r1 ^ 2) * c2;
   //CpL_2 = CN.pi * (r3 ^ 2 - r2 ^ 2) * c2;
-   CpL_duct = 1.18*(816.0/1000.0)*F_m_duct*120.1539*(d1^2.14); //Use the inner diameter
+   CpL_duct = 1.18*(816.0/1000.0)*F_m_duct*120.1539*(d1^2.14); //Use the inner diameter, 1.18 from bear module to fix cap investment cost
   CpL_total = CpL_1 + CpL_duct + Penalty;
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false)),
