@@ -36,6 +36,7 @@ model HBSTES_Case1_SystemLevel
   parameter SI.Power P_wind_gross = P_wind_net*LOF_Wind;
   parameter SI.Power P_PV_gross = P_PV_net*LOF_PV;
   //Results
+  
   SI.Energy E_supplied(start = 0) "Energy supplied by the boiler to the industrial process (J)";
   SI.Energy E_demand(start = 0) "Energy demanded by the industrial process (J)";
   SI.Energy E_renewable(start = 0) "Electrical energy produced by the renewable source (J)";
@@ -173,12 +174,13 @@ parameter Medium.ThermodynamicState state_air_min_des = Medium.setState_pTX(Medi
   parameter Real FCI_piping5 = L_piping5*FCIpL_piping5;
   
   parameter Real FCI_filler = FOB_filler*1.05*4.0; // 1.05 is for delivery cost, 4 is a hand factor (from Sieder)
-  parameter Real FCI_insulation = FOB_insulation*1.05*4.0; 
+  parameter Real FCI_insulation = FOB_insulation*1.05*4.0;
   parameter Real FCI_tank = FOB_tank*1.05*4.0;
   parameter Real FCI_heater = FOB_heater*1.05*4.0;
   parameter Real FCI_HX = FOB_HX*1.05*3.5;
   parameter Real FCI_blower1 = FOB_blower1*1.05*4.0; // fresh air blower
   parameter Real FCI_blower2 = FOB_blower2*1.05*4.0; // charging loop blower (before heater)
+
   
   parameter Real FCI_PV = 1.075*P_PV_gross;
   parameter Real FCI_wind = 1.4622*P_wind_gross;
