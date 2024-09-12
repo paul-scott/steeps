@@ -295,6 +295,20 @@ package MoltenSalt_ph "Molten Salt (60% NaNO3, 40% KNO3 by weight), explicit in 
 			</html>"));
 	end density_derT_p;
 
+  redeclare function extends density_derh_p
+    "Return derivative w.r.t. specific enthalpy at constant pressure"
+  algorithm
+    ddhp:=density_derT_p(state)/specificHeatCapacityCp(state);
+    annotation(Inline = true);
+  end density_derh_p;
+
+  redeclare function extends density_derp_h
+    "Return derivative w.r.t. pressure at constant specific enthalpy"
+  algorithm
+    ddph:=0;
+    annotation(Inline = true);
+  end density_derp_h;
+
 	annotation (Documentation(info="<html>
 <p><span style=\"font-family: Arial,sans-serif;\">Calculation of fluid properties for the mixture common molten salt (60&percnt; NaNO<sub>3</sub> and 40&percnt; KNO<sub>3</sub>) in the fluid region of 573.15 to 873.15 Kelvin.The use of this molten salt is usally used in solar thermal system due to its high thermal capacity and the high range of temperature. </span></p>
 <p><span style=\"font-family: Arial,sans-serif;\">This package of thermodynamic properties is explicit for pressure and specific enthalpy, however it is based in functions where the dependency is exclusively in the temperature. </span></p>
