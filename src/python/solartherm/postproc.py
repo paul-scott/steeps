@@ -477,9 +477,9 @@ class SimResultHeat(SimResult):
 		C_cap_ann = fin.annualised_capital_cost(C_cap, disc_v[0], int(life_v[0])) # Annualised TCI [k$/year]
 		C_year = (om_y_v[0] + om_p_v[0]*epy) * 1e-3 # Total operational costs [k$/year]
 
-		C_cap_bd_n = ['HBS', 'Heater', 'HX', 'Blowers', 'Piping', 'PV', 'Wind'] # Capital cost components name
+		C_cap_bd_n = ['HBS', 'Heater', 'HX', 'Blower1', 'Blower2', 'Piping', 'PV', 'Wind'] # Capital cost components name
 		C_cap_bd_u = 'k$' # Capital cost components unit
-		C_cap_bd_v = [C_HBS*1e-3, C_heater_v[0]*1e-3, C_HX_v[0]*1e-3, C_blowers*1e-3, C_pip*1e-3, C_PV_v[0]*1e-3, C_wind_v[0]*1e-3] # Capital cost breakdown [k$]
+		C_cap_bd_v = [C_HBS*1e-3, C_heater_v[0]*1e-3, C_HX_v[0]*1e-3, C_blower1_v[0]*1e-3, C_blower2_v[0]*1e-3, C_pip*1e-3, C_PV_v[0]*1e-3, C_wind_v[0]*1e-3] # Capital cost breakdown [k$]
 
 		C_op_bd_n = ['Fixed O&M', 'variable O&M'] # Operational cost components name
 		C_op_bd_u = 'k$/year' # Operational cost components unit
