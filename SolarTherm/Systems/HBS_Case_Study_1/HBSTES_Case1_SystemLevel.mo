@@ -145,11 +145,11 @@ parameter Medium.ThermodynamicState state_air_min_des = Medium.setState_pTX(Medi
   parameter SI.Power P_C1 = (0.9855*(1.4/0.4)*(V_flow1_max*p_high/0.75)*(((p_high/p_amb_des)^(0.4/1.4))-1) )/0.90 "Sizing power of blower 1 (W)";
   parameter SI.Power P_C2 = (0.9855*(1.4/0.4)*(V_flow2_max*p_high/0.75)*(((p_high/p_amb_des)^(0.4/1.4))-1) )/0.90 "Sizing power of blower 2 (W)";
   
-  parameter SI.Length L_piping1 = 1.5*TES.Tank_A.D_tank "Length of piping 1 (m)";
-  parameter SI.Length L_piping2 = 1.5*TES.Tank_A.D_tank + 0.75*TES.Tank_A.H_tank "Length of piping 2 (m)";
-  parameter SI.Length L_piping3 = 1.5*TES.Tank_A.D_tank + 0.75*TES.Tank_A.H_tank "Length of piping 3 (m)";
-  parameter SI.Length L_piping4 = 1.5*TES.Tank_A.D_tank "Length of piping 4 (m)";
-  parameter SI.Length L_piping5 = 1.5*TES.Tank_A.H_tank "Length of piping 5 (m)";
+  parameter SI.Length L_piping1 = max(1.5*TES.Tank_A.D_tank, 50) "Length of piping 1 (m)";
+  parameter SI.Length L_piping2 = max(1.5*TES.Tank_A.D_tank + 0.75*TES.Tank_A.H_tank, 50) "Length of piping 2 (m)";
+  parameter SI.Length L_piping3 = max(1.5*TES.Tank_A.D_tank + 0.75*TES.Tank_A.H_tank, 50) "Length of piping 3 (m)";
+  parameter SI.Length L_piping4 = max(1.5*TES.Tank_A.D_tank, 50) "Length of piping 4 (m)";
+  parameter SI.Length L_piping5 = max(1.5*TES.Tank_A.H_tank, 50) "Length of piping 5 (m)";
   parameter Real FCIpL_piping1 = (I_year/816.0)*479.77 "FCI cost per metre of piping 1 (USD/m)";
   parameter Real FCIpL_piping2 = (I_year/816.0)*1299.45 "FCI cost per metre of piping 2 (USD/m)";
   parameter Real FCIpL_piping3 = (I_year/816.0)*2060.85 "FCI cost per metre of piping 3 (USD/m)";
