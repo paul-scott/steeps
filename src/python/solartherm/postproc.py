@@ -423,7 +423,7 @@ class SimResultHeat(SimResult):
 		epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
 		#srev = rev_v[-1] # spot market revenue [$]
 		lcoh = None # Levelised cost of heat
-		capf = self.mat.data('Capacity_Factor')[0] # Capacity factor
+		capf = self.mat.data('Capacity_Factor')[-1] # Capacity factor
 
 		lcoh = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],int(life_v[0]), int(cons_v[0]), epy)
 		#capf = fin.capacity_factor(name_v[0], epy)
@@ -431,7 +431,7 @@ class SimResultHeat(SimResult):
 		# Convert to useful units
 		epy = epy/(1e6*3600) # Convert from J/year to MWh/year
 		if close_to_year: 
-			lcoe = lcoe*1e6*3600 # Convert from $/J to $/MWh
+			lcoh = lcoh*1e6*3600 # Convert from $/J to $/MWh
 			capf = 100*capf
 
 		return [epy, lcoh, capf]
@@ -441,8 +441,8 @@ class SimResultHeat(SimResult):
 		"""Calculate costs breakdown for the renewable system"""
 		eng_t = self.mat.abscissa('E_supplied', valuesOnly=True) # Time [s]
 		eng_v = self.mat.data('E_supplied') # Cumulative electricity generated [J]
-		disc_v = 0.064 #self.mat.data('r_disc') # Discount rate [-]
-		life_v = 25 #self.mat.data('t_life') # Plant lifetime [year]
+		disc_v = [0.064] #self.mat.data('r_disc') # Discount rate [-]
+		life_v = [25] #self.mat.data('t_life') # Plant lifetime [year]
 
 		C_filler_v = self.mat.data('FCI_filler') # filler capital cost [$]
 		C_insulation_v = self.mat.data('FCI_insulation') # tank insulation capital cost [$]
