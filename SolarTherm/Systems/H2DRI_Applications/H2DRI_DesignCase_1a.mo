@@ -122,7 +122,7 @@ model H2DRI_DesignCase_1a
   SI.MassFlowRate m_Fe2O3_signal(start = m_flow_Fe2O3_des);
   SI.MassFlowRate m_H2_signal(start = m_flow_H2_des);
   SolarTherm.Models.Reactors.Reactor_H2DRI_Overall Reactor(T_rxn(start = T_reactants_des))  annotation(
-    Placement(visible = true, transformation(origin = {11, -19}, extent = {{-37, -37}, {37, 37}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {7, -19}, extent = {{-37, -37}, {37, 37}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink H2O_Sink(redeclare package Medium = Modelica.Media.Water.WaterIF97_ph) annotation(
     Placement(visible = true, transformation(origin = {206, 28}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression T_Fe2O3_signal(y = T_Fe2O3_in) annotation(
@@ -201,11 +201,11 @@ equation
   connect(TES.fluid_b, Fe2O3_pump.fluid_a) annotation(
     Line(points = {{-58, -55.5}, {-54, -55.5}, {-54, -55}}, color = {0, 127, 255}));
   connect(Fe2O3_pump.fluid_b, Reactor.fluid_Fe2O3_in) annotation(
-    Line(points = {{-40, -55}, {-36, -55}, {-36, -26}, {-26, -26}}, color = {0, 127, 255}));
+    Line(points = {{-40, -55}, {-36, -55}, {-36, -24}, {-18, -24}}, color = {0, 127, 255}));
   connect(m_flow_Fe2O3.y, Fe2O3_source_pump.m_flow) annotation(
     Line(points = {{-154, -9}, {-107, -9}, {-107, -51}}, color = {0, 0, 127}));
   connect(H2_pump.fluid_b, Reactor.fluid_H2_in) annotation(
-    Line(points = {{-48, 38}, {-36, 38}, {-36, -12}, {-26, -12}}, color = {0, 170, 0}));
+    Line(points = {{-48, 38}, {-36, 38}, {-36, -15}, {-18, -15}}, color = {0, 170, 0}));
   connect(H2_Topup_Source.ports[1], H2_Topup_Pump.fluid_a) annotation(
     Line(points = {{184, 138}, {176, 138}, {176, 120}, {170, 120}}, color = {0, 170, 0}));
   connect(m_flow_H2_Topup.y, H2_Topup_Pump.m_flow) annotation(
@@ -217,7 +217,7 @@ equation
   connect(H2_Topup_Mixer.fluid_out, GG_HX.fluid_C_in) annotation(
     Line(points = {{117, 101}, {108, 101}, {108, 76}}, color = {0, 170, 0}));
   connect(p_amb.y, Reactor.p_reactor) annotation(
-    Line(points = {{10, 38}, {10, 25.5}, {11, 25.5}, {11, 12}}, color = {0, 0, 127}));
+    Line(points = {{10, 38}, {10, 25.5}, {7, 25.5}, {7, 1}}, color = {0, 0, 127}));
   connect(Fe2O3_source_cold.ports[1], Fe2O3_pump_cold.fluid_a) annotation(
     Line(points = {{180, -64}, {167, -64}, {167, -81}, {152, -81}}, color = {0, 127, 255}));
   connect(m_flow_Fe2O3_cold.y, Fe2O3_pump_cold.m_flow) annotation(
@@ -237,9 +237,9 @@ equation
   connect(GG_HX.fluid_HA_out, Condenser.fluid_H2_in) annotation(
     Line(points = {{108, 68}, {132, 68}, {132, 50}}, color = {0, 170, 0}));
   connect(GG_HX.fluid_HA_in, Reactor.fluid_H2_out) annotation(
-    Line(points = {{66, 68}, {54, 68}, {54, -12}, {48, -12}, {48, -12}}, color = {0, 170, 0}));
+    Line(points = {{66, 68}, {54, 68}, {54, -15}, {32, -15}}, color = {0, 170, 0}));
   connect(GG_HX.fluid_HB_in, Reactor.fluid_H2O_out) annotation(
-    Line(points = {{66, 64}, {58, 64}, {58, -26}, {48, -26}, {48, -26}}, color = {0, 127, 255}));
+    Line(points = {{66, 64}, {58, 64}, {58, -24}, {32, -24}}, color = {0, 127, 255}));
   annotation(
     experiment(StopTime = 1000.0, StartTime = 0.0, Tolerance = 1e-3, Interval = 1.0),
     Diagram(coordinateSystem(extent = {{-200, -100}, {220, 200}}, preserveAspectRatio = false, initialScale = 0.1), graphics = {Text(origin = {-132, 173}, extent = {{-50, 17}, {144, 5}}, textString = "Case 1: Hot Fe2O3 TES sustains the process", fontSize = 12), Text(origin = {-120, 163}, extent = {{-36, 19}, {154, 1}}, textString = "H2 is only heated using gas-gas HX.", fontSize = 12), Line(origin = {-102, -92}, points = {{72, 0}, {-72, 0}}, pattern = LinePattern.Dash), Line(origin = {-174, -78}, points = {{0, -14}, {0, 14}}, pattern = LinePattern.Dash, arrow = {Arrow.None, Arrow.Filled}), Text(origin = {-102, -95}, extent = {{-56, 3}, {42, -5}}, textString = "Heated to target temperature"), Text(origin = {-62, -21}, extent = {{-38, 7}, {12, -5}}, textString = "T_Fe2O3_hot_des"), Text(origin = {-96, 73}, extent = {{-28, 9}, {12, -5}}, textString = "T_H2_hot_des"), Text(origin = {56, -33}, extent = {{-20, 7}, {42, -19}}, textString = "T_products_des", textStyle = {TextStyle.Bold, TextStyle.Bold, TextStyle.Bold, TextStyle.Bold, TextStyle.Bold, TextStyle.Bold, TextStyle.Bold, TextStyle.Bold}), Text(origin = {84, 45}, extent = {{-20, 7}, {30, -13}}, textString = "eff_GGHX_des", textStyle = {TextStyle.Bold, TextStyle.Bold})}),
