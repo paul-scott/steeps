@@ -36,6 +36,7 @@ model HBSTES_Case1_SystemLevel
   parameter SI.Power P_wind_gross = P_wind_net*LOF_Wind;
   parameter SI.Power P_PV_gross = P_PV_net*LOF_PV;
   //Results
+  
   SI.Energy E_supplied(start = 0) "Energy supplied by the boiler to the industrial process (J)";
   SI.Energy E_demand(start = 0) "Energy demanded by the industrial process (J)";
   SI.Energy E_renewable(start = 0) "Electrical energy produced by the renewable source (J)";
@@ -144,11 +145,11 @@ parameter Medium.ThermodynamicState state_air_min_des = Medium.setState_pTX(Medi
   parameter SI.Power P_C1 = (0.9855*(1.4/0.4)*(V_flow1_max*p_high/0.75)*(((p_high/p_amb_des)^(0.4/1.4))-1) )/0.90 "Sizing power of blower 1 (W)";
   parameter SI.Power P_C2 = (0.9855*(1.4/0.4)*(V_flow2_max*p_high/0.75)*(((p_high/p_amb_des)^(0.4/1.4))-1) )/0.90 "Sizing power of blower 2 (W)";
   
-  parameter SI.Length L_piping1 = 1.5*TES.Tank_A.D_tank "Length of piping 1 (m)";
-  parameter SI.Length L_piping2 = 1.5*TES.Tank_A.D_tank + 0.75*TES.Tank_A.H_tank "Length of piping 2 (m)";
-  parameter SI.Length L_piping3 = 1.5*TES.Tank_A.D_tank + 0.75*TES.Tank_A.H_tank "Length of piping 3 (m)";
-  parameter SI.Length L_piping4 = 1.5*TES.Tank_A.D_tank "Length of piping 4 (m)";
-  parameter SI.Length L_piping5 = 1.5*TES.Tank_A.H_tank "Length of piping 5 (m)";
+  parameter SI.Length L_piping1 = max(1.5*TES.Tank_A.D_tank, 50) "Length of piping 1 (m)";
+  parameter SI.Length L_piping2 = max(1.5*TES.Tank_A.D_tank + 0.75*TES.Tank_A.H_tank, 50) "Length of piping 2 (m)";
+  parameter SI.Length L_piping3 = max(1.5*TES.Tank_A.D_tank + 0.75*TES.Tank_A.H_tank, 50) "Length of piping 3 (m)";
+  parameter SI.Length L_piping4 = max(1.5*TES.Tank_A.D_tank, 50) "Length of piping 4 (m)";
+  parameter SI.Length L_piping5 = max(1.5*TES.Tank_A.H_tank, 50) "Length of piping 5 (m)";
   parameter Real FCIpL_piping1 = (I_year/816.0)*479.77 "FCI cost per metre of piping 1 (USD/m)";
   parameter Real FCIpL_piping2 = (I_year/816.0)*1299.45 "FCI cost per metre of piping 2 (USD/m)";
   parameter Real FCIpL_piping3 = (I_year/816.0)*2060.85 "FCI cost per metre of piping 3 (USD/m)";
@@ -161,7 +162,7 @@ parameter Medium.ThermodynamicState state_air_min_des = Medium.setState_pTX(Medi
   parameter Real FOB_filler = (I_year/816.0)*TES.C_filler "FOB cost of checkerbrick (USD)";
   parameter Real FOB_insulation = (I_year/816.0)*TES.C_insulation "FOB cost of TES insulation (USD)";
   parameter Real FOB_tank = (I_year/816.0)*TES.C_tank "FOB cost of TES tank shell (USD)";
-  parameter Real FOB_heater = P_heater_des*0.206/4.0 "FOB cost of the air heaters (USD)";
+  parameter Real FOB_heater = P_heater_des*0.206/(4.0*1.05) "FOB cost of the air heaters (USD)";
   parameter Real FOB_HX = (I_year/500.0)*(div(730.406,185.8)*6200.0*((10.764*185.8)^0.42) +  6200.0*((10.764*rem(730.406,185.8))^0.42)) "FOB cost of gas-gas HXs at the return air stream";
   parameter Real FOB_blower1 = (I_year/500.0)*1.0*(div(P_C1,745700.0)*exp(6.8929+0.79*log(745700.0/745.7)) + exp(6.8929+0.79*log(rem(P_C1,745700.0)/745.7)))"FOB cost of blower 1, cast iron (USD)";
   parameter Real FOB_blower2 = (I_year/500.0)*1.0*(div(P_C2,745700.0)*exp(6.8929+0.79*log(745700.0/745.7)) + exp(6.8929+0.79*log(rem(P_C2,745700.0)/745.7)))"FOB cost of blower 2, cast iron (USD)";
@@ -172,13 +173,14 @@ parameter Medium.ThermodynamicState state_air_min_des = Medium.setState_pTX(Medi
   parameter Real FCI_piping4 = L_piping4*FCIpL_piping4;
   parameter Real FCI_piping5 = L_piping5*FCIpL_piping5;
   
-  parameter Real FCI_filler = FOB_filler*1.05*4.0;
+  parameter Real FCI_filler = FOB_filler*1.05*4.0; // 1.05 is for delivery cost, 4 is a hand factor (from Sieder)
   parameter Real FCI_insulation = FOB_insulation*1.05*4.0;
   parameter Real FCI_tank = FOB_tank*1.05*4.0;
   parameter Real FCI_heater = FOB_heater*1.05*4.0;
   parameter Real FCI_HX = FOB_HX*1.05*3.5;
-  parameter Real FCI_blower1 = FOB_blower1*1.05*4.0;
-  parameter Real FCI_blower2 = FOB_blower2*1.05*4.0;
+  parameter Real FCI_blower1 = FOB_blower1*1.05*4.0; // fresh air blower
+  parameter Real FCI_blower2 = FOB_blower2*1.05*4.0; // charging loop blower (before heater)
+
   
   parameter Real FCI_PV = 1.075*P_PV_gross;
   parameter Real FCI_wind = 1.4622*P_wind_gross;

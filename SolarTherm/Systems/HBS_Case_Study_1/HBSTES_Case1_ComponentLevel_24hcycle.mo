@@ -264,4 +264,5 @@ equation
     experiment(StopTime = 864000, StartTime = 0, Tolerance = 1e-4, Interval = 60),
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
+
 end HBSTES_Case1_ComponentLevel_24hcycle;

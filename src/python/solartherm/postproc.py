@@ -394,6 +394,106 @@ class SimResultFuel(SimResult):
 	perf_n = ['fpy', 'lcof', 'capf', 'srev']
 	perf_u = ['L/year', '$/L', '%', '$']
 
+
+class SimResultHeat(SimResult):
+	def calc_perf(self):
+		"""Calculate LCOH of renewable systems
+		Some of the metrics will be returned as none if simulation runtime is
+		not a multiple of a year.
+		"""
+		var_names = self.get_names()
+		assert('E_supplied' in var_names), "For a levelised cost of heat calculation, It is expected to see E_elec variable in the results file!"
+
+		eng_t = self.mat.abscissa('E_supplied', valuesOnly=True) # Time [s]
+		eng_v = self.mat.data('E_supplied') # Cumulative electricity generated [J]
+		cap_v = self.mat.data('FCI_total') # Capital costs [$]
+		om_y_v = [0.] #self.mat.data('C_year') # O&M costs per year [$/year]
+		om_p_v =[0.]# self.mat.data('C_prod') # O&M costs per production per year [$/J/year]
+		disc_v = [0.064] #self.mat.data('r_disc') # Discount rate [-]
+		life_v = [25] #self.mat.data('t_life') # Plant lifetime [year]
+		cons_v = [0] #self.mat.data('t_cons') # Construction time [year]
+		#name_v = self.mat.data('P_name') # Generator nameplate [W]
+		#rev_v = self.mat.data('R_spot') # Cumulative revenue [$]
+
+		dur = eng_t[-1] - eng_t[0] # Time duration [s]
+		years = dur/31536000 # number of years of simulation [year]
+		# Only provide certain metrics if runtime is a multiple of a year
+		close_to_year = years > 0.5 and abs(years - round(years)) <= 0.01
+
+		epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
+		#srev = rev_v[-1] # spot market revenue [$]
+		lcoh = None # Levelised cost of heat
+		capf = self.mat.data('Capacity_Factor')[-1] # Capacity factor
+
+		lcoh = fin.lcoe_r(cap_v[0], om_y_v[0] + om_p_v[0]*epy, disc_v[0],int(life_v[0]), int(cons_v[0]), epy)
+		#capf = fin.capacity_factor(name_v[0], epy)
+
+		# Convert to useful units
+		epy = epy/(1e6*3600) # Convert from J/year to MWh/year
+		if close_to_year: 
+			lcoh = lcoh*1e6*3600 # Convert from $/J to $/MWh
+			capf = 100*capf
+
+		return [epy, lcoh, capf]
+
+
+	def cost_breakdown(self):
+		"""Calculate costs breakdown for the renewable system"""
+		eng_t = self.mat.abscissa('E_supplied', valuesOnly=True) # Time [s]
+		eng_v = self.mat.data('E_supplied') # Cumulative electricity generated [J]
+		disc_v = [0.064] #self.mat.data('r_disc') # Discount rate [-]
+		life_v = [25] #self.mat.data('t_life') # Plant lifetime [year]
+
+		C_filler_v = self.mat.data('FCI_filler') # filler capital cost [$]
+		C_insulation_v = self.mat.data('FCI_insulation') # tank insulation capital cost [$]
+		C_tank_v = self.mat.data('FCI_tank') # tank capital cost [$]
+		C_heater_v = self.mat.data('FCI_heater') # heater capital cost [$]
+		C_HX_v = self.mat.data('FCI_HX') # HX cost [$]
+		C_blower1_v = self.mat.data('FCI_blower1') # Blower 1 cost [$]
+		C_blower2_v = self.mat.data('FCI_blower2') # Blower 2 cost [$]
+	
+		C_pipe1_v = self.mat.data('FCI_piping1') # piping cost 1 [$]
+		C_pipe2_v = self.mat.data('FCI_piping2') # piping cost 2 [$]
+		C_pipe3_v = self.mat.data('FCI_piping3') # piping cost 3 [$]
+		C_pipe4_v = self.mat.data('FCI_piping4') # piping cost 4 [$]
+		C_pipe5_v = self.mat.data('FCI_piping5') # piping cost 5 [$]
+		C_PV_v = self.mat.data('FCI_PV') # PV cost [$]
+		C_wind_v = self.mat.data('FCI_wind') # wind cost [$]
+
+		C_cap_v = self.mat.data('FCI_total') # Capital costs [$]
+
+		C_HBS=C_filler_v[0]+C_insulation_v[0]+C_tank_v[0]
+		C_blowers=C_blower1_v[0]+C_blower2_v[0]
+		C_pip=C_pipe1_v[0]+C_pipe2_v[0]+C_pipe3_v[0]+C_pipe4_v[0]+C_pipe5_v[0]
+
+
+		om_y_v = [0]# self.mat.data('C_year') # Fixed O&M costs per year [$/year]
+		om_p_v = [0]# self.mat.data('C_prod') # Variable O&M costs per production per year [$/J/year]
+
+		dur = eng_t[-1] - eng_t[0] # Time duration [s]
+		epy = fin.energy_per_year(dur, eng_v[-1]) # Energy expected in a year [J]
+
+		C_cap = C_cap_v[0] * 1e-3 # Total capital investment (TCI) [k$]
+		C_cap_ann = fin.annualised_capital_cost(C_cap, disc_v[0], int(life_v[0])) # Annualised TCI [k$/year]
+		C_year = (om_y_v[0] + om_p_v[0]*epy) * 1e-3 # Total operational costs [k$/year]
+
+		C_cap_bd_n = ['HBS', 'Heater', 'HX', 'Blower1', 'Blower2', 'Piping', 'PV', 'Wind'] # Capital cost components name
+		C_cap_bd_u = 'k$' # Capital cost components unit
+		C_cap_bd_v = [C_HBS*1e-3, C_heater_v[0]*1e-3, C_HX_v[0]*1e-3, C_blower1_v[0]*1e-3, C_blower2_v[0]*1e-3, C_pip*1e-3, C_PV_v[0]*1e-3, C_wind_v[0]*1e-3] # Capital cost breakdown [k$]
+
+		C_op_bd_n = ['Fixed O&M', 'variable O&M'] # Operational cost components name
+		C_op_bd_u = 'k$/year' # Operational cost components unit
+		C_op_bd_v = [om_y_v[0]*1e-3, om_p_v[0]*epy*1e-3] # Operational cost breakdown [k$/year]
+
+		C_ann_bd_n = ['Total capital investment', 'Operational'] # Annualised cost breakdown names
+		C_ann_bd_u = 'k$/year' # Annualised cost breakdown unit
+		C_ann_bd_v = [C_cap_ann, C_year] # Annualised cost breakdown [k$/year]
+
+		return C_cap_bd_n, C_cap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_ann_bd_n, C_ann_bd_u, C_ann_bd_v
+
+	perf_n = ['epy', 'lcoe', 'capf']
+	perf_u = ['MWh/year', '$/MWh', '%']
+
 class DecisionMaker(object):
 	"""
 	This class is used to select the final optimum point amongs a list of optimal solutions in a multi-objective optimisation problem.

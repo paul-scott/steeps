@@ -38,9 +38,20 @@ model Piping_Cost_OneLayer_TCF
   //Downcomer length is  86.7315 m, Outer diameter is 0.864m
   //Inputs
   //parameter SI.MassFlowRate m_flow_air =  "Mass flow rate of air (kg/s)";
-  parameter SI.Velocity u_air = 61.0 "Maximum speed of air in chamber (m/s)";
+  parameter SI.Velocity u_air = 20.0 "Maximum speed of air in chamber (m/s)";
   //Turton pipe heuristics
   parameter SI.Density rho_air = SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.rho_T(T1) "Density of air (kg/m3)";
+  parameter SI.DynamicViscosity vis_air=SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.mu_T(T1) "Dynamic viscosity (Ns/m2) of air at ambient pressure as a function of temperature";
+  
+  // Pressure drop alone a 50 m pipe
+  parameter SI.Length L=50 "Length of the pipe";  
+  parameter Real Re = rho_air*u_air*d1/vis_air "Reynolds Number";
+  parameter SI.Length roughness= 0.26e-3 "Roughness of cast iron 0.26 (mm), concrete 0.3--3, since the refractory is made of calcium silica, the roughness of 0.3 is probably approperate. https://www.pipeflow.com/pipe-pressure-drop-calculations/pipe-roughness";
+  parameter Real relative_roughness=roughness/d1 "Relative roughness";
+  parameter Real f= if Re<2300 then 64/Re else 0.25/(log(relative_roughness/3.7+5.74/(Re^0.9)))^2 "friction factor, from Moody chart https://www.pipeflow.com/pipe-pressure-drop-calculations/pipe-friction-factors";
+  parameter SI.Pressure dP = f*(L/d1)*(rho_air*u_air^2/2) "Pressure drop alone the pipe (Pa)";
+  
+    
   //parameter SI.Area
   //System is ~18.5 MW tentative
   //0.1% per meter?
@@ -86,7 +97,7 @@ QpL=(2.0*CN.pi/log(r1/r2))*(((E/1)*(T2^1-T1^1))+((F/2)*(T2^2-T1^2))+((G/3)*(T2^3
   QpL = CN.pi * d2 * h_amb * (T2 - T3);
   CpL_1 = CN.pi * (r2 ^ 2 - r1 ^ 2) * c2;
   //CpL_2 = CN.pi * (r3 ^ 2 - r2 ^ 2) * c2;
-   CpL_duct = 1.18*(816.0/1000.0)*F_m_duct*120.1539*(d1^2.14); //Use the inner diameter
+   CpL_duct = 1.18*(816.0/1000.0)*F_m_duct*120.1539*(d1^2.14); //Use the inner diameter, 1.18 from bear module to fix cap investment cost
   CpL_total = CpL_1 + CpL_duct + Penalty;
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false)),
