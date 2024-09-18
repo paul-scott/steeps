@@ -15,13 +15,14 @@ model Reactor_Losses_Gangue
   parameter SI.MassFlowRate m_flow_Ore_stoi = 1.120573734*m_flow_Fe2O3_stoi;
   
   parameter SI.MassFlowRate m_flow_H2_stoi = 0.05414666 * m_flow_Fe_des "Stoichiometric mass flow rate of H2 required to ensure the design Fe-DRI output assuming 100% conversion rate";
-  parameter SI.Temperature T_inlet = 925.0 + 273.15 "Inlet temperature (K)";
+  parameter SI.Temperature T_inlet_fixed = 840.0 + 273.15 "Inlet temperature (K)";
   //parameter SI.Temperature T_inlet_base = 600.0+273.15;
   parameter SI.MolarEnthalpy Q_loss_per_mol = 0.0 "Heat loss per mole of Fe2O3 (J/mol)";
   //SI.Temperature T_products_des(start = T_products_des_start) "Design intended product temperature (K)";
   //SI.Temperature T_inlet "Reactant temperature before losses estimated using polynomial fit (K)";
   //SI.Temperature T_reactants "Reactant temperature after losses estimated using polynomial fit (K)";
-  SI.Temperature T_Ore_in = T_inlet "Inlet Fe2O3 reactant temperature (K)";
+  SI.Temperature T_inlet "Inlet reactant temperature (K)";
+  SI.Temperature T_Ore_in = T_inlet "Inlet Ore reactant temperature (K)";
   SI.Temperature T_H2_in = T_inlet "Inlet H2 reactant temperature (K)";
   //Real r_min "Minimum inlet molar ratio of H2 to Fe2O3 required to ensure 100% yield of Fe-DRI at least according to equilibrium calculations, estimated using a polynomial fit (-)";
   parameter SI.MolarFlowRate n_flow_Fe_max = m_flow_Fe_des / SolarTherm.Models.Chemistry.ChemTable.Fe.M "Maximum number of moles of Fe that can be produced per second (mol/s)";
@@ -42,6 +43,7 @@ model Reactor_Losses_Gangue
   //Loss Signal
   //parameter SI.MolarEnthalpy Q_loss_per_mol = 30000.0 "Heat loss per mole of Fe2O3 (J/mol)";
   SI.HeatFlowRate Q_flow_loss = Q_loss_per_mol * Reactor.n_flow_Fe2O3_in;
+  Real r_min;
   //Real eff_reactor = (SolarTherm.Models.Chemistry.H2DRI.Isothermal.Overall_Rxn_Enthalpy(Reactor.T_reactants_afterloss,p_des)-0.5*Q_loss_per_mol)/SolarTherm.Models.Chemistry.H2DRI.Isothermal.Overall_Rxn_Enthalpy(Reactor.T_reactants_afterloss,p_des);
   //Real f_loss = Q_flow_loss/(2.0*Reactor.n_flow_Fe2O3_in*SolarTherm.Models.Chemistry.H2DRI.Isothermal.Overall_Rxn_Enthalpy(Reactor.T_reactants,p_des));
   Modelica.Fluid.Sources.Boundary_pT Ore_source(redeclare package Medium = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_ph, nPorts = 1, p = p_des, use_T_in = true) annotation(
@@ -78,18 +80,15 @@ model Reactor_Losses_Gangue
 initial equation
 
 equation
+  //Che
+  T_inlet = 973.15 + time;
+  r_min = 6.377e1 - (8.239e-2)*T_inlet + (3.131e-5)*(T_inlet^2.0);
+  m_flow_H2_signal = m_flow_H2_stoi * ((r_min) / 3.0); //140 seconds simulation
+  //Initial calibration
+  //T_inlet = T_inlet_fixed;
+  //m_flow_H2_signal = m_flow_H2_stoi * ((3.0 + time) / 3.0); 17 seconds simulation
+  //Dont change this
   m_flow_Ore_signal = m_flow_Ore_stoi;
-//Fixed based on plant size
-//Sweep design product temperature
-//T_products_des = T_products_des_start + (time/100.0)*(T_products_des_end-T_products_des_start);
-//Estimate required reactant temperature
-//T_reactants = 1.0862878*T_products_des+51.45030;
-//T_reactants = 65.15226 - (14.0897*eff_reactor) + (1209.891*(T_products_des/1000.0)) - (123.165*eff_reactor*(T_products_des/1000.0));
-//T_inlet = 51.02315 + (1086.761*T_products_des/1000.0) - (0.00838*Q_loss_per_mol/1000.0) + 2.16376*(T_products_des*Q_loss_per_mol*1.0e-6);
-//Estimate required inlet molar ratio of H2 to Fe2O3
-//r_min = 6.062457e1 + ((-7.646067e-2)*T_reactants) + ((2.853147e-5)*T_reactants*T_reactants);
-//Vary molar ratios
-  m_flow_H2_signal = m_flow_H2_stoi * ((3.0 + time) / 3.0);
 //Connectors
   connect(H2_Source.ports[1], H2_pump.fluid_a) annotation(
     Line(points = {{-92, 25}, {-64, 25}}, color = {0, 127, 255}));
@@ -116,7 +115,7 @@ equation
   connect(p_amb.y, Reactor.p_reactor) annotation(
     Line(points = {{62, 54}, {38, 54}, {38, 42}, {38, 42}}, color = {0, 0, 127}));
   annotation(
-    experiment(StopTime = 17.0, StartTime = 0.0, Tolerance = 1e-3, Interval = 0.2),
+    experiment(StopTime = 140, StartTime = 0.0, Tolerance = 1e-3, Interval = 0.2),
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false, initialScale = 0.1)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
 end Reactor_Losses_Gangue;

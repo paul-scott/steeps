@@ -152,7 +152,7 @@ model H2DRI_DesignCase_1a
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure Fe2O3_pump_cold(redeclare package Medium = SolarTherm.Media.SolidParticles.Fe2O3_ph) annotation(
     Placement(visible = true, transformation(origin = {145, -81}, extent = {{7, -7}, {-7, 7}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink Fe2O3_Preheated_Sink(redeclare package Medium = SolarTherm.Media.SolidParticles.Fe2O3_ph) annotation(
-    Placement(visible = true, transformation(origin = {-6, -92}, extent = {{22, -22}, {-22, 22}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-6, -90}, extent = {{22, -22}, {-22, 22}}, rotation = 0)));
   SolarTherm.Models.Storage.Tank.Reservoir H2_Reservoir(T_start = T_H2_hot_des, m_start = 10.0) annotation(
     Placement(visible = true, transformation(origin = {-104, 50}, extent = {{-16, -16}, {16, 16}}, rotation = 0)));
 equation
@@ -231,7 +231,7 @@ equation
   connect(H2_Reservoir.fluid_b, H2_pump.fluid_a) annotation(
     Line(points = {{-88, 38}, {-64, 38}, {-64, 38}, {-64, 38}}, color = {0, 127, 255}));
   connect(Fe2O3_pump_cold.fluid_b, Fe2O3_Preheated_Sink.port_a) annotation(
-    Line(points = {{138, -80}, {70, -80}, {70, -92}, {16, -92}}, color = {0, 127, 255}));
+    Line(points = {{138, -80}, {70, -80}, {70, -90}, {16, -90}}, color = {0, 127, 255}));
   connect(GG_HX.fluid_HB_out, Condenser.fluid_H2O_in) annotation(
     Line(points = {{108, 64}, {128, 64}, {128, 42}, {132, 42}}, color = {0, 127, 255}));
   connect(GG_HX.fluid_HA_out, Condenser.fluid_H2_in) annotation(
