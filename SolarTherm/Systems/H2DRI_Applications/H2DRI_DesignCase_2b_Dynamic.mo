@@ -10,16 +10,16 @@ model H2DRI_DesignCase_2b_Dynamic
   replaceable package Material_IOE_OreD = SolarTherm.Materials.IOE_Dehydroxylated;
   replaceable package Medium_Ore_Dehydroxylated = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_ph;
   
-  parameter String PV_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/dummy_pv.motab");
-  parameter String Wind_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/dummy_wind.motab");
+  parameter String PV_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/PV_Pilbara_1MW.motab");
+  parameter String Wind_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/Wind_Pilbara_320MW.motab");
+  
+  parameter Real CEPCI = 816.0 "CEPCI index of the year used in the study e.g. 816.0 for year 2022";
   
   //Parameter Inputs
-  parameter Real RM = 1.0 "Renewable Multiple (pre-transmission oversizing)";
+  parameter Real RM = 2.0 "Renewable Multiple (pre-transmission oversizing)";
   parameter Real HM = 2.0 "Heater Multiple";
   parameter Real PV_fraction = 0.5 "PV_fraction";
   parameter SI.Time t_storage = 10.0*3600.0;
-  
-  
   
   parameter SI.HeatFlowRate Q_process_des = 7.20898e7;
   parameter SI.MassFlowRate m_flow_ore_des = 154.1 "Mass flow of ore out of the hot tank and into the med tank if running at design point (kg/s)";
@@ -29,10 +29,10 @@ model H2DRI_DesignCase_2b_Dynamic
   parameter SI.Power P_renewable_des = RM * P_heater_des;
   parameter SI.HeatFlowRate Q_heater_des = HM * Q_process_des;
   parameter SI.Power P_heater_des = Q_heater_des / eff_heater;
-  parameter SI.Power PV_ref_size = 50.0e6;
-  parameter SI.Power Wind_ref_size = 50.0e6;
-  parameter Real LOF_PV = 1.300;
-  parameter Real LOF_Wind = 1.131;
+  parameter SI.Power PV_ref_size = 1.0e6; //1MW reference size
+  parameter SI.Power Wind_ref_size = 320.0e6; //320MW reference size
+  parameter Real LOF_PV = 1.300; //Loss oversize factor, so we actually get the required power from PV field
+  parameter Real LOF_Wind = 1.131; //Loss oversize factor, so we actually get the required power from Wind field
   parameter SI.Power P_wind_net = (1.0 - PV_fraction)*P_renewable_des;
   parameter SI.Power P_PV_net = PV_fraction*P_renewable_des;
   parameter SI.Power P_wind_gross = P_wind_net*LOF_Wind;
@@ -43,8 +43,11 @@ model H2DRI_DesignCase_2b_Dynamic
   parameter SI.Temperature T_med_set = 289.0 + 273.15;
   
   parameter Real ar = 2.0;
+  
+  //Sizing Parameters
+    //Storage Bins
   parameter Real eps_packing = 0.20;
-  parameter Real eps_material = 0.089;
+  parameter Real eps_material = 0.00;
   parameter Real epsilon = eps_packing + eps_material - eps_packing*eps_material "Effective porosity";
   parameter SI.Density rho_ore_med = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_utilities.rho_T(T_med_set) "Density of pure ore (kg/m3)";
   parameter SI.Density rho_ore_hot = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_utilities.rho_T(T_hot_set) "Density of pure ore (kg/m3)";
@@ -61,6 +64,64 @@ model H2DRI_DesignCase_2b_Dynamic
   
   parameter SI.Length H_tank_hot = D_tank_hot*ar;
   parameter SI.Length H_tank_med = D_tank_med*ar;
+  
+  parameter Real FOB_tank_hot = (CEPCI/500)*2.1*570.0*(35.315*V_tank_hot)^0.46 "FOB cost of the hot Fe2O3 storage tank (USD_year)";
+  
+  parameter Real FOB_tank_med = (CEPCI/500)*1.0*570.0*(35.315*V_tank_med)^0.46 "FOB cost of the medium temp Fe2O3 storage tank (USD_year)";
+  
+    //Fluidised Bed Heater
+  parameter SI.HeatFlux q_flow_heater_max = 100000.0 "Maximum radiant heat flux of the fluidised bed heater (W/m2)"; //Placeholder
+  parameter SI.Area A_cs_FB = Q_heater_des/q_flow_heater_max "Minimum cross sectional area of the fluidised bed (m2)";
+  parameter SI.Diameter d_p = 2.5e-4 "Assumed ore particle diameter (m)"; //250 micrometres
+  parameter SI.Density rho_p_FB = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_utilities.rho_T(0.5*(T_hot_set+T_med_set));
+  
+  parameter SI.Density rho_g_FB = SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.rho_T(0.5*(T_hot_set+T_med_set));
+  parameter SI.DynamicViscosity mu_g_FB = SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.mu_T(0.5*(T_hot_set+T_med_set));
+  
+  parameter SI.Velocity u_mf_FB = (d_p*d_p*(rho_p_FB-rho_g_FB)*9.81)/(1650.0*mu_g_FB);
+  parameter SI.Velocity u_g_FB = 3.0*u_mf_FB;
+  
+  parameter SI.MassFlowRate m_flow_air_FB = rho_g_FB*A_cs_FB*u_g_FB "Mass flow rate through FB blower (kg/s)";
+  
+  parameter SI.VolumeFlowRate V_flow_air_FB = m_flow_air_FB/SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.rho_T(298.15) "Volumetric flow rate of ambient temp air into FB blower (m3/s)";
+  
+  parameter SI.Power P_C_FB = (0.9855*(1.41/0.41)*(V_flow_air_FB*1.0e5/0.75)*(((1.1/1.0)^(0.41/1.41))-1.0))/0.9 "Sizing power of blower of FB heater (W)";
+  parameter Real FOB_blower_FB = (CEPCI/500.0)*1.0*exp(6.8929+0.79*log(P_C_FB/745.7)) "FOB cost of the blower in FB heater (USD_year)";
+  
+  //PGHX2's max temp range is T_amb_des to T_OreD_hot_des effectiveness is assumed to be 0.80 
+  parameter SI.HeatFlowRate Q_flow_recup_FB = 0.8*m_flow_air_FB*(SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.h_T(T_hot_set)-SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.h_T(298.15));
+  parameter SI.ThermalConductance U_recup_FB = 30.0 "Gas-gas heat transfer coefficient (W/m2K)";
+  parameter SI.Area A_recup_FB = Q_flow_recup_FB/(U_recup_FB*(T_hot_set-298.15)) "Required gas-gas heat recuperator heat exchanger area of FB heater (m2)";
+  parameter Real FOB_recup_FB = div(A_recup_FB, 185.8)*(CEPCI/500.0)*150945.38 + (CEPCI/500.0)*6200.0*((10.764*rem(A_recup_FB,185.8))^0.42);
+  
+  
+  
+  
+  //Cost parameters
+  parameter Real pri_PV = 1.3304 "Cost per W_gross of PV plant (USD_2022/W)";
+  parameter Real pri_Wind = 1.7253 "Cost per W_gross of PV plant (USD_2022/W)";
+  parameter Real pri_FB_Heating = 0.1539 "Cost per W of heater (USD_2022/W)";
+  
+  //Fixed-Size Capital Costs
+  parameter Real FCI_Reactor = 506546275.0 "Reactor FCI cost (USD_2022)";
+  parameter Real FCI_GGHX = 48763800.0 "GGHX FCI cost (USD_2022)";
+  parameter Real FCI_Blower_H2 = 1592480.0 "H2 Blower FCI cost (USD_2022)";
+  parameter Real FCI_Condenser_1 = 470771.0 "Condenser 1 cost (USD_2022)";
+  parameter Real FCI_Condenser_2 = 1265220.0 "Condenser 2 cost (USD_2022)";
+  parameter Real FCI_PGHX1 = 1322420.0 + 475604.0 + 96581.0  "PGHX1 cost (USD_2022)";
+  parameter Real FCI_PGHX2 = 27193400.0 + 3713210.0 + 640790.0 "PGHX2 cost (USD_2022)";
+
+  //Variable-Sized Capital Costs
+  parameter Real FCI_heating_FB = pri_FB_Heating*P_heater_des;
+  parameter Real FCI_PV = pri_PV*P_PV_gross;
+  parameter Real FCI_Wind = pri_Wind*P_wind_gross;
+  
+  parameter Real FCI_blower_FB = P_C_FB*1.05*3.5*0.7012 "FCI cost of the blower in FB heater (USD_year)";
+  parameter Real FCI_recup_FB = FOB_recup_FB*1.05*3.5*0.7012;
+  parameter Real FCI_tank_hot = FOB_tank_hot*1.05*2.744;
+  parameter Real FCI_tank_med = FOB_tank_med*1.05*4.0;
+  
+  
   
   Modelica.Blocks.Sources.CombiTimeTable PV_input(fileName = PV_file, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, tableName = "Power", tableOnFile = true) annotation(
     Placement(visible = true, transformation(origin = {-88, 54}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
@@ -98,7 +159,8 @@ model H2DRI_DesignCase_2b_Dynamic
   
   SI.Mass m_Fe_produced(start=0);
   SI.Mass m_Fe_target(start=0);
-  Real CapF(start=0);
+  Real CapF_Process(start=0);
+  Real CapF_Heater(start=0);
   //Boolean Defocus(start = false);
   
   
@@ -108,7 +170,16 @@ model H2DRI_DesignCase_2b_Dynamic
     //end if;
   //end if;
   
-
+  //Energy Accounting
+  SI.Energy E_PV_out(start=0);
+  SI.Energy E_Wind_out(start=0);
+  SI.Energy E_renewable_raw(start=0);
+  SI.Energy E_heater_raw(start=0);
+  SI.Energy Q_heater_raw(start=0);
+  SI.Energy Q_heater_out(start=0);
+  
+  SI.Energy Q_heater_target(start=0); //maximum possible heater output at 100% operation
+  
 algorithm
 
 
@@ -137,12 +208,23 @@ algorithm
   end when;
 
 equation
-  der(m_Fe_target) = m_flow_ore_des*0.6242;
-  der(m_Fe_produced) = Sink.port_a.m_flow*0.6242;
+  der(E_PV_out) = (Grid_Sum.u1/PV_ref_size)*P_PV_gross;
+  der(E_Wind_out) = (Grid_Sum.u2/Wind_ref_size)*P_wind_gross;
+
+  der(E_renewable_raw) = Grid_Sum.y;
+  der(E_heater_raw) = Heater.P_heater_out;
+  der(Q_heater_raw) = Heater.Q_heater_raw;
+  der(Q_heater_out) = Heater.Q_out;
+
+  der(Q_heater_target) = Q_heater_des;
+  der(m_Fe_target) = m_flow_ore_des*(50.8/154.1)*(0.8924*2.0*55.845/159.6882);
+  der(m_Fe_produced) = Sink.port_a.m_flow*(50.8/154.1)*(0.8924*2.0*55.845/159.6882);
   if time < 10.0 then
-    CapF = 0.0;
+    CapF_Process = 0.0;
+    CapF_Heater = 0.0;
   else
-    CapF = m_Fe_produced/m_Fe_target;
+    CapF_Process = m_Fe_produced/m_Fe_target;
+    CapF_Heater = Q_heater_out/Q_heater_target;
   end if;
 
 

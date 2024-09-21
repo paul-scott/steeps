@@ -273,23 +273,20 @@ model H2DRI_DesignCase_2b_DesignPt
   parameter SI.ThermalConductance UA_GGHX_des = C_min_GGHX_des*NTU_GGHX_des "Design UA of the GGHX (W/K)";
   parameter SI.Area A_GGHX_des = UA_GGHX_des/U_GGHX_des "Design heat transfer area of the GGHX (m2)"; 
   parameter Real FOB_GGHX = div(A_GGHX_des, 185.8)*(CEPCI/500.0)*150945.38 + (CEPCI/500.0)*6200.0*((10.764*rem(A_GGHX_des,185.8))^0.42) "Free-on-board cost of the GGHX component, based on a Spiral-Plate HX (USD_year)";
-  parameter Real FCI_GGHX = FOB_GGHX*1.05*2.4541;
+  parameter Real FCI_GGHX = FOB_GGHX*1.05*3.5*0.7012; //checked
    
   //H2 Blower cost, based on cast iron, 3psig (1.22 bar absolute)
   parameter SI.Density rho_H2_mix_des = Modelica.Media.IdealGases.SingleGases.H2.density_pT(p_des,T_H2_mix_des) "Density of H2 after the mixer (kg/m3)";
   parameter SI.VolumeFlowRate V_flow_H2_mix_des = m_flow_H2_des/rho_H2_mix_des "Volumetric flow rate of H2 in the blower fan (m3/s)";
-  parameter Real N_blower_quo = div(V_flow_H2_mix_des, 23.6) "Number of maximum-sized blower fans (max 23.6 m3/s vol flow rate)";
-  parameter SI.VolumeFlowRate V_blower_rem = rem(V_flow_H2_mix_des, 23.6) "Remaining volumetric flow rate of the blowers (m3/s)";
-  
-  parameter Real FOB_blower = if V_blower_rem > 2.36 then N_blower_quo*(CEPCI/460.0)*23.0*(2119.0*23.6)^0.82 + (CEPCI/460.0)*23.0*(2119.0*V_blower_rem)^0.82 else N_blower_quo*(CEPCI/460.0)*23.0*(2119.0*23.6)^0.82 + (CEPCI/460.0)*516.0*(2119.0*V_blower_rem)^0.46 "Free-on-board cost of the blowers, cast iron, (USD_year)";
-  
-  parameter Real FCI_blower = FOB_blower*1.05*2.5;
+  parameter SI.Power P_C_blower_H2 = (0.9855*(1.41/0.41)*(V_flow_H2_mix_des*1.0e5/0.75)*(((1.1/1.0)^(0.41/1.41))-1.0))/0.9 "Sizing power of the H2 blower (W)";
+  parameter Real FOB_blower_H2 = (CEPCI/500.0)*1.0*exp(6.8929+0.79*log(P_C_blower_H2/745.7)) "FOB cost of the blower in PGHX1 (USD_year)";
+  parameter Real FCI_blower_H2 = FOB_blower_H2*1.05*3.5*0.7012 "FCI cost of the blower in PGHX1 (USD_year)";
   
   //Hot Tank Cost
   parameter SI.Time t_stor_OreD_hot = 10.0*3600.0 "Number of seconds of storage of hot-tank Fe2O3 (s)";
   //parameter Real ar_tank_hot = 2.0 "Aspect ratio of hot tank (-)";
   
-  parameter Real porosity_OreD_material = 1.0 - (4300.0/SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_utilities.rho_T(900.0+273.15)) "Material porosity of Fe2O3 based on measurements at 900degC obtained from Mahdiar (-)";
+  parameter Real porosity_OreD_material = max(1.0 - (4954.0/SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_utilities.rho_T(25.0+273.15)),0.0) "Material porosity of Fe2O3 based on measurements at 900degC obtained from Mahdiar (-)";
   parameter Real porosity_OreD_packing = 0.20 "Packing porosity of Fe2O3 packed bed (-)";
   parameter SI.Density rho_OreD_hot = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_utilities.rho_T(T_OreD_hot_des) "Density of pure, dense Fe2O3 at the hot tank temperature (kg/m3)";
   
@@ -303,7 +300,7 @@ model H2DRI_DesignCase_2b_DesignPt
   parameter SI.Density rho_OreD_med = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_utilities.rho_T(T_OreD_med_des) "Density of pure, dense Fe2O3 at the hot tank temperature (kg/m3)";
   parameter SI.Volume V_tank_med = (m_flow_OreD_des+m_flow_OreD_PGHX2)*t_stor_OreD_med/(rho_OreD_med*(1.0-porosity_OreD_material)*(1.0-porosity_OreD_packing));
     
-  parameter Real FOB_tank_med = (CEPCI/500)*1.0*570.0*(35.315*V_tank_hot)^0.46 "FOB cost of the medium temp Fe2O3 storage tank (USD_year)";
+  parameter Real FOB_tank_med = (CEPCI/500)*1.0*570.0*(35.315*V_tank_med)^0.46 "FOB cost of the medium temp Fe2O3 storage tank (USD_year)";
   parameter Real FCI_tank_med = FOB_tank_med*1.05*4.0;
   //Reactor Cost
   //Formula is (816/1000)*14000000*(m_flow_Fe2O3_des^0.53) where m_flow is up to 1000kg/s (for the first stage)
@@ -312,13 +309,13 @@ model H2DRI_DesignCase_2b_DesignPt
   //parameter SI.MassFlowRate m_flow_Fe3O4_des = (2.0*m_flow_Fe2O3_des*M_Fe3O4)/(3.0*M_Fe2O3);
   //parameter SI.MassFlowRate m_flow_FeO_des = (2.0*m_flow_Fe2O3_des*M_FeO)/(M_Fe2O3);
   
-  parameter Real FOB_reactor = (CEPCI/1000.0)*(14.0e6*(3.0*m_flow_OreD_des^0.53)) "FOB Cost of the reactors (USD_year)";
-  parameter Real FCI_reactor = FOB_reactor*1.05*2.0;
+  parameter Real FOB_reactor = 0.0;//(CEPCI/1000.0)*(14.0e6*(3.0*m_flow_OreD_des^0.53)) "FOB Cost of the reactors (USD_year)";
+  parameter Real FCI_reactor = (CEPCI/816.0)*506546275.0;//FOB_reactor*1.05*2.0;
   
   //Heater Cost
-  parameter Real pri_heater = 0.150 "Cost per W of heater. Assumed to be 200 USD_2022/kW";
-  parameter Real FOB_heater = (CEPCI/816.0)*pri_heater*P_heater_max "FOB cost of the electrical heater (USD_year)";
-  parameter Real FCI_heater = FOB_heater*1.05*4.0;
+  parameter Real pri_heater = 0.1539 "Cost per W of heater in 2022";
+  parameter Real FOB_heater = 0.0;//(CEPCI/816.0)*pri_heater*P_heater_max "FOB cost of the electrical heater (USD_year)";
+  parameter Real FCI_heater = (CEPCI/816.0)*pri_heater*P_heater_max;
   
   //Condenser Q_flow_cooling = U_condenser_des*A_condenser1*(T_condenser1_in_des-T_amb_des)
   parameter SI.CoefficientOfHeatTransfer U_condenser1_des = 700.0 "W/m2K";
@@ -329,23 +326,52 @@ model H2DRI_DesignCase_2b_DesignPt
   Real FOB_condenser1 = (CEPCI/500.0)*10000.0*((10.764*A_condenser1)^0.40);
   Real FOB_condenser2 = (CEPCI/500.0)*10000.0*((10.764*A_condenser2)^0.40);
   
-  Real FCI_condenser1 = FOB_condenser1*1.05*2.4541;
-  Real FCI_condenser2 = FOB_condenser2*1.05*2.4541;
+  Real FCI_condenser1 = FOB_condenser1*1.05*3.5*0.7012;
+  Real FCI_condenser2 = FOB_condenser2*1.05*3.5*0.7012;
   
   //Cost of PGHX1
-  parameter SI.ThermalConductance U_PGHX1_des = 373.96 "Overall heat transfer coefficient of PGHX1 (W/K)";
+  parameter SI.ThermalConductance U_PGHX1_des = 36.98 "Overall heat transfer coefficient of PGHX1 (W/K)";
   parameter SI.Area A_PGHX1_des = C_min_PGHX1*NTU_PGHX1_des/U_PGHX1_des;
-  parameter Real FOB_PGHX1 = (CEPCI/708.8)*(1909.21*A_PGHX1_des);
-  parameter Real FCI_PGHX1 = FOB_PGHX1*1.05*1.8688;
+  parameter Real FOB_PGHX1 = (CEPCI/708.8)*(47.36*U_PGHX1_des*A_PGHX1_des);
+  parameter Real FCI_PGHX1 = FOB_PGHX1*1.05*3.5*0.5340;
   
   //Cost of PGHX2
-  parameter SI.ThermalConductance U_PGHX2_des = 533.96 "Overall heat transfer coefficient of PGHX2 (W/K)";
+  parameter SI.ThermalConductance U_PGHX2_des = 63.39 "Overall heat transfer coefficient of PGHX2 (W/K)";
   parameter SI.Area A_PGHX2_des = C_H_PGHX2*NTU_PGHX2_des/U_PGHX2_des;
-  parameter Real FOB_PGHX2 = (CEPCI/708.8)*(1856.0*A_PGHX2_des);
-  parameter Real FCI_PGHX2 = FOB_PGHX2*1.05*1.8688;
+  parameter Real FOB_PGHX2 = (CEPCI/708.8)*(27.69*U_PGHX2_des*A_PGHX2_des);
+  parameter Real FCI_PGHX2 = FOB_PGHX2*1.05*3.5*0.5340;
   
+  //Cost of PGHX1 Blower
+  parameter SI.Area A_cs_PGHX1 = A_PGHX1_des/CN.pi "Min cross sectional area of the PGHX1 fluidised bed (m2)";
+  parameter SI.Velocity u_air_mf_PGHX1 = 0.05256 "Minimum superficial fluidisation velocity of PGHX1 fluidised bed (m/s)";
+  parameter SI.Velocity u_air_PGHX1 = 3.0*u_air_mf_PGHX1 "Three times the min superficial fluidisation velocity of PGHX1 (m/s)";
+  parameter SI.MassFlowRate m_flow_air_PGHX1 = SolarTherm.Media.Air.Air_amb_p_utilities.rho_T(0.5*(T_OreH_feedstock_des+T_products_des))*A_cs_PGHX1*u_air_mf_PGHX1;
+  parameter SI.VolumeFlowRate V_flow_air_PGHX1_blower = m_flow_air_PGHX1/SolarTherm.Media.Air.Air_amb_p_utilities.rho_T(T_amb_des) "Volumetric flow rate of ambient temp air in PGHX1 blower (m3/s)";
+  parameter SI.Power P_C_PGHX1 = (0.9855*(1.4/0.4)*(V_flow_air_PGHX1_blower*1.0e5/0.75)*(((1.1/1.0)^(0.4/1.4))-1.0))/0.9 "Sizing power of blower of PGHX1";
+  parameter Real FOB_blower_PGHX1 = (CEPCI/500.0)*1.0*exp(6.8929+0.79*log(P_C_PGHX1/745.7)) "FOB cost of the blower in PGHX1 (USD_year)";
+  parameter Real FCI_blower_PGHX1 = FOB_blower_PGHX1*1.05*3.5*0.7012 "FCI cost of the blower in PGHX1 (USD_year)";
+  //PGHX1's max temp range is T_amb_des to T_products_des, effectiveness is assumed to be 0.80 
+  parameter SI.HeatFlowRate Q_flow_recup_PGHX1 = 0.8*m_flow_air_PGHX1*(SolarTherm.Media.Air.Air_amb_p_utilities.h_T(T_products_des)-SolarTherm.Media.Air.Air_amb_p_utilities.h_T(T_amb_des));
+  parameter SI.ThermalConductance U_recup_PGHX1 = 30.0 "Gas-gas heat transfer coefficient (W/m2K)";
+  parameter SI.Area A_recup_PGHX1 = Q_flow_recup_PGHX1/(U_recup_PGHX1*(T_products_des-T_amb_des)) "Required gas-gas heat recuperator heat exchanger area of PGHX1 (m2)";
+  parameter Real FOB_recup_PGHX1 = div(A_recup_PGHX1, 185.8)*(CEPCI/500.0)*150945.38 + (CEPCI/500.0)*6200.0*((10.764*rem(A_recup_PGHX1,185.8))^0.42);
+  parameter Real FCI_recup_PGHX1 = FOB_recup_PGHX1*1.05*3.5*0.7012;
   
-  
+  //Cost of PGHX2 Blower
+  parameter SI.Area A_cs_PGHX2 = A_PGHX2_des/CN.pi "Min cross sectional area of the PGHX2 fluidised bed (m2)";
+  parameter SI.Area u_air_mf_PGHX2 = 0.04316 "Minimum superficial fluidisation velocity of PGHX1 fluidised bed (m/s)";
+  parameter SI.Velocity u_air_PGHX2 = 3.0*u_air_mf_PGHX2 "Three times the min superficial fluidisation velocity of PGHX2 (m/s)";
+  parameter SI.MassFlowRate m_flow_air_PGHX2 = SolarTherm.Media.Air.Air_amb_p_utilities.rho_T(0.5*(T_H2_pre1_des+T_OreD_hot_des))*A_cs_PGHX2*u_air_mf_PGHX2;
+  parameter SI.VolumeFlowRate V_flow_air_PGHX2_blower = m_flow_air_PGHX2/SolarTherm.Media.Air.Air_amb_p_utilities.rho_T(T_amb_des) "Volumetric flow rate of ambient temp air in PGHX2 blower (m3/s)";
+  parameter SI.Power P_C_PGHX2 = (0.9855*(1.4/0.4)*(V_flow_air_PGHX2_blower*1.0e5/0.75)*(((1.1/1.0)^(0.4/1.4))-1.0))/0.9 "Sizing power of blower of PGHX2";
+  parameter Real FOB_blower_PGHX2 = (CEPCI/500.0)*1.0*exp(6.8929+0.79*log(P_C_PGHX2/745.7)) "FOB cost of the blower in PGHX2 (USD_year)";
+  parameter Real FCI_blower_PGHX2 = FOB_blower_PGHX2*1.05*3.5*0.7012 "FCI cost of the blower in PGHX2 (USD_year)";
+  //PGHX2's max temp range is T_amb_des to T_OreD_hot_des effectiveness is assumed to be 0.80 
+  parameter SI.HeatFlowRate Q_flow_recup_PGHX2 = 0.8*m_flow_air_PGHX2*(SolarTherm.Media.Air.Air_amb_p_utilities.h_T(T_OreD_hot_des)-SolarTherm.Media.Air.Air_amb_p_utilities.h_T(T_amb_des));
+  parameter SI.ThermalConductance U_recup_PGHX2 = 30.0 "Gas-gas heat transfer coefficient (W/m2K)";
+  parameter SI.Area A_recup_PGHX2 = Q_flow_recup_PGHX2/(U_recup_PGHX2*(T_OreD_hot_des-T_amb_des)) "Required gas-gas heat recuperator heat exchanger area of PGHX2 (m2)";
+  parameter Real FOB_recup_PGHX2 = div(A_recup_PGHX2, 185.8)*(CEPCI/500.0)*150945.38 + (CEPCI/500.0)*6200.0*((10.764*rem(A_recup_PGHX2,185.8))^0.42);
+  parameter Real FCI_recup_PGHX2 = FOB_recup_PGHX2*1.05*3.5*0.7012;
   
   
   //Reactor Physical Design
