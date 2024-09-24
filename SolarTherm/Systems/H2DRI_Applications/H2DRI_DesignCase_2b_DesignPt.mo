@@ -52,7 +52,8 @@ model H2DRI_DesignCase_2b_DesignPt
   
   
   //Design Inputs
-  parameter Real m_flow_Fe_Mtperyr = 1.0 "Plant Size in MegaTons per year (Mt/yr)";
+  parameter Real m_flow_DRI_Mtperyr = 1.0 "DRI output in MegaTons per year (Mt/yr) which is inclusive of gangue";
+  parameter Real m_flow_Fe_Mtperyr = 0.8530*m_flow_DRI_Mtperyr "Iron Output in MegaTons per year (Mt/yr)";
   parameter SI.MassFlowRate m_flow_Fe_des = m_flow_Fe_Mtperyr*(1.0e9)/(31536000.0) "Design maximum mass flow rate output of Iron (kg/s)"; 
   //We assume a year is 365.0 days
   //47.6
@@ -320,8 +321,8 @@ model H2DRI_DesignCase_2b_DesignPt
   //Condenser Q_flow_cooling = U_condenser_des*A_condenser1*(T_condenser1_in_des-T_amb_des)
   parameter SI.CoefficientOfHeatTransfer U_condenser1_des = 700.0 "W/m2K";
   parameter SI.CoefficientOfHeatTransfer U_condenser2_des = 700.0 "W/m2K";
-  SI.Area A_condenser1 = Q_flow_cooling_condenser1/(U_condenser1_des*(T_condenser1_in_des-T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
-  SI.Area A_condenser2 = Q_flow_cooling_condenser2/(U_condenser2_des*(T_condenser2_in_des-T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
+  SI.Area A_condenser1 = Q_flow_cooling_condenser1/(U_condenser1_des*0.8*(T_condenser1_in_des-T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
+  SI.Area A_condenser2 = Q_flow_cooling_condenser2/(U_condenser2_des*0.8*(T_condenser2_in_des-T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
   
   Real FOB_condenser1 = (CEPCI/500.0)*10000.0*((10.764*A_condenser1)^0.40);
   Real FOB_condenser2 = (CEPCI/500.0)*10000.0*((10.764*A_condenser2)^0.40);
@@ -342,7 +343,7 @@ model H2DRI_DesignCase_2b_DesignPt
   parameter Real FCI_PGHX2 = FOB_PGHX2*1.05*3.5*0.5340;
   
   //Cost of PGHX1 Blower
-  parameter SI.Area A_cs_PGHX1 = A_PGHX1_des/CN.pi "Min cross sectional area of the PGHX1 fluidised bed (m2)";
+  parameter SI.Area A_cs_PGHX1 = 2.0*A_PGHX1_des/CN.pi "Min cross sectional area of the PGHX1 fluidised bed (m2)";
   parameter SI.Velocity u_air_mf_PGHX1 = 0.05256 "Minimum superficial fluidisation velocity of PGHX1 fluidised bed (m/s)";
   parameter SI.Velocity u_air_PGHX1 = 3.0*u_air_mf_PGHX1 "Three times the min superficial fluidisation velocity of PGHX1 (m/s)";
   parameter SI.MassFlowRate m_flow_air_PGHX1 = SolarTherm.Media.Air.Air_amb_p_utilities.rho_T(0.5*(T_OreH_feedstock_des+T_products_des))*A_cs_PGHX1*u_air_mf_PGHX1;
@@ -358,7 +359,7 @@ model H2DRI_DesignCase_2b_DesignPt
   parameter Real FCI_recup_PGHX1 = FOB_recup_PGHX1*1.05*3.5*0.7012;
   
   //Cost of PGHX2 Blower
-  parameter SI.Area A_cs_PGHX2 = A_PGHX2_des/CN.pi "Min cross sectional area of the PGHX2 fluidised bed (m2)";
+  parameter SI.Area A_cs_PGHX2 = 2.0*A_PGHX2_des/CN.pi "Min cross sectional area of the PGHX2 fluidised bed (m2)";
   parameter SI.Area u_air_mf_PGHX2 = 0.04316 "Minimum superficial fluidisation velocity of PGHX1 fluidised bed (m/s)";
   parameter SI.Velocity u_air_PGHX2 = 3.0*u_air_mf_PGHX2 "Three times the min superficial fluidisation velocity of PGHX2 (m/s)";
   parameter SI.MassFlowRate m_flow_air_PGHX2 = SolarTherm.Media.Air.Air_amb_p_utilities.rho_T(0.5*(T_H2_pre1_des+T_OreD_hot_des))*A_cs_PGHX2*u_air_mf_PGHX2;

@@ -10,6 +10,7 @@ model H2DRI_DesignCase_2b_Dynamic
   replaceable package Material_IOE_OreD = SolarTherm.Materials.IOE_Dehydroxylated;
   replaceable package Medium_Ore_Dehydroxylated = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_ph;
   
+  parameter Real Plant_Scale = 1.0 "Plant DRI design production rate in (Mt_DRI/yr)";
   parameter String PV_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/PV_Pilbara_1MW.motab");
   parameter String Wind_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/Wind_Pilbara_320MW.motab");
   
@@ -19,10 +20,10 @@ model H2DRI_DesignCase_2b_Dynamic
   parameter Real RM = 2.0 "Renewable Multiple (pre-transmission oversizing)";
   parameter Real HM = 2.0 "Heater Multiple";
   parameter Real PV_fraction = 0.5 "PV_fraction";
-  parameter SI.Time t_storage = 10.0*3600.0;
+  parameter SI.Time t_storage = 10.0*3600.0 "Seconds of storage (h)";
   
-  parameter SI.HeatFlowRate Q_process_des = 7.20898e7;
-  parameter SI.MassFlowRate m_flow_ore_des = 154.1 "Mass flow of ore out of the hot tank and into the med tank if running at design point (kg/s)";
+  parameter SI.HeatFlowRate Q_process_des = 6.14926e7;
+  parameter SI.MassFlowRate m_flow_ore_des = 131.4894*(Plant_Scale/1.0) "Mass flow of ore out of the hot tank and into the med tank if running at design point (kg/s)";
   
   parameter Real eff_heater = 0.95 "Electrical-to-heat conversion efficiency of the heater";
   //Renewable Parameters
@@ -70,7 +71,7 @@ model H2DRI_DesignCase_2b_Dynamic
   parameter Real FOB_tank_med = (CEPCI/500)*1.0*570.0*(35.315*V_tank_med)^0.46 "FOB cost of the medium temp Fe2O3 storage tank (USD_year)";
   
     //Fluidised Bed Heater
-  parameter SI.HeatFlux q_flow_heater_max = 100000.0 "Maximum radiant heat flux of the fluidised bed heater (W/m2)"; //Placeholder
+  parameter SI.HeatFlux q_flow_heater_max = 60000.0 "Maximum radiant heat flux of the fluidised bed heater (W/m2)"; //Placeholder
   parameter SI.Area A_cs_FB = Q_heater_des/q_flow_heater_max "Minimum cross sectional area of the fluidised bed (m2)";
   parameter SI.Diameter d_p = 2.5e-4 "Assumed ore particle diameter (m)"; //250 micrometres
   parameter SI.Density rho_p_FB = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_utilities.rho_T(0.5*(T_hot_set+T_med_set));
@@ -87,39 +88,74 @@ model H2DRI_DesignCase_2b_Dynamic
   
   parameter SI.Power P_C_FB = (0.9855*(1.41/0.41)*(V_flow_air_FB*1.0e5/0.75)*(((1.1/1.0)^(0.41/1.41))-1.0))/0.9 "Sizing power of blower of FB heater (W)";
   parameter Real FOB_blower_FB = (CEPCI/500.0)*1.0*exp(6.8929+0.79*log(P_C_FB/745.7)) "FOB cost of the blower in FB heater (USD_year)";
-  
-  //PGHX2's max temp range is T_amb_des to T_OreD_hot_des effectiveness is assumed to be 0.80 
+  //PGHX2's max temp range is T_amb_des to T_OreD_hot_des effectiveness is assumed to be 0.80
   parameter SI.HeatFlowRate Q_flow_recup_FB = 0.8*m_flow_air_FB*(SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.h_T(T_hot_set)-SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.h_T(298.15));
   parameter SI.ThermalConductance U_recup_FB = 30.0 "Gas-gas heat transfer coefficient (W/m2K)";
-  parameter SI.Area A_recup_FB = Q_flow_recup_FB/(U_recup_FB*(T_hot_set-298.15)) "Required gas-gas heat recuperator heat exchanger area of FB heater (m2)";
+  parameter SI.Area A_recup_FB = Q_flow_recup_FB/(0.80*U_recup_FB*(T_hot_set-298.15)) "Required gas-gas heat recuperator heat exchanger area of FB heater (m2), assumed 0.80 effectiveness";
   parameter Real FOB_recup_FB = div(A_recup_FB, 185.8)*(CEPCI/500.0)*150945.38 + (CEPCI/500.0)*6200.0*((10.764*rem(A_recup_FB,185.8))^0.42);
   
   
   
   
   //Cost parameters
-  parameter Real pri_PV = 1.3304 "Cost per W_gross of PV plant (USD_2022/W)";
-  parameter Real pri_Wind = 1.7253 "Cost per W_gross of PV plant (USD_2022/W)";
+  parameter Real pri_PV = 1.10725 "Cost per W_gross of PV plant, already including 3% contingency (USD_2022/W)";
+  parameter Real pri_Wind = 1.50607 "Cost per W_gross of PV plant already including 3% contingency (USD_2022/W)";
   parameter Real pri_FB_Heating = 0.1539 "Cost per W of heater (USD_2022/W)";
   
   //Fixed-Size Capital Costs
   parameter Real FCI_Reactor = 506546275.0 "Reactor FCI cost (USD_2022)";
-  parameter Real FCI_GGHX = 48763800.0 "GGHX FCI cost (USD_2022)";
-  parameter Real FCI_Blower_H2 = 1592480.0 "H2 Blower FCI cost (USD_2022)";
-  parameter Real FCI_Condenser_1 = 470771.0 "Condenser 1 cost (USD_2022)";
-  parameter Real FCI_Condenser_2 = 1265220.0 "Condenser 2 cost (USD_2022)";
-  parameter Real FCI_PGHX1 = 1322420.0 + 475604.0 + 96581.0  "PGHX1 cost (USD_2022)";
-  parameter Real FCI_PGHX2 = 27193400.0 + 3713210.0 + 640790.0 "PGHX2 cost (USD_2022)";
+  parameter Real FCI_GGHX = 41675600.0 "GGHX FCI cost (USD_2022)";
+  parameter Real FCI_Blower_H2 = 1404500.0 "H2 Blower FCI cost (USD_2022)";
+  parameter Real FCI_Condenser_1 = 483007.0 "Condenser 1 cost (USD_2022)";
+  parameter Real FCI_Condenser_2 = 1298110.0 "Condenser 2 cost (USD_2022)";
+  parameter Real FCI_PGHX1 = 1128020.0 + 595218.0 + 147284.0 "PGHX1 cost (USD_2022)";
+  parameter Real FCI_PGHX2 = 23195900.0 + 6255300.0 + 977190.0 "PGHX2 cost (USD_2022)";
 
   //Variable-Sized Capital Costs
   parameter Real FCI_heating_FB = pri_FB_Heating*P_heater_des;
-  parameter Real FCI_PV = pri_PV*P_PV_gross;
-  parameter Real FCI_Wind = pri_Wind*P_wind_gross;
-  
-  parameter Real FCI_blower_FB = P_C_FB*1.05*3.5*0.7012 "FCI cost of the blower in FB heater (USD_year)";
+  parameter Real FCI_blower_FB = FOB_blower_FB*1.05*3.5*0.7012 "FCI cost of the blower in FB heater (USD_year)";
   parameter Real FCI_recup_FB = FOB_recup_FB*1.05*3.5*0.7012;
   parameter Real FCI_tank_hot = FOB_tank_hot*1.05*2.744;
   parameter Real FCI_tank_med = FOB_tank_med*1.05*4.0;
+  
+  //PV and Wind Capital Costs
+  parameter Real FCI_PV = pri_PV*P_PV_gross;
+  parameter Real FCI_Wind = pri_Wind*P_wind_gross;
+  
+  //Crushing Capital Cost
+  parameter Real FCI_Crushing = 50548009.0*Plant_Scale/1.0;
+  
+  //DRI Plant Capital Costs
+  parameter Real FCI_Plant = FCI_Reactor + FCI_GGHX + FCI_Blower_H2 + FCI_Condenser_1 + FCI_Condenser_2 + FCI_PGHX1 + FCI_PGHX2 + FCI_heating_FB + FCI_blower_FB + FCI_recup_FB + FCI_tank_hot + FCI_tank_med;
+  
+  //FCI_Plant, FCI_PV and FCI_Wind make up total CAPEX.
+  
+  //Fixed Annual Costs
+  parameter Real AC_Plant = 0.04*FCI_Plant "Annual cost due to plant O&M, 4% of Plant CAPEX (USD/year)";
+  parameter Real AC_Labour = 6613253.0*Plant_Scale/1.0 "Annual cost due to labour needed to run plant (USD/year)";
+  parameter Real AC_PV = 0.01268*P_PV_gross "Annual O&M costs for PV plant (USD/year)";
+  parameter Real AC_Wind = 0.01868*P_wind_gross "Annual O&M costs for Wind plant (USD/year)";
+  
+  //Variable Annual Costs
+  Real AC_H2 = 218178221.0*0.8530*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to stoichiometric consumption of H2 (USD/yr)"; //0.8530kg of Fe per 1.0kg of DRI
+  Real AC_Mining = 23254357.0*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to stoichiometric mining of iron ore (USD/yr)";
+  Real AC_Electric = 4183700.0*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to electricity cost of processing iron ore (USD/yr)";
+  
+  
+  //Sum Up Everything
+  parameter Real C_capital = FCI_Plant + FCI_PV + FCI_Wind + FCI_Crushing;
+  Real C_annual = AC_Plant + AC_Labour + AC_PV + AC_Wind + AC_H2 + AC_Mining + AC_Electric;
+  
+  //Some Financial Parameters
+  parameter Real n = 30.0 "Plant lifetime (years)";
+  parameter Real r_nom = 0.07 "Nominal discount rate (-)";
+  parameter Real r_inf = 0.025 "Inflation rate (-)";
+  
+  parameter Real r = ((1.0+r_nom)/(1.0+r_inf)) - 1 "Real discount rate (-)";
+  parameter Real f = (r*((1.0+r)^n))/(((1.0+r)^n)-1.0) "Annuity factor on LCOD calculation (-)";
+  
+  
+  
   
   
   
@@ -128,23 +164,23 @@ model H2DRI_DesignCase_2b_Dynamic
   Modelica.Blocks.Sources.CombiTimeTable Wind_input(fileName = Wind_file, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative, tableName = "Power", tableOnFile = true) annotation(
     Placement(visible = true, transformation(origin = {-88, 26}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Math.Add Grid_Sum(k1 = P_PV_gross / PV_ref_size, k2 = P_wind_gross / Wind_ref_size) annotation(
-    Placement(visible = true, transformation(origin = {-50, 40}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-51, 39}, extent = {{-9, -9}, {9, 9}}, rotation = 0)));
   SolarTherm.Models.CSP.CRS.Receivers.Basic_Heater Heater(redeclare package Medium = Medium_Ore_Dehydroxylated, P_heater_des = P_heater_des, Q_heater_des = Q_heater_des, T_cold_set = T_med_set, T_hot_set = T_hot_set, eff_heater = eff_heater) annotation(
-    Placement(visible = true, transformation(origin = {28, -6}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Storage.Tank.Silo Med_Tank(redeclare package Medium = Medium_Ore_Dehydroxylated, redeclare package Filler_Package = Material_IOE_OreD, T_min = T_med_set - 10.0, T_max = T_med_set + 10.0, U_loss_tank = 0.0, T_start = T_med_set, T_set = T_med_set - 10.0, L_start = 0.50, epsilon = epsilon, H_tank = H_tank_med, D_tank = D_tank_med) annotation(
-    Placement(visible = true, transformation(origin = {-18, -8}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {14, -6}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+  SolarTherm.Models.Storage.Tank.Silo Cold_Tank(redeclare package Medium = Medium_Ore_Dehydroxylated, redeclare package Filler_Package = Material_IOE_OreD, T_min = T_med_set - 10.0, T_max = T_med_set + 10.0, U_loss_tank = 0.0, T_start = T_med_set, T_set = T_med_set - 10.0, L_start = 0.50, epsilon = epsilon, H_tank = H_tank_med, D_tank = D_tank_med) annotation(
+    Placement(visible = true, transformation(origin = {-32, -8}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
   SolarTherm.Models.Storage.Tank.Silo Hot_Tank(redeclare package Medium = Medium_Ore_Dehydroxylated, redeclare package Filler_Package = Material_IOE_OreD, T_min = T_hot_set - 10.0, T_max = T_hot_set + 10.0, U_loss_tank = 0.0, T_start = T_hot_set, T_set = T_hot_set - 10.0, L_start = 0.50, epsilon = epsilon, H_tank = H_tank_hot, D_tank = D_tank_hot) annotation(
-    Placement(visible = true, transformation(origin = {54, -6}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {40, -6}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple Heater_Lift(redeclare package Medium = Medium_Ore_Dehydroxylated) annotation(
-    Placement(visible = true, transformation(origin = {4, -14}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-10, -14}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink2 Sink(redeclare package Medium = Medium_Ore_Dehydroxylated) annotation(
-    Placement(visible = true, transformation(origin = {92, -12}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {90, -12}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
   Modelica.Fluid.Sources.Boundary_pT OreD_source(redeclare package Medium = Medium_Ore_Dehydroxylated, T = 289.0 + 273.15,nPorts = 1, p = 100000, use_T_in = false) annotation(
-    Placement(visible = true, transformation(origin = {-74, -12}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
-  SolarTherm.Models.Fluid.Pumps.PumpSimple Med_Lift(redeclare package Medium = Medium_Ore_Dehydroxylated) annotation(
-    Placement(visible = true, transformation(origin = {-42, -14}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-88, -12}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
+  SolarTherm.Models.Fluid.Pumps.PumpSimple Cold_Lift(redeclare package Medium = Medium_Ore_Dehydroxylated) annotation(
+    Placement(visible = true, transformation(origin = {-56, -14}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure Reactor_Lift(redeclare package Medium = Medium_Ore_Dehydroxylated) annotation(
-    Placement(visible = true, transformation(origin = {74, -12}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {60, -12}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
 
 //Controller
   parameter SI.Time t_wait = 1.0*3600 "Waiting time between turning off process and being able to turn on";
@@ -157,8 +193,8 @@ model H2DRI_DesignCase_2b_Dynamic
   
   Integer State(start = 1);
   
-  SI.Mass m_Fe_produced(start=0);
-  SI.Mass m_Fe_target(start=0);
+  SI.Mass m_DRI_produced(start=0);
+  SI.Mass m_DRI_target(start=0);
   Real CapF_Process(start=0);
   Real CapF_Heater(start=0);
   //Boolean Defocus(start = false);
@@ -179,6 +215,31 @@ model H2DRI_DesignCase_2b_Dynamic
   SI.Energy Q_heater_out(start=0);
   
   SI.Energy Q_heater_target(start=0); //maximum possible heater output at 100% operation
+  
+  //LCOD Calculation
+  Real LCOD_2022 "Levelised cost per ton of DRI (USD_2022/tDRI)";
+  Real LCOD_2021 = LCOD_2022*(708.8/816.0) "Levelised cost per ton of DRI (USD_2021/tDRI)"; 
+  Real LCOD_2021_AUD = LCOD_2021*1.330849 "Levelised cost per ton of DRI (AUD_2021/tDRI)";
+  Real LCOD_2022_numerator = f*C_capital + C_annual "Numerator of the LCOD formula (USD/yr)";
+  
+  //These are annual costs
+  Real LCOD_frac_Hydrogen = AC_H2/LCOD_2022_numerator;
+  Real LCOD_frac_Mining = AC_Mining/LCOD_2022_numerator;
+  Real LCOD_frac_Electricity = AC_Electric/LCOD_2022_numerator;
+  
+  Real LCOD_frac_PlantOM = AC_Plant/LCOD_2022_numerator;
+  Real LCOD_frac_Labour = AC_Labour/LCOD_2022_numerator;
+  
+  //These are capital costs
+  Real LCOD_frac_Plant = f*FCI_Plant/LCOD_2022_numerator;
+  Real LCOD_frac_Crushing = f*FCI_Crushing/LCOD_2022_numerator;
+  
+  //These are a combination
+  Real LCOD_frac_PV = (f*FCI_PV + AC_PV)/LCOD_2022_numerator;
+  Real LCOD_frac_Wind = (f*FCI_Wind + AC_Wind)/LCOD_2022_numerator;
+  
+  //Check if they sum to 1.0
+  Real Sum_frac = LCOD_frac_Hydrogen + LCOD_frac_Mining + LCOD_frac_Electricity + LCOD_frac_PlantOM + LCOD_frac_Labour + LCOD_frac_Plant + LCOD_frac_PV + LCOD_frac_Wind + LCOD_frac_Crushing;
   
 algorithm
 
@@ -217,14 +278,16 @@ equation
   der(Q_heater_out) = Heater.Q_out;
 
   der(Q_heater_target) = Q_heater_des;
-  der(m_Fe_target) = m_flow_ore_des*(50.8/154.1)*(0.8924*2.0*55.845/159.6882);
-  der(m_Fe_produced) = Sink.port_a.m_flow*(50.8/154.1)*(0.8924*2.0*55.845/159.6882);
+  der(m_DRI_target) = m_flow_ore_des*(50.8/154.1)*(0.8924*2.0*55.845/159.6882)*(1.0/0.8530);
+  der(m_DRI_produced) = Sink.port_a.m_flow*(50.8/154.1)*(0.8924*2.0*55.845/159.6882)*(1.0/0.8530);
   if time < 10.0 then
     CapF_Process = 0.0;
     CapF_Heater = 0.0;
+    LCOD_2022 = 0.0;
   else
-    CapF_Process = m_Fe_produced/m_Fe_target;
+    CapF_Process = m_DRI_produced/m_DRI_target;
     CapF_Heater = Q_heater_out/Q_heater_target;
+    LCOD_2022 = (f*C_capital + C_annual)/(1.0e-3*m_DRI_produced);
   end if;
 
 
@@ -268,79 +331,72 @@ equation
     end if;
   end if;
   if State == 1 then
-    Heater_Lift.m_flow = (Heater.Q_heater_raw/Q_process_des)*m_flow_ore_des;
-  
+    Heater_Lift.m_flow = Heater.Q_heater_raw / Q_process_des * m_flow_ore_des;
     Heater.curtail = false;
-    Heater.Q_curtail = Q_process_des; //Not used anyway
-
-    Med_Lift.m_flow = m_flow_ore_des;  
+    Heater.Q_curtail = Q_process_des;
+//Not used anyway
+    Cold_Lift.m_flow = m_flow_ore_des;
     Reactor_Lift.m_flow = m_flow_ore_des;
   elseif State == 2 then
-    Heater_Lift.m_flow = (Heater.Q_heater_raw/Q_process_des)*m_flow_ore_des;
-    
+    Heater_Lift.m_flow = Heater.Q_heater_raw / Q_process_des * m_flow_ore_des;
     Heater.curtail = false;
-    Heater.Q_curtail = Q_process_des; //Not used anyway
-    
-    Med_Lift.m_flow = m_flow_ore_des;  
+    Heater.Q_curtail = Q_process_des;
+//Not used anyway
+    Cold_Lift.m_flow = m_flow_ore_des;
     Reactor_Lift.m_flow = m_flow_ore_des;
   elseif State == 3 then
     Heater_Lift.m_flow = m_flow_ore_des;
-    
     Heater.curtail = true;
-    Heater.Q_curtail = Q_process_des; //Curtailed
-    
-    Med_Lift.m_flow = m_flow_ore_des;  
+    Heater.Q_curtail = Q_process_des;
+//Curtailed
+    Cold_Lift.m_flow = m_flow_ore_des;
     Reactor_Lift.m_flow = m_flow_ore_des;
   elseif State == 4 then
     Heater_Lift.m_flow = 1.0e-9;
-    
     Heater.curtail = false;
-    Heater.Q_curtail = Q_process_des; //Not used anyway
-    
-    Med_Lift.m_flow = m_flow_ore_des;  
+    Heater.Q_curtail = Q_process_des;
+//Not used anyway
+    Cold_Lift.m_flow = m_flow_ore_des;
     Reactor_Lift.m_flow = m_flow_ore_des;
   elseif State == 5 then
-    Heater_Lift.m_flow = (Heater.Q_heater_raw/Q_process_des)*m_flow_ore_des;
-    
+    Heater_Lift.m_flow = Heater.Q_heater_raw / Q_process_des * m_flow_ore_des;
     Heater.curtail = false;
-    Heater.Q_curtail = Q_process_des; //Not used anyway
-    
-    Med_Lift.m_flow = 1.0e-9;  
+    Heater.Q_curtail = Q_process_des;
+//Not used anyway
+    Cold_Lift.m_flow = 1.0e-9;
     Reactor_Lift.m_flow = 1.0e-9;
   else
     Heater_Lift.m_flow = 1.0e-9;
-    
     Heater.curtail = false;
-    Heater.Q_curtail = Q_process_des; //Not used anyway
-    Med_Lift.m_flow = 1.0e-9;  
+    Heater.Q_curtail = Q_process_des;
+//Not used anyway
+    Cold_Lift.m_flow = 1.0e-9;
     Reactor_Lift.m_flow = 1.0e-9;
   end if;
-
-  Med_Tank.T_amb = 298.15;
+  Cold_Tank.T_amb = 298.15;
   Hot_Tank.T_amb = 298.15;
-  
-  Med_Tank.p = 100000.0;
+  Cold_Tank.p = 100000.0;
   Hot_Tank.p = 100000.0;
   connect(Wind_input.y[1], Grid_Sum.u2) annotation(
-    Line(points = {{-76, 26}, {-70, 26}, {-70, 34}, {-62, 34}, {-62, 34}}, color = {0, 0, 127}));
+    Line(points = {{-76, 26}, {-70, 26}, {-70, 34}, {-62, 34}}, color = {0, 0, 127}));
   connect(PV_input.y[1], Grid_Sum.u1) annotation(
-    Line(points = {{-76, 54}, {-70, 54}, {-70, 46}, {-62, 46}, {-62, 46}}, color = {0, 0, 127}));
-  connect(Med_Lift.fluid_b, Med_Tank.fluid_a) annotation(
-    Line(points = {{-36, -14}, {-32, -14}, {-32, -4}, {-26, -4}, {-26, -4}}, color = {0, 127, 255}));
-  connect(OreD_source.ports[1], Med_Lift.fluid_a) annotation(
-    Line(points = {{-66, -12}, {-58, -12}, {-58, -14}, {-48, -14}}, color = {0, 127, 255}));
+    Line(points = {{-76, 54}, {-69.5, 54}, {-69.5, 44}, {-62, 44}}, color = {0, 0, 127}));
+  connect(Cold_Lift.fluid_b, Cold_Tank.fluid_a) annotation(
+    Line(points = {{-50, -14}, {-40, -14}, {-40, -4}}, color = {0, 127, 255}));
+  connect(OreD_source.ports[1], Cold_Lift.fluid_a) annotation(
+    Line(points = {{-80, -12}, {-62, -12}, {-62, -14}}, color = {0, 127, 255}));
   connect(Reactor_Lift.fluid_b, Sink.port_a) annotation(
-    Line(points = {{80, -12}, {86, -12}}, color = {0, 127, 255}));
+    Line(points = {{66, -12}, {76, -12}}, color = {0, 127, 255}));
   connect(Hot_Tank.fluid_b, Reactor_Lift.fluid_a) annotation(
-    Line(points = {{62, -12}, {68, -12}, {68, -12}, {68, -12}}, color = {0, 127, 255}));
+    Line(points = {{48, -12}, {54, -12}}, color = {0, 127, 255}));
   connect(Grid_Sum.y, Heater.P_supply) annotation(
-    Line(points = {{-38, 40}, {-6, 40}, {-6, 1}, {17, 1}}, color = {0, 0, 127}));
+    Line(points = {{-41, 39}, {-6, 39}, {-6, 1}, {3, 1}}, color = {0, 0, 127}));
   connect(Heater.fluid_b, Hot_Tank.fluid_a) annotation(
-    Line(points = {{38, -6}, {42, -6}, {42, -2}, {46, -2}, {46, -2}}, color = {0, 127, 255}));
-  connect(Med_Tank.fluid_b, Heater_Lift.fluid_a) annotation(
-    Line(points = {{-10, -14}, {-2, -14}, {-2, -14}, {-2, -14}}, color = {0, 127, 255}));
+    Line(points = {{24, -6}, {32, -6}, {32, -2}}, color = {0, 127, 255}));
+  connect(Cold_Tank.fluid_b, Heater_Lift.fluid_a) annotation(
+    Line(points = {{-24, -14}, {-16, -14}}, color = {0, 127, 255}));
   connect(Heater_Lift.fluid_b, Heater.fluid_a) annotation(
-    Line(points = {{10, -14}, {14, -14}, {14, -6}, {18, -6}, {18, -6}}, color = {0, 127, 255}));
+    Line(points = {{-4, -14}, {4, -14}, {4, -6}}, color = {0, 127, 255}));
 
 annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false)), experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1.0e-5, Interval = 300, maxStepSize = 60, initialStepSize = 60));
