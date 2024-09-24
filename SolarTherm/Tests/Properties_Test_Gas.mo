@@ -21,15 +21,15 @@ model Properties_Test_Gas
   SI.SpecificHeatCapacity cp_H2;
   SI.SpecificHeatCapacity cp_H2O;
   //SI.SpecificEntropy s;
-  //SI.Density rho;
+  SI.Density rho_H2;
   //SI.ThermalConductivity k;
 equation
   p = p_fixed;
-  T = T_start + (time/100)*(T_end-T_start);
+  T = 54.59 + 273.15;//T_start + (time/100)*(T_end-T_start);
   T_C = T - 273.15;
   //h = Utility_Package.h_T(T);
   //s = Utility_Package.s_T(T);
-  //rho = Utility_Package.rho_T(T);
+  rho_H2 = Modelica.Media.IdealGases.SingleGases.H2.density(Modelica.Media.IdealGases.SingleGases.H2.setState_pT(p,T));
   //k = Utility_Package.k_T(T);
   h_H2 = Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_fixed,T);
   h_H2O = Modelica.Media.Water.IF97_Utilities.h_pT(p_fixed,T);
