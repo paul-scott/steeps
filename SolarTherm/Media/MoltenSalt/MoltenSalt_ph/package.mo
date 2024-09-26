@@ -12,7 +12,7 @@ package MoltenSalt_ph "Molten Salt (60% NaNO3, 40% KNO3 by weight), explicit in 
 		ThermoStates = Modelica.Media.Interfaces.Choices.IndependentVariables.ph,
 		final mediumName="MoltenSalt",
 		final substanceNames={"NaNO3","KNO3"},
-		final singleState=false,
+		singleState=false,
 		final reducedX=true,
 		final fixedX=true,
 		Temperature(
@@ -79,7 +79,7 @@ package MoltenSalt_ph "Molten Salt (60% NaNO3, 40% KNO3 by weight), explicit in 
 	equation
 		d = rho_T(T);
 		h = state.h;
-		u = h - p/d;
+    u = h - (if singleState then reference_p/d else state.p/d);
 		MM = 0.091438;
 		R = 8.3144/MM;
 		state.p = p;
@@ -164,8 +164,10 @@ package MoltenSalt_ph "Molten Salt (60% NaNO3, 40% KNO3 by weight), explicit in 
 
 	redeclare function extends specificInternalEnergy "Return specific internal energy"
 	algorithm
-		u := state.h - state.p / rho_T(T_h(state.h));
-		annotation (Inline=true);
+		u := if singleState
+		       then state.h - reference_p / rho_T(T_h(state.h))
+		       else state.h - state.p / rho_T(T_h(state.h));
+    annotation (Inline=true);
 	end specificInternalEnergy;
 
 
