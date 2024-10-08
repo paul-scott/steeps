@@ -1,0 +1,11 @@
+within SolarTherm.Models.Chemistry;
+
+partial record PropertyTable "Property tables of chemicals at 1 bar unless otherwise specified. Array lengths are usually 122."
+  parameter Modelica.SIunits.Temperature T_data[:] "Absolute temperature (K)";
+  parameter Modelica.SIunits.SpecificEnthalpy h_data[:] "Specific enthalpy (J/kg)";
+  parameter Modelica.SIunits.SpecificEntropy s_data[:] "Specific absolute entropy (J/kgK)";
+  parameter Modelica.SIunits.SpecificHeatCapacityAtConstantPressure cp_data[:] "Specific heat capacity at constant pressure (J/kgK)";
+  parameter Modelica.SIunits.ThermalConductivity k_data[:] "Thermal conductivity (W/mK)";
+  annotation(
+    Diagram(coordinateSystem(preserveAspectRatio = false)));
+end PropertyTable;

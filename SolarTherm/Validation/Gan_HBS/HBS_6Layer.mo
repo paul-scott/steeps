@@ -27,9 +27,9 @@ model HBS_6Layer
   //Tank Design parameters
   parameter SI.Energy E_max = 144e9 "Design storage capacity";
   parameter Real ar = 2.0 "Tank Aspect ratio H/D";
-  parameter Real eta = (CN.pi*d_p*d_p)/(s_p*s_p*2.0*(3.0^0.5)) "Structural porosity of the firebrick (m)";
+  parameter Real eta = 0.40 "Structural porosity of the firebrick (m)";
   parameter Real d_p = 0.02 "Diameter of the pores (m)";
-  parameter Real s_p = 0.04 "Separation of the pores (m)";
+  //parameter Real s_p = 0.04 "Separation of the pores (m)";
   //parameter Real t_e = d_p / (2.0 * N_p) "Thickness of encapsulation, default is such that it is at a value that preserves equidistant radii discretizations (m)";
   //Temperature Bounds
   parameter SI.Temperature T_min = CV.from_degC(620) "Design cold Temperature of everything in the tank (K)";

@@ -1,7 +1,7 @@
 within SolarTherm.Media.SolidParticles;
-package IOE_Dehydroxylated_utilities
-  extends Modelica.Icons.UtilitiesPackage;
-  import SolarTherm.Models.Chemistry.Property_Tables.Mixtures.IOE_Dehydroxylated.*;
+package Fe2O3_utilities
+ extends Modelica.Icons.UtilitiesPackage;
+  import SolarTherm.Models.Chemistry.Property_Tables.Fe2O3.*;
   
   function cp_T "Specific heat capacity of as a function of temperature"
 	extends Modelica.Icons.Function;
@@ -89,4 +89,4 @@ package IOE_Dehydroxylated_utilities
 	p := 101325.0;
   end p_rho;
 
-end IOE_Dehydroxylated_utilities;
+end Fe2O3_utilities;

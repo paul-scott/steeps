@@ -2,8 +2,6 @@ CarboHSP_ph
 CarboHSP_utilities
 Fe2O3_ph
 Fe2O3_utilities
-Fe_ph
-Fe_utilities
 Fe3O4_ph
 Fe3O4_utilities
 FeO_ph
@@ -18,3 +16,5 @@ IOE_Hydroxylated_utilities
 IOE_Hydroxylated_ph
 IOE_Dehydroxylated_utilities
 IOE_Dehydroxylated_ph
+Fe_utilities
+Fe_ph

@@ -26,11 +26,12 @@ model HBS_6Layer_Tank
   parameter Real ar = 2.0 "Aspect ratio of tank";
   
     //Porosity of tank filler materials
-  //parameter Real eta = 0.22 "Porosity";
+  parameter Real eta = 0.22 "Porosity";
   
     //Filler diameter of materials
-  parameter Real d_p = 0.02 "Diameter of the pores (m)";
-  parameter Real s_p = 0.04 "Separation of the pores (m)";
+  parameter SI.Length d_p = 0.02 "Diameter of the pores (m)";
+  //parameter Real s_p = 0.04 "Separation of the pores (m)";
+
   
     //Encapsulation thickness
   //parameter SI.Length t_e = d_p/(2*N_p) "Encapsulation thickness"; //Defaults to equidistant radial discretization
@@ -79,7 +80,7 @@ model HBS_6Layer_Tank
         rotation=0)));
   
   //Initialize Tank
-  SolarTherm.Validation.Gan_HBS.HBS_6Layer Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package_1 = Filler_Package_1, redeclare replaceable package Filler_Package_2 = Filler_Package_2, redeclare replaceable package Filler_Package_3 = Filler_Package_3, redeclare replaceable package Filler_Package_4 = Filler_Package_4, redeclare replaceable package Filler_Package_5 = Filler_Package_5, redeclare replaceable package Filler_Package_6 = Filler_Package_6, Correlation = Correlation, E_max = E_max, ar = ar, d_p = d_p, s_p = s_p, T_min = T_min, T_max = T_max, N_f = N_f, U_loss_tank = U_loss_tank);
+  SolarTherm.Validation.Gan_HBS.HBS_6Layer Tank_A(redeclare replaceable package Fluid_Package = Fluid_Package, redeclare replaceable package Filler_Package_1 = Filler_Package_1, redeclare replaceable package Filler_Package_2 = Filler_Package_2, redeclare replaceable package Filler_Package_3 = Filler_Package_3, redeclare replaceable package Filler_Package_4 = Filler_Package_4, redeclare replaceable package Filler_Package_5 = Filler_Package_5, redeclare replaceable package Filler_Package_6 = Filler_Package_6, Correlation = Correlation, E_max = E_max, ar = ar, d_p = d_p, eta = eta, T_min = T_min, T_max = T_max, N_f = N_f, U_loss_tank = U_loss_tank);
 
 
   //Cost BreakDown

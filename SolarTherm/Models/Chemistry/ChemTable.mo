@@ -15,6 +15,11 @@ package ChemTable
   final Chemical Al2O3(M=101.9612772e-3, Hf0=-1675.7e3, S0=50.820);
   final Chemical SiO2(M=60.0843e-3, Hf0=-910.6999e3, S0=41.460);
   
+  final Chemical MgO(M=40.3044e-3, Hf0=-601.500e3, S0=26.951);
+  final Chemical Al6Si2O13(M=426.0524316e-3, Hf0=-6819.210e3, S0=274.9);
+  final Chemical CaO(M=56.0774e-3, Hf0=-635.0900e3, S0=37.750);
+  final Chemical CaCO3(M=100.0869e-3, Hf0=-1206.6656e3, S0=87.990);
+  
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false)),
     Icon(graphics = {Rectangle(lineColor = {200, 200, 200}, fillColor = {248, 248, 248}, fillPattern = FillPattern.HorizontalCylinder, extent = {{-100, -100}, {100, 100}}, radius = 25), Rectangle(origin = {0, -11}, lineThickness = 1, extent = {{-72, 69}, {72, -53}}), Line(origin = {-1, 34}, points = {{-71, 0}, {73, 0}}, thickness = 1), Line(origin = {-40, -3}, points = {{0, 61}, {0, -61}}, thickness = 1), Line(origin = {-2, -3}, points = {{0, 61}, {0, -61}}, thickness = 1), Line(origin = {36, -4}, points = {{0, 62}, {0, -60}}, thickness = 1)}, coordinateSystem(initialScale = 0.1)),

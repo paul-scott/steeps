@@ -15,7 +15,7 @@ model HBSTES_Reference_1_SystemLevel
   parameter Real RM = 2.0 "Renewable Multiple (pre-transmission oversizing)";
   parameter Real HM = 2.0 "Heater Multiple";
   parameter Real PV_fraction = 0.5 "PV_fraction";
-  parameter Real t_storage = 55.0 "Hours of storage (hours)";
+  parameter Real t_storage = 35.0 "Hours of storage (hours)";
   parameter Real util_storage_des = 0.325446;
   //Utilisation determined via component-level analysis 0.5767
   parameter Real level_storage_mid = 0.441777;

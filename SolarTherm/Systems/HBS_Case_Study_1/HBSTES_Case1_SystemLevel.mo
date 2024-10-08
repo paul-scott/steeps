@@ -15,10 +15,10 @@ model HBSTES_Case1_SystemLevel
   parameter Real HM = 2.0 "Heater Multiple";
   parameter Real PV_fraction = 0.5 "PV_fraction";
   
-  parameter Real t_storage = 12.0*4.0 "Hours of storage (hours)";
-  parameter Real util_storage_des = 0.2285;
-  //Utilisation determined via component-level analysis 0.5767
-  parameter Real level_storage_mid = 0.6905;
+  parameter Real t_storage = 12.0*3.50 "Hours of storage (hours)";
+  parameter Real util_storage_des = 0.2188;
+  //UtilisaSystemstion determined via component-level analysis 0.5767
+  parameter Real level_storage_mid = 0.5067;
   //Midpoint of minimum and maximum storage levels determine via component-level analysis 0.4637
   //parameter SI.SpecificEnthalpy h_tol = 0.05 * (TES.Tank_A.h_f_max - TES.Tank_A.h_f_min);
   //Heater Parameters
@@ -107,25 +107,25 @@ parameter Medium.ThermodynamicState state_air_min_des = Medium.setState_pTX(Medi
   parameter Modelica.SIunits.SpecificEnthalpy h_air_max_des = Medium.specificEnthalpy(state_air_max_des) "Specific enthalpy of air at maximum system temperature T_max (J/kg)";
   parameter Modelica.SIunits.SpecificEnthalpy h_air_process_des = Medium.specificEnthalpy(state_air_process_des) "Specific enthalpy of air at design process inlet temperature T_process_des (J/kg)";
   SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_SingleTank_Final TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid, redeclare package Filler_Package = Filler, N_f = N_f, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, ar = ar, d_p = d_p, eta = eta, U_loss_top = U_loss_top, U_loss_bot = U_loss_bot) annotation(
-    Placement(visible = true, transformation(origin = {32, 0}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {38, -6}, extent = {{-38, -38}, {38, 38}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpCold(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {-18, -78}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-20, -76}, extent = {{10, -10}, {-10, 10}}, rotation = 0)));
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction_LoopBreaker Splitter_Top(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {32, 67.6249}, extent = {{-18, -13.9366}, {18, 13.9366}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {38, 62.6249}, extent = {{-22, -20.9366}, {22, 20.9366}}, rotation = 0)));
   SolarTherm.Models.Fluid.Valves.PBS_TeeJunction Splitter_Bot(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {31, -43.8998}, extent = {{17, 0}, {-17, -22.039}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {32, -43.0917}, extent = {{20, 0}, {-20, -21.8345}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple_EqualPressure pumpHot(redeclare package Medium = Medium) annotation(
-    Placement(visible = true, transformation(origin = {91, 79}, extent = {{-9, -9}, {9, 9}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {89, 79}, extent = {{-9, -9}, {9, 9}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression Tamb(y = 298.15) annotation(
-    Placement(visible = true, transformation(origin = {-5, 0}, extent = {{-9, -12}, {9, 12}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-11, 2}, extent = {{-9, -12}, {9, 12}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression p_amb(y = 101325) annotation(
-    Placement(visible = true, transformation(origin = {107, 2.22045e-16}, extent = {{11, -12}, {-11, 12}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-11, -14}, extent = {{-9, -12}, {9, 12}}, rotation = 0)));
   SolarTherm.Models.Control.WindPV_Thermocline_Control Control(redeclare package HTF = Medium, E_max = E_max, Q_boiler_des = Q_process_des, T_boiler_min = T_process_min, T_boiler_start = T_process_start, T_heater_max = T_heater_max, T_heater_start = T_heater_start, T_target = T_max, util_storage_des = util_storage_des, h_target = h_air_max_des, level_mid = level_storage_mid, m_0 = 1e-8, m_boiler_des = m_process_des*(h_air_process_des-h_air_min_des)/(h_air_max_des-h_air_min_des), m_min = 1e-8, m_tol = 0.01 * m_process_des, t_stor_start_dis = t_stor_start_dis, t_wait = 1.0 * 3600.0) annotation(
-    Placement(visible = true, transformation(origin = {114, 26}, extent = {{-10, -10}, {10, 10}}, rotation = 0))); //m_boiler_des needs to be scaled down to the mass flow rate at the overdesigned temperature T_max.
+    Placement(visible = true, transformation(origin = {114, 30}, extent = {{-10, -10}, {10, 10}}, rotation = 0))); //m_boiler_des needs to be scaled down to the mass flow rate at the overdesigned temperature T_max.
   SolarTherm.Models.Fluid.HeatExchangers.Boiler_Basic Process(redeclare package Medium = Medium, T_cold_set = T_min, T_hot_set = T_process_des) annotation(
     Placement(visible = true, transformation(origin = {158, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.CSP.CRS.Receivers.Basic_Heater basic_Heater(redeclare package Medium = Medium, P_heater_des = P_heater_des, Q_heater_des = Q_heater_des, eff_heater = eff_heater, T_cold_set = T_min, T_hot_set = T_max) annotation(
-    Placement(visible = true, transformation(origin = {-46, 10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-41, 11}, extent = {{-9, -9}, {9, 9}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable PV_input(fileName = PV_file, tableName = "Power", tableOnFile = true, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative) annotation(
     Placement(visible = true, transformation(origin = {-124, 34}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Math.Add Grid_Sum(k1 = P_PV_gross / PV_ref_size, k2 = P_wind_gross / Wind_ref_size) annotation(
@@ -204,57 +204,57 @@ equation
   end if;
 //grid_input.Q_defocus_y = min(gridInput.grid_input.y[1], scheduler.y[1] * (h_salt_hot_set - h_salt_cold_set));
   connect(TES.fluid_b, Splitter_Bot.fluid_c) annotation(
-    Line(points = {{32, -30}, {32, -56.5}, {31, -56.5}, {31, -60}}, color = {0, 127, 255}, thickness = 0.5));
-  connect(Tamb.y, TES.T_amb) annotation(
-    Line(points = {{5, 0}, {15, 0}}, color = {0, 0, 127}));
-  connect(p_amb.y, TES.p_amb) annotation(
-    Line(points = {{95, 0}, {49, 0}}, color = {0, 0, 127}));
+    Line(points = {{38, -36}, {38, -47.5}, {32, -47.5}, {32, -59}}, color = {0, 127, 255}, thickness = 0.5));
   connect(Splitter_Bot.fluid_b, pumpCold.fluid_a) annotation(
-    Line(points = {{17, -78}, {-8, -78}}, color = {0, 127, 255}, thickness = 0.5));
+    Line(points = {{16, -76}, {-10, -76}}, color = {0, 127, 255}, thickness = 0.5));
   connect(TES.T_top_measured, Control.T_top_tank) annotation(
-    Line(points = {{49, 21}, {78, 21}, {78, 24}, {103, 24}}, color = {0, 0, 127}));
+    Line(points = {{55, 15}, {78, 15}, {78, 28}, {103, 28}}, color = {0, 0, 127}));
   connect(TES.T_bot_measured, Control.T_bot_tank) annotation(
-    Line(points = {{49, -21}, {82, -21}, {82, 20}, {103, 20}}, color = {0, 0, 127}));
+    Line(points = {{55, -27}, {82, -27}, {82, 24}, {103, 24}}, color = {0, 0, 127}));
   connect(TES.Level, Control.Level) annotation(
-    Line(points = {{49, 8}, {90, 8}, {90, 28}, {103, 28}, {103, 29}}, color = {0, 0, 127}));
+    Line(points = {{55, 3.5}, {90, 3.5}, {90, 28}, {103, 28}, {103, 33}}, color = {0, 0, 127}));
   connect(Splitter_Top.fluid_c, TES.fluid_a) annotation(
-    Line(points = {{32, 67}, {32, 30}}, color = {0, 127, 255}, thickness = 0.5));
+    Line(points = {{38, 62}, {38, 24}}, color = {0, 127, 255}, thickness = 0.5));
   connect(Splitter_Top.fluid_b, pumpHot.fluid_a) annotation(
-    Line(points = {{47, 79}, {82, 79}}, color = {0, 127, 255}, thickness = 0.5));
+    Line(points = {{56, 79}, {80, 79}}, color = {0, 127, 255}, thickness = 0.5));
   connect(Process.fluid_b, Splitter_Bot.fluid_a) annotation(
-    Line(points = {{158, -10}, {158, -78}, {45, -78}}, color = {0, 127, 255}, thickness = 0.5));
+    Line(points = {{158, -10}, {158, -76}, {48, -76}}, color = {0, 127, 255}, thickness = 0.5));
   connect(pumpHot.fluid_b, Process.fluid_a) annotation(
-    Line(points = {{100, 79}, {158, 79}, {158, 10}}, color = {0, 127, 255}, thickness = 0.5));
-  connect(pumpCold.fluid_b, basic_Heater.fluid_a) annotation(
-    Line(points = {{-28, -78}, {-46, -78}, {-46, 1}}, color = {0, 127, 255}, thickness = 0.5));
-  connect(basic_Heater.fluid_b, Splitter_Top.fluid_a) annotation(
-    Line(points = {{-46, 19}, {-46, 79}, {18, 79}}, color = {0, 127, 255}, thickness = 0.5));
+    Line(points = {{98, 79}, {158, 79}, {158, 10}}, color = {0, 127, 255}, thickness = 0.5));
   connect(Control.curtail, basic_Heater.curtail) annotation(
-    Line(points = {{125, 22}, {128, 22}, {128, -36}, {-68, -36}, {-68, 1}, {-57, 1}}, color = {255, 0, 255}));
-  connect(Control.Q_curtail, basic_Heater.Q_curtail) annotation(
-    Line(points = {{103, 17}, {-10, 17}, {-10, -12}, {-72, -12}, {-72, 2}, {-57, 2}, {-57, 5}}, color = {0, 0, 127}));
+    Line(points = {{125, 26}, {128, 26}, {128, -52}, {-68, -52}, {-68, 20}, {-51, 20}}, color = {255, 0, 255}));
   connect(TES.h_top_outlet, Control.h_tank_top) annotation(
-    Line(points = {{22, 25}, {22, 46}, {105, 46}, {105, 37}}, color = {0, 0, 127}));
+    Line(points = {{32, 22}, {32, 46}, {105, 46}, {105, 41}}, color = {0, 0, 127}));
   connect(PV_input.y[1], Grid_Sum.u1) annotation(
     Line(points = {{-113, 34}, {-104, 34}, {-104, 24}, {-96, 24}}, color = {0, 0, 127}));
   connect(Wind_input.y[1], Grid_Sum.u2) annotation(
     Line(points = {{-113, 4}, {-104, 4}, {-104, 12}, {-96, 12}}, color = {0, 0, 127}));
   connect(Grid_Sum.y, basic_Heater.P_supply) annotation(
-    Line(points = {{-73, 18}, {-66, 18}, {-66, 10}, {-57, 10}}, color = {0, 0, 127}));
+    Line(points = {{-73, 18}, {-66, 18}, {-66, 17}, {-51, 17}}, color = {0, 0, 127}));
   connect(Process.h_out_signal, Control.h_boiler_outlet) annotation(
-    Line(points = {{148, -8}, {136, -8}, {136, 52}, {116, 52}, {116, 38}, {116, 38}}, color = {0, 0, 127}));
+    Line(points = {{148, -8}, {136, -8}, {136, 52}, {115, 52}, {115, 41}}, color = {0, 0, 127}));
   connect(TES.h_bot_outlet, Control.h_tank_bot) annotation(
-    Line(points = {{22, -25}, {22, -30}, {132, -30}, {132, 46}, {110, 46}, {110, 38}}, color = {0, 0, 127}));
+    Line(points = {{32, -34}, {132, -34}, {132, 46}, {110, 46}, {110, 41}}, color = {0, 0, 127}));
   connect(basic_Heater.Q_heater_raw, Control.Q_heater_raw) annotation(
-    Line(points = {{-34, 10}, {-20, 10}, {-20, 52}, {86, 52}, {86, 32}, {104, 32}, {104, 32}}, color = {0, 0, 127}));
+    Line(points = {{-31, 18}, {-20, 18}, {-20, 52}, {86, 52}, {86, 37}, {103, 37}}, color = {0, 0, 127}));
   connect(Control.m_heater_signal, pumpCold.m_flow) annotation(
-    Line(points = {{126, 32}, {140, 32}, {140, -58}, {-18, -58}, {-18, -70}, {-18, -70}}, color = {0, 0, 127}));
+    Line(points = {{125, 36}, {140, 36}, {140, -56}, {-20, -56}, {-20, -67}}, color = {0, 0, 127}));
   connect(Control.m_boiler_signal, pumpHot.m_flow) annotation(
-    Line(points = {{126, 26}, {130, 26}, {130, 94}, {90, 94}, {90, 86}, {92, 86}}, color = {0, 0, 127}));
+    Line(points = {{125, 31}, {130, 31}, {130, 94}, {90, 94}, {90, 87}, {89, 87}}, color = {0, 0, 127}));
   connect(ConstantDemand.y, Control.Q_demand) annotation(
-    Line(points = {{164, 42}, {120, 42}, {120, 38}, {122, 38}}, color = {0, 0, 127}));
+    Line(points = {{164, 42}, {120, 42}, {120, 41}, {121, 41}}, color = {0, 0, 127}));
+  connect(Control.Q_curtail, basic_Heater.Q_curtail) annotation(
+    Line(points = {{104, 22}, {-60, 22}, {-60, 14}, {-52, 14}, {-52, 14}, {-52, 14}}, color = {0, 0, 127}));
+  connect(basic_Heater.fluid_b, Splitter_Top.fluid_a) annotation(
+    Line(points = {{-32, 12}, {-26, 12}, {-26, 79}, {20, 79}}, color = {0, 127, 255}, thickness = 0.5));
+  connect(pumpCold.fluid_b, basic_Heater.fluid_a) annotation(
+    Line(points = {{-30, -76}, {-58, -76}, {-58, 12}, {-50, 12}, {-50, 12}}, color = {11, 133, 255}, thickness = 0.55));
+  connect(Tamb.y, TES.T_amb) annotation(
+    Line(points = {{-2, 2}, {20, 2}, {20, 2}, {20, 2}}, color = {0, 0, 127}));
+  connect(p_amb.y, TES.p_amb) annotation(
+    Line(points = {{-2, -14}, {20, -14}, {20, -14}, {20, -14}}, color = {0, 0, 127}));
   annotation(
-    Diagram(coordinateSystem(preserveAspectRatio = false, extent = {{-200, -100}, {200, 100}}, initialScale = 0.1), graphics = {Text(origin = {85, 68}, extent = {{-11, 4}, {23, -10}}, textString = "Hot Pump"), Text(origin = {-21, -90}, extent = {{-11, 4}, {23, -10}}, textString = "Cold Pump"), Text(origin = {-51, -4}, extent = {{-11, 4}, {13, -6}}, textString = "Heater")}),
+    Diagram(coordinateSystem(preserveAspectRatio = false, extent = {{-200, -100}, {200, 100}}, initialScale = 0.1)),
     Icon(coordinateSystem(extent = {{-200, -100}, {200, 100}}, preserveAspectRatio = false)),
     experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1.0e-5, Interval = 300, maxStepSize = 60, initialStepSize = 60));
 end HBSTES_Case1_SystemLevel;

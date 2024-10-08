@@ -13,8 +13,9 @@ model HBS_Validation_Charging
   parameter SI.Length D_tank = 7.748 "Tank diameter (m)";
   parameter Real ar = H_tank/D_tank;
   
-  parameter SI.Length d_p = 19.6e-3 "Filler pore diameter (m)";
-  parameter SI.Length s_p = 31.7e-3 "Filler pore separation (m)";
+  parameter SI.Length d_p = 16.0e-3 "Filler pore diameter (m)";
+  //parameter SI.Length s_p = 31.7e-3 "Filler pore separation (m)";
+  parameter Real eta = 0.4034 "Checkerbrick porosity";
   
   parameter SI.Temperature T_max = 1326.85 + 273.15 "Maximum design system temperature (K)";
   parameter SI.Temperature T_min = 224.85 + 273.15 "Minimum design system temperature (K)";
@@ -62,7 +63,7 @@ model HBS_Validation_Charging
     Placement(visible = true, transformation(origin = {-36, 56}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression m_flow_charging(y = m_flow_charging_signal) annotation(
     Placement(visible = true, transformation(origin = {-75, 90}, extent = {{-23, -10}, {23, 10}}, rotation = 0)));
-  SolarTherm.Validation.Gan_HBS.HBS_6Layer_Tank HBS(redeclare package Medium = Medium, redeclare replaceable package Fluid_Package = Fluid_Package, N_f = 100, T_max = T_max, T_min = T_min, Correlation = Correlation, ar = ar, d_p= d_p, s_p = s_p,Tank_A.H_tank=H_tank,Tank_A.D_tank=D_tank,Tank_A.h_p_start=h_p_start,Tank_A.h_f_start=h_f_start) annotation(
+  SolarTherm.Validation.Gan_HBS.HBS_6Layer_Tank HBS(redeclare package Medium = Medium, redeclare replaceable package Fluid_Package = Fluid_Package, N_f = 100, T_max = T_max, T_min = T_min, Correlation = Correlation, ar = ar, d_p= d_p, eta = eta,Tank_A.H_tank=H_tank,Tank_A.D_tank=D_tank,Tank_A.h_p_start=h_p_start,Tank_A.h_f_start=h_f_start) annotation(
     Placement(visible = true, transformation(origin = {0, -6}, extent = {{-44, -44}, {44, 44}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink2 Fluid_Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = { -59, -71}, extent = {{21, -21}, {-21, 21}}, rotation = 0)));

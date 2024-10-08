@@ -1,6 +1,6 @@
 within SolarTherm.Systems.HBS_Case_Study_1;
 
-model HBSTES_Case1_ComponentLevel_24hcycle
+model HBSTES_Case1_ComponentLevel_VarCycle "This component analysis allows a variable cycle length depending on t_storage and t_standby"
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -10,7 +10,8 @@ model HBSTES_Case1_ComponentLevel_24hcycle
   package Filler_Package = SolarTherm.Materials.Mullite_20pct_porosity;
   //These parameters are varied
   parameter Real HM = 2.0 "Heater Multiple";
-  parameter SI.Time t_discharge = 10.0 * 3600.0 "Rated discharging period (s)";
+  parameter SI.Time t_discharge = 12.0 * 3600.0 "Rated discharging period (s)";
+  parameter SI.Time t_standby = 4.0*3600.0 "Standby time after both charging and discharging cycle (s)";
   //Numerical Discretisation Settings
   parameter Integer N_f = 100;
   parameter Real f_TES_oversize = 3.5;
@@ -42,8 +43,7 @@ model HBSTES_Case1_ComponentLevel_24hcycle
   parameter SI.MassFlowRate m_charge_des = (Q_heater_des - Q_process_des) / (h_f_max - h_f_min) "Design charging mass flow rate assuming design temperature outlet (kg/s)";
   parameter SI.MassFlowRate m_discharge_des = Q_process_des / (h_f_max - h_f_min)  "Design discharging mass flow rate assuming design temperature outlet (kg/s)";
   //Derived Parameters
-  parameter SI.Time t_cycle = 24.0*3600.0 "Total duration of one cycle (s)";
-  parameter SI.Time t_standby = t_cycle - t_charge - t_discharge "Standby time to make it 24h cycle (s)";
+  parameter SI.Time t_cycle = t_charge + t_discharge + 2.0*t_standby "Total duration of one cycle (s)";
   //this is 24 hours
   parameter SI.SpecificEnthalpy h_f_min = Fluid_Package.h_Tf(T_min, 0.0);
   parameter SI.SpecificEnthalpy h_f_max = Fluid_Package.h_Tf(T_max, 1.0);
@@ -133,18 +133,29 @@ model HBSTES_Case1_ComponentLevel_24hcycle
   SI.Energy E_stored(start = 0.0);
 algorithm
 //Mass flow controls
-  when rem(time, t_cycle) > 1e-6 then
+  when rem(time, t_cycle) > 1e-6 then //Start of charging cycle
     Dis := false;
     if TES.T_bot_measured < T_heater_max then
       Chg := true;
     end if;
   end when;
-  when rem(time, t_cycle) > 1e-6 + t_charge then
+  
+  when rem(time, t_cycle) > 1e-6 + t_charge then //End of charging cycle, begin standby
     Chg := false;
+  end when;
+  
+  when rem(time, t_cycle) > 1e-6 + t_charge + t_standby then //begin discharging cycle
     if TES.T_top_measured > T_process_min then
       Dis := true;
     end if;
   end when;
+  
+   when rem(time, t_cycle) > 1e-6 + t_charge + t_standby + t_discharge then //end discharging cycle
+    Dis := false;
+   end when;
+  
+   
+  
   when TES.T_bot_measured > T_heater_max then
     Chg := false;
     Level_high := TES.Level;
@@ -209,7 +220,7 @@ equation
 //last charging phase
     der(E_chg) = TES.fluid_a.m_flow * (inStream(TES.fluid_a.h_outflow) - TES.fluid_b.h_outflow);
     der(E_dis) = 0.0;
-  elseif time >= 9.0 * t_cycle + t_charge and time < 10.0 * t_cycle then
+  elseif time >= 9.0 * t_cycle + t_charge + t_standby and time < 9.0 * t_cycle + t_charge + t_standby + t_discharge then
 //last discharging phase
     der(E_chg) = 0.0;
     der(E_dis) = TES.fluid_b.m_flow * (TES.fluid_a.h_outflow - inStream(TES.fluid_b.h_outflow));
@@ -217,7 +228,7 @@ equation
     der(E_chg) = 0.0;
     der(E_dis) = 0.0;
   end if;
-  if time > 9.0 * t_cycle + t_charge then
+  if time > 9.0 * t_cycle + t_charge + t_standby then
 //we can calculate utilisation and efficiency because denominator is not zero;
     util_energy = E_dis / E_max;
     eff_energy = E_dis / E_chg;
@@ -261,8 +272,8 @@ equation
   connect(p_amb.y, TES.p_amb) annotation(
     Line(points = {{29, -4}, {12, -4}}, color = {0, 0, 127}));
   annotation(
-    experiment(StopTime = 864000, StartTime = 0, Tolerance = 1e-4, Interval = 60),
+    experiment(StopTime = 5340000, StartTime = 0, Tolerance = 1e-4, Interval = 300),
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
 
-end HBSTES_Case1_ComponentLevel_24hcycle;
+end HBSTES_Case1_ComponentLevel_VarCycle;

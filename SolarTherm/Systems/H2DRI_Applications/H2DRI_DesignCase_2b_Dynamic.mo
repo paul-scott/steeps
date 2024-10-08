@@ -17,10 +17,10 @@ model H2DRI_DesignCase_2b_Dynamic
   parameter Real CEPCI = 816.0 "CEPCI index of the year used in the study e.g. 816.0 for year 2022";
   
   //Parameter Inputs
-  parameter Real RM = 2.0 "Renewable Multiple (pre-transmission oversizing)";
-  parameter Real HM = 2.0 "Heater Multiple";
-  parameter Real PV_fraction = 0.5 "PV_fraction";
-  parameter SI.Time t_storage = 10.0*3600.0 "Seconds of storage (h)";
+  parameter Real RM = 1.8 "Renewable Multiple (pre-transmission oversizing)";
+  parameter Real HM = 1.6 "Heater Multiple";
+  parameter Real PV_fraction = 0.6 "PV_fraction";
+  parameter SI.Time t_storage = 62.0*3600.0 "Seconds of storage (h)";
   
   parameter SI.HeatFlowRate Q_process_des = 6.14926e7;
   parameter SI.MassFlowRate m_flow_ore_des = 131.4894*(Plant_Scale/1.0) "Mass flow of ore out of the hot tank and into the med tank if running at design point (kg/s)";
