@@ -269,18 +269,32 @@ algorithm
   end when;
 
 equation
-  der(E_PV_out) = (Grid_Sum.u1/PV_ref_size)*P_PV_gross;
-  der(E_Wind_out) = (Grid_Sum.u2/Wind_ref_size)*P_wind_gross;
+  if time > 86400.0*10.0 then //10 days initialisation has finished
+    der(E_PV_out) = (Grid_Sum.u1/PV_ref_size)*P_PV_gross;
+    der(E_Wind_out) = (Grid_Sum.u2/Wind_ref_size)*P_wind_gross;
 
-  der(E_renewable_raw) = Grid_Sum.y;
-  der(E_heater_raw) = Heater.P_heater_out;
-  der(Q_heater_raw) = Heater.Q_heater_raw;
-  der(Q_heater_out) = Heater.Q_out;
+    der(E_renewable_raw) = Grid_Sum.y;
+    der(E_heater_raw) = Heater.P_heater_out;
+    der(Q_heater_raw) = Heater.Q_heater_raw;
+    der(Q_heater_out) = Heater.Q_out;
 
-  der(Q_heater_target) = Q_heater_des;
-  der(m_DRI_target) = m_flow_ore_des*(50.8/154.1)*(0.8924*2.0*55.845/159.6882)*(1.0/0.8530);
-  der(m_DRI_produced) = Sink.port_a.m_flow*(50.8/154.1)*(0.8924*2.0*55.845/159.6882)*(1.0/0.8530);
-  if time < 10.0 then
+    der(Q_heater_target) = Q_heater_des;
+    der(m_DRI_target) = m_flow_ore_des*(50.8/154.1)*(0.8924*2.0*55.845/159.6882)*(1.0/0.8530);
+    der(m_DRI_produced) = Sink.port_a.m_flow*(50.8/154.1)*(0.8924*2.0*55.845/159.6882)*(1.0/0.8530);
+  else
+    der(E_PV_out) = 0.0;
+    der(E_Wind_out) = 0.0;
+    der(E_renewable_raw) = 0.0;
+    der(E_heater_raw) = 0.0;
+    der(Q_heater_raw) = 0.0;
+    der(Q_heater_out) = 0.0;
+
+    der(Q_heater_target) = 0.0;
+    der(m_DRI_target) = 0.0;
+    der(m_DRI_produced) = 0.0;
+  end if;
+  
+  if time < 10.0 + 86400.0*10.0 then
     CapF_Process = 0.0;
     CapF_Heater = 0.0;
     LCOD_2022 = 0.0;
@@ -399,5 +413,5 @@ equation
     Line(points = {{-4, -14}, {4, -14}, {4, -6}}, color = {0, 127, 255}));
 
 annotation(
-    Diagram(coordinateSystem(preserveAspectRatio = false)), experiment(StopTime = 3.1536e+07, StartTime = 0, Tolerance = 1.0e-5, Interval = 300, maxStepSize = 60, initialStepSize = 60));
+    Diagram(coordinateSystem(preserveAspectRatio = false)), experiment(StopTime = 3.24e+07, StartTime = 0, Tolerance = 1.0e-5, Interval = 300, maxStepSize = 60, initialStepSize = 60));
 end H2DRI_DesignCase_2b_Dynamic;

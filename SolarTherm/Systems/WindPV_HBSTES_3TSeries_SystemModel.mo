@@ -123,7 +123,7 @@ parameter Medium.ThermodynamicState state_air_min_des = Medium.setState_pTX(Medi
   SolarTherm.Models.Fluid.HeatExchangers.Boiler_Basic Process(redeclare package Medium = Medium, T_cold_set = T_min, T_hot_set = T_process_des) annotation(
     Placement(visible = true, transformation(origin = {158, 0}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   SolarTherm.Models.CSP.CRS.Receivers.Basic_Heater basic_Heater(redeclare package Medium = Medium, P_heater_des = P_heater_des, Q_heater_des = Q_heater_des, eff_heater = eff_heater, T_cold_set = T_min, T_hot_set = T_max) annotation(
-    Placement(visible = true, transformation(origin = {-46, 10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
+    Placement(visible = true, transformation(origin = {-48, 10}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Sources.CombiTimeTable PV_input(fileName = PV_file, tableName = "Power", tableOnFile = true, smoothness = Modelica.Blocks.Types.Smoothness.ContinuousDerivative) annotation(
     Placement(visible = true, transformation(origin = {-124, 34}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
   Modelica.Blocks.Math.Add Grid_Sum(k1 = P_PV_gross / PV_ref_size, k2 = P_wind_gross / Wind_ref_size) annotation(
@@ -171,13 +171,13 @@ equation
   connect(pumpHot.fluid_b, Process.fluid_a) annotation(
     Line(points = {{100, 79}, {158, 79}, {158, 10}}, color = {0, 127, 255}, thickness = 0.5));
   connect(pumpCold.fluid_b, basic_Heater.fluid_a) annotation(
-    Line(points = {{-28, -78}, {-46, -78}, {-46, 1}}, color = {0, 127, 255}, thickness = 0.5));
+    Line(points = {{-28, -78}, {-58, -78}, {-58, 10}}, color = {0, 127, 255}, thickness = 0.5));
   connect(basic_Heater.fluid_b, Splitter_Top.fluid_a) annotation(
-    Line(points = {{-46, 19}, {-46, 79}, {18, 79}}, color = {0, 127, 255}, thickness = 0.5));
+    Line(points = {{-38, 10}, {-38, 79}, {18, 79}}, color = {0, 127, 255}, thickness = 0.5));
   connect(Control.curtail, basic_Heater.curtail) annotation(
-    Line(points = {{125, 22}, {128, 22}, {128, -36}, {-68, -36}, {-68, 1}, {-57, 1}}, color = {255, 0, 255}));
+    Line(points = {{125, 22}, {128, 22}, {128, -36}, {-68, -36}, {-68, 20}, {-59, 20}}, color = {255, 0, 255}));
   connect(Control.Q_curtail, basic_Heater.Q_curtail) annotation(
-    Line(points = {{103, 17}, {-10, 17}, {-10, -12}, {-72, -12}, {-72, 2}, {-57, 2}, {-57, 5}}, color = {0, 0, 127}));
+    Line(points = {{103, 17}, {-10, 17}, {-10, -12}, {-72, -12}, {-72, 2}, {-59, 2}, {-59, 14}}, color = {0, 0, 127}));
   connect(TES.h_top_outlet, Control.h_tank_top) annotation(
     Line(points = {{22, 25}, {22, 46}, {105, 46}, {105, 37}}, color = {0, 0, 127}));
   connect(PV_input.y[1], Grid_Sum.u1) annotation(
@@ -185,13 +185,13 @@ equation
   connect(Wind_input.y[1], Grid_Sum.u2) annotation(
     Line(points = {{-113, 4}, {-104, 4}, {-104, 12}, {-96, 12}}, color = {0, 0, 127}));
   connect(Grid_Sum.y, basic_Heater.P_supply) annotation(
-    Line(points = {{-73, 18}, {-66, 18}, {-66, 10}, {-57, 10}}, color = {0, 0, 127}));
+    Line(points = {{-73, 18}, {-66, 18}, {-66, 17}, {-59, 17}}, color = {0, 0, 127}));
   connect(Process.h_out_signal, Control.h_boiler_outlet) annotation(
     Line(points = {{148, -8}, {136, -8}, {136, 52}, {116, 52}, {116, 38}, {116, 38}}, color = {0, 0, 127}));
   connect(TES.h_bot_outlet, Control.h_tank_bot) annotation(
     Line(points = {{22, -25}, {22, -30}, {132, -30}, {132, 46}, {110, 46}, {110, 38}}, color = {0, 0, 127}));
   connect(basic_Heater.Q_heater_raw, Control.Q_heater_raw) annotation(
-    Line(points = {{-34, 10}, {-20, 10}, {-20, 52}, {86, 52}, {86, 32}, {104, 32}, {104, 32}}, color = {0, 0, 127}));
+    Line(points = {{-37, 17.5}, {-20, 17.5}, {-20, 52}, {86, 52}, {86, 32}, {104, 32}}, color = {0, 0, 127}));
   connect(Control.m_heater_signal, pumpCold.m_flow) annotation(
     Line(points = {{126, 32}, {140, 32}, {140, -58}, {-18, -58}, {-18, -70}, {-18, -70}}, color = {0, 0, 127}));
   connect(Control.m_boiler_signal, pumpHot.m_flow) annotation(
