@@ -137,11 +137,11 @@ model Thermocline_HBS_LC_Section_Final
   parameter Real C_encapsulation = 0.0;
   
   
-  
-  
+  SI.SpecificEnthalpy h_p[N_f] "J/kg";
+  SI.Temperature T_p[N_f](start = T_p_start) "Temperature of particle elements";
 protected
   //Initialise Particle
-  SI.Temperature T_p[N_f](start = T_p_start) "Temperature of particle elements";
+ 
   //Filler mass-liquid fraction
   Real f_p[N_f] "Mass liquid fraction of filler";
   Real Bi[N_f] "Biot Number";
@@ -156,7 +156,7 @@ protected
   //SI.ThermalConductance U_out_e[N_f] "K/W";
   SI.ThermalConductance U_up[N_f] "Thermal conductance between a filler element and the one on top of it (K/W)";
   //Filler Properties
-  SI.SpecificEnthalpy h_p[N_f] "J/kg";
+  
   SI.ThermalConductivity k_p[N_f] "W/mK";
   //Filler Geometry
   //parameter Real N_spheres_total = N_f * 6 * (1 - eta) * A * dz / (CN.pi * d_p ^ 3) "Total number of spheres in the tank";
