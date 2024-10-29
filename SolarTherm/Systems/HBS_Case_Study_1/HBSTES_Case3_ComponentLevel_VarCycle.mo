@@ -1,6 +1,6 @@
 within SolarTherm.Systems.HBS_Case_Study_1;
 
-model HBSTES_Case2_ComponentLevel_VarCycle "This component analysis allows a variable cycle length depending on t_storage and t_standby"
+model HBSTES_Case3_ComponentLevel_VarCycle "This component analysis allows a variable cycle length depending on t_storage and t_standby"
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -80,7 +80,7 @@ model HBSTES_Case2_ComponentLevel_VarCycle "This component analysis allows a var
     Placement(visible = true, transformation(origin = {46, 44}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.mass_loop_breaker mass_loop_breaker annotation(
     Placement(visible = true, transformation(origin = {-2, 50}, extent = {{-24, -24}, {24, 24}}, rotation = -90)));
-  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_HBS_LC_2P_MixedOutlet TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, N_f_A = N_f, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, ar_A = ar, d_p_A = d_p, eta_A = eta, U_loss_top_A = U_loss_top, U_loss_bot_A = U_loss_bot, T_recv_set = T_heater_max, T_PB_set = T_process_des) annotation(
+  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_HBS_LC_2P_Sequential TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, N_f_A = N_f, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, ar_A = ar, d_p_A = d_p, eta_A = eta, U_loss_top_A = U_loss_top, U_loss_bot_A = U_loss_bot, T_recv_set = T_heater_max, T_PB_set = T_process_des) annotation(
     Placement(visible = true, transformation(origin = {-2, -4}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
   //Mass flow Signals starts in charging state //,h_tol=h_tol
   SI.MassFlowRate m_Heater_signal(start = m_charge_des);
@@ -276,4 +276,4 @@ equation
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
 
-end HBSTES_Case2_ComponentLevel_VarCycle;
+end HBSTES_Case3_ComponentLevel_VarCycle;

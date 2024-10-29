@@ -15,10 +15,10 @@ model HBSTES_Case2_SystemLevel
   parameter Real HM = 2.0 "Heater Multiple";
   parameter Real PV_fraction = 0.5 "PV_fraction";
   
-  parameter Real t_storage = 12.0*3.50 "Hours of storage (hours)";
-  parameter Real util_storage_des = 0.2188;
+  parameter Real t_storage = 20.0 "Hours of storage (hours)";
+  parameter Real util_storage_des = 0.2779;
   //UtilisaSystemstion determined via component-level analysis 0.5767
-  parameter Real level_storage_mid = 0.5067;
+  parameter Real level_storage_mid = 0.6105;
   //Midpoint of minimum and maximum storage levels determine via component-level analysis 0.4637
   //parameter SI.SpecificEnthalpy h_tol = 0.05 * (TES.Tank_A.h_f_max - TES.Tank_A.h_f_min);
   //Heater Parameters
@@ -47,11 +47,11 @@ model HBSTES_Case2_SystemLevel
   SI.Energy E_heater_out(start = 0) "Heat energy transferred to the air (after curtailment)";
   Real Capacity_Factor(start = 0) "Capacity factor of the system";
   //Discretisation and geometry
-  parameter Integer N_f = 50;
+  parameter Integer N_f = 100;
   //50
   parameter SI.Length d_p = 0.03 "Hole diameter in the filler (m)";
-  parameter Real ar = 4.8 "Tank H/D ratio (m)";
-  parameter Real eta = 0.51 "Packed-bed porosity";
+  parameter Real ar = 4.8/(sqrt(0.5)) "Tank H/D ratio (m)";
+  parameter Real eta = 0.53 "Packed-bed porosity";
   //parameter SI.Length L_pipe = 50.0;
   //parameter SI.Length D_pipe = 0.050;
   //parameter SI.Length D_solid = 0.075;

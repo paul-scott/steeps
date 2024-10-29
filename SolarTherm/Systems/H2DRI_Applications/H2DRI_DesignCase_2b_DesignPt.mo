@@ -224,7 +224,7 @@ model H2DRI_DesignCase_2b_DesignPt
   
   //What is the expected temperature of materials entering the med tank assuming they get mixed well?
   //parameter SI.SpecificEnthalpy h_OreD_med_des = (m_flow_Fe2O3_feedstock*h_Fe2O3_med1_des + m_flow_Fe2O3_PGHX2*h_Fe2O3_med2_des)/(m_flow_Fe2O3_feedstock + m_flow_Fe2O3_PGHX2) "Expected specific enthalpy of the med tank (J/kg)"; //Do this
-  parameter SI.SpecificEnthalpy h_OreD_med_des = (-1.0*n_flow_H2O_dehydroxy_des*(SolarTherm.Models.Chemistry.ChemTable.H2O.Hf0 + SolarTherm.Models.Chemistry.ChemTable.Fe2O3.Hf0 - SolarTherm.Models.Chemistry.ChemTable.Fe2O3H2O.Hf0) + m_flow_OreH_des*h_OreH_med1_des + m_flow_OreD_PGHX2*h_OreD_med2_des - f_mass_LOI_H*m_flow_OreH_des*h_H2O_400C)/((1.0-f_mass_LOI_H)*m_flow_OreH_des + m_flow_OreD_PGHX2);
+  parameter SI.SpecificEnthalpy h_OreD_med_des = (-1.0*n_flow_H2O_dehydroxy_des*(SolarTherm.Models.Chemistry.ChemTable.H2O.Hf0 + SolarTherm.Models.Chemistry.ChemTable.Fe2O3.Hf0 - SolarTherm.Models.Chemistry.ChemTable.Fe2O3H2O.Hf0) + m_flow_OreH_des*h_OreH_med1_des + m_flow_OreD_PGHX2*h_OreD_med2_des - f_mass_LOI_H*m_flow_OreH_des*(h_H2O_400C-h_H2O_ref))/((1.0-f_mass_LOI_H)*m_flow_OreH_des + m_flow_OreD_PGHX2);
   
   parameter SI.MassFlowRate m_flow_H2O_dehydroxy_des = m_flow_OreH_des*f_mass_LOI_H "Design mass loss rate of water leaving due to dehydroxylation (kg/s)";
   parameter SI.MolarFlowRate n_flow_H2O_dehydroxy_des = m_flow_H2O_dehydroxy_des/M_H2O "Design molar loss rate of water leaving due to dehydroxylation (mol/s)";

@@ -10,17 +10,17 @@ model HBSTES_Case1_ComponentLevel_VarCycle "This component analysis allows a var
   package Filler_Package = SolarTherm.Materials.Mullite_20pct_porosity;
   //These parameters are varied
   parameter Real HM = 2.0 "Heater Multiple";
-  parameter SI.Time t_discharge = 12.0 * 3600.0 "Rated discharging period (s)";
-  parameter SI.Time t_standby = 4.0*3600.0 "Standby time after both charging and discharging cycle (s)";
+  parameter SI.Time t_discharge = 10.0 * 3600.0 "Rated discharging period (s)";
+  parameter SI.Time t_standby = 2.0*3600.0 "Standby time after both charging and discharging cycle (s)";
   //Numerical Discretisation Settings
   parameter Integer N_f = 100;
-  parameter Real f_TES_oversize = 3.5;
+  parameter Real f_TES_oversize = 2.5;
   parameter Real t_storage_hours_ideal = t_discharge*f_TES_oversize/3600.0;
   //parameter Integer N_p = 5; //Not used
   //TES Geometric Parameters
   parameter SI.Length d_p = 0.03 "Hole diameter in the filler (m)";
   parameter Real ar = 4.8 "Tank H/D ratio (m)";
-  parameter Real eta = 0.51 "Packed-bed porosity";
+  parameter Real eta = 0.53 "Packed-bed porosity";
   //parameter SI.Length s_p = 0.04 "Separation of holes in the filler (m)";
   parameter SI.CoefficientOfHeatTransfer U_loss_top = 10.0*(323.15-298.15)/(T_max-298.15) "Heat loss coefficient at the top of the tank (W/m2K)";
   parameter SI.CoefficientOfHeatTransfer U_loss_bot = 10.0*(323.15-298.15)/(T_max-298.15) "Heat loss coefficient at the bottom of the tank (W/m2K)";
@@ -272,7 +272,7 @@ equation
   connect(p_amb.y, TES.p_amb) annotation(
     Line(points = {{29, -4}, {12, -4}}, color = {0, 0, 127}));
   annotation(
-    experiment(StopTime = 5340000, StartTime = 0, Tolerance = 1e-4, Interval = 300),
+    experiment(StopTime = 864000, StartTime = 0, Tolerance = 1e-4, Interval = 60),
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
 
