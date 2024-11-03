@@ -171,8 +171,8 @@ model H2DRI_DesignCase_2c_DesignPt
   parameter SI.HeatFlowRate H_flow_inlet_des = m_flow_OreD_des * h_OreD_inlet_des + m_flow_H2_des * h_H2_inlet_des;
   parameter SI.Temperature T_OreD_hot_guess = (H_flow_inlet_des + m_flow_H2_des * (h_H2_pre1_des * eff_PGHX2_des - h_H2_pre1_des) + 293299.7 * m_flow_OreD_des + 762976.9 * m_flow_H2_des * eff_PGHX2_des) / (940.488 * m_flow_OreD_des + 15214.199 * m_flow_H2_des * eff_PGHX2_des);
   //Condenser1
-  //SI.HeatFlowRate Q_flow_cooling_condenser1 = (1.0 - f_split_GGHX) * m_flow_H2_excess * (Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_H2_offgas_des, T_condenser1_in_des) - Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_des, T_condenser_out_des)) + (1.0 - f_split_GGHX) * m_flow_H2O_des * (Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_condenser1_in_des) - Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_condenser_out_des));
-  //SI.HeatFlowRate Q_flow_cooling_condenser2 = f_split_GGHX * m_flow_H2_excess * (Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_H2_offgas_des, T_condenser2_in_des) - Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_des, T_condenser_out_des)) + f_split_GGHX * m_flow_H2O_des * (Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_condenser2_in_des) - Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_condenser_out_des));
+  SI.HeatFlowRate Q_flow_cooling_condenser1 = (1.0 - f_split_GGHX) * m_flow_H2_excess * (Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_H2_offgas_des, T_condenser1_in_des) - Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_des, T_condenser_out_des)) + (1.0 - f_split_GGHX) * m_flow_H2O_des * (Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_condenser1_in_des) - Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_condenser_out_des));
+  SI.HeatFlowRate Q_flow_cooling_condenser2 = f_split_GGHX * m_flow_H2_excess * (Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_H2_offgas_des, T_condenser2_in_des) - Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_des, T_condenser_out_des)) + f_split_GGHX * m_flow_H2O_des * (Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_condenser2_in_des) - Modelica.Media.Water.WaterIF97_pT.specificEnthalpy_pT(p_H2O_offgas_des, T_condenser_out_des));
   
   parameter SI.SpecificEnthalpy h_OreD_400C = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_utilities.h_T(400.0+273.15);
 
@@ -247,12 +247,12 @@ model H2DRI_DesignCase_2c_DesignPt
   //Condenser Q_flow_cooling = U_condenser_des*A_condenser1*(T_condenser1_in_des-T_amb_des)
   parameter SI.CoefficientOfHeatTransfer U_condenser1_des = 700.0 "W/m2K";
   parameter SI.CoefficientOfHeatTransfer U_condenser2_des = 700.0 "W/m2K";
-  //SI.Area A_condenser1 = Q_flow_cooling_condenser1 / (U_condenser1_des * 0.8 * (T_condenser1_in_des - T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
-  //SI.Area A_condenser2 = Q_flow_cooling_condenser2 / (U_condenser2_des * 0.8 * (T_condenser2_in_des - T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
-  //Real FOB_condenser1 = CEPCI / 500.0 * 10000.0 * (10.764 * A_condenser1) ^ 0.40;
-  //Real FOB_condenser2 = CEPCI / 500.0 * 10000.0 * (10.764 * A_condenser2) ^ 0.40;
-  //Real FCI_condenser1 = FOB_condenser1 * 1.05 * 3.5 * 0.7012;
-  //Real FCI_condenser2 = FOB_condenser2 * 1.05 * 3.5 * 0.7012;
+  SI.Area A_condenser1 = Q_flow_cooling_condenser1 / (U_condenser1_des * 0.8 * (T_condenser1_in_des - T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
+  SI.Area A_condenser2 = Q_flow_cooling_condenser2 / (U_condenser2_des * 0.8 * (T_condenser2_in_des - T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
+  Real FOB_condenser1 = CEPCI / 500.0 * 10000.0 * (10.764 * A_condenser1) ^ 0.40;
+  Real FOB_condenser2 = CEPCI / 500.0 * 10000.0 * (10.764 * A_condenser2) ^ 0.40;
+  Real FCI_condenser1 = FOB_condenser1 * 1.05 * 3.5 * 0.7012;
+  Real FCI_condenser2 = FOB_condenser2 * 1.05 * 3.5 * 0.7012;
   //Cost of PGHX1
   parameter SI.ThermalConductance U_PGHX1_des = 36.98 "Overall heat transfer coefficient of PGHX1 (W/K)";
   parameter SI.Area A_PGHX1_des = C_min_PGHX1 * NTU_PGHX1_des / U_PGHX1_des;
