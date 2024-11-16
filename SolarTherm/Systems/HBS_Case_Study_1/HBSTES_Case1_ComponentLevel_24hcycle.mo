@@ -21,8 +21,9 @@ model HBSTES_Case1_ComponentLevel_24hcycle
   parameter Real ar = 4.8 "Tank H/D ratio (m)";
   parameter Real eta = 0.51 "Packed-bed porosity";
   //parameter SI.Length s_p = 0.04 "Separation of holes in the filler (m)";
-  parameter SI.CoefficientOfHeatTransfer U_loss_top = 10.0*(323.15-298.15)/(T_max-298.15) "Heat loss coefficient at the top of the tank (W/m2K)";
-  parameter SI.CoefficientOfHeatTransfer U_loss_bot = 10.0*(323.15-298.15)/(T_max-298.15) "Heat loss coefficient at the bottom of the tank (W/m2K)";
+  parameter SI.Temperature T_tes_ext = 50 + 273.15 "TES external wall temperautre (K)";
+  parameter SI.CoefficientOfHeatTransfer U_loss_top = 10.0*(T_tes_ext-298.15)/(T_max-298.15) "Heat loss coefficient at the top of the tank (W/m2K)";
+  parameter SI.CoefficientOfHeatTransfer U_loss_bot = 10.0*(T_tes_ext-298.15)/(T_max-298.15) "Heat loss coefficient at the bottom of the tank (W/m2K)";
   //Temperature Controls
   parameter SI.Temperature T_max = 1100.0 + 273.15 "Maximum temperature (K)";
   parameter SI.Temperature T_process_des = 1000.0 + 273.15 "Design process inlet temperature (K)";
