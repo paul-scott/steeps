@@ -1,29 +1,37 @@
 within SolarTherm.Validation;
 
 model Medium_Test
-  replaceable package Medium_Test = SolarTherm.Media.SolidParticles.Fe2O3H2O_ph;
-  replaceable package Utilities_Test = SolarTherm.Media.SolidParticles.Fe2O3H2O_utilities;
+  replaceable package Medium = SolarTherm.Media.SolidParticles.Fe2O3H2O_ph;
+  replaceable package Utilities = SolarTherm.Media.SolidParticles.Fe2O3H2O_utilities;
   Modelica.SIunits.Temperature T_signal(start=298.15);
   Modelica.SIunits.MassFlowRate m_flow_signal = 1.0;
   
-  Modelica.SIunits.SpecificEnthalpy h_fluid = Utilities_Test.h_T(T_signal);
-  Modelica.SIunits.SpecificHeatCapacityAtConstantPressure cp_fluid = Utilities_Test.cp_T(T_signal);
-  Modelica.SIunits.Density rho_fluid = Utilities_Test.rho_T(T_signal);
-  Modelica.SIunits.ThermalConductivity k_fluid = Utilities_Test.k_T(T_signal);
-  Modelica.SIunits.SpecificEntropy s_fluid = Utilities_Test.s_T(T_signal);
+  Modelica.SIunits.SpecificEnthalpy h_fluid = Utilities.h_T(T_signal);
+  Modelica.SIunits.SpecificHeatCapacityAtConstantPressure cp_fluid = Utilities.cp_T(T_signal);
+  Modelica.SIunits.Density rho_fluid = Utilities.rho_T(T_signal);
+  Modelica.SIunits.ThermalConductivity k_fluid = Utilities.k_T(T_signal);
+  Modelica.SIunits.SpecificEntropy s_fluid = Utilities.s_T(T_signal);
+
+  Medium.BaseProperties State;
+  
+  Modelica.SIunits.SpecificEnthalpy h_state = State.h;
+  Modelica.SIunits.Density rho_state = State.d;
+
   
   
-  Modelica.Fluid.Sources.Boundary_pT Medium_source(redeclare package Medium = Medium_Test, nPorts = 1, p = 101325, use_T_in = true, use_p_in = false) annotation(
+  Modelica.Fluid.Sources.Boundary_pT Medium_source(redeclare package Medium = Medium, nPorts = 1, p = 101325, use_T_in = true, use_p_in = false) annotation(
     Placement(visible = true, transformation(origin = {-19, 7}, extent = {{-17, -17}, {17, 17}}, rotation = 0)));
-  SolarTherm.Models.Fluid.Sources.FluidSink Sink(redeclare package Medium = Medium_Test) annotation(
+  SolarTherm.Models.Fluid.Sources.FluidSink Sink(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {82, 2}, extent = {{-26, -26}, {26, 26}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression T_input(y = T_signal) annotation(
     Placement(visible = true, transformation(origin = {-81, 11}, extent = {{-19, -17}, {19, 17}}, rotation = 0)));
-  SolarTherm.Models.Fluid.Pumps.PumpSimple Pump(redeclare package Medium = Medium_Test) annotation(
+  SolarTherm.Models.Fluid.Pumps.PumpSimple Pump(redeclare package Medium = Medium) annotation(
     Placement(visible = true, transformation(origin = {28, 4}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
   Modelica.Blocks.Sources.RealExpression m_flow(y = m_flow_signal) annotation(
     Placement(visible = true, transformation(origin = {-5, 55}, extent = {{-19, -17}, {19, 17}}, rotation = 0)));
 equation
+  State.p = 101325.0;
+  State.T = T_signal;
   der(T_signal) = 1.0;
   connect(T_input.y, Medium_source.T_in) annotation(
     Line(points = {{-60, 11}, {-18, 11}, {-18, 14}, {-39, 14}}, color = {0, 0, 127}));

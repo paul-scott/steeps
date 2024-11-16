@@ -1,6 +1,6 @@
 within SolarTherm.Systems.H2DRI_Applications;
 
-model H2DRI_DesignCase_2b_Dynamic
+model H2DRI_DesignCase_2c_Dynamic
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -22,8 +22,8 @@ model H2DRI_DesignCase_2b_Dynamic
   parameter SI.Time t_storage = 70.0*3600.0 "Seconds of storage (h)";
   parameter Real PV_fraction = 0.2 "PV_fraction";
   
-  parameter SI.HeatFlowRate Q_process_des = 6.105e7;// 6.14926e7;
-  parameter SI.MassFlowRate m_flow_ore_des = 131.4894*(Plant_Scale/1.0) "Mass flow of ore out of the hot tank and into the med tank if running at design point (kg/s)";
+  parameter SI.HeatFlowRate Q_process_des = 5.889e7;// 6.14926e7;
+  parameter SI.MassFlowRate m_flow_ore_des = 137.1903*(Plant_Scale/1.0) "Mass flow of ore out of the hot tank and into the med tank if running at design point (kg/s)";
   
   parameter Real eff_heater = 0.95 "Electrical-to-heat conversion efficiency of the heater";
   //Renewable Parameters
@@ -40,8 +40,8 @@ model H2DRI_DesignCase_2b_Dynamic
   parameter SI.Power P_PV_gross = P_PV_net*LOF_PV;
   
   //Tank Parameters
-  parameter SI.Temperature T_hot_set = 757.6 + 273.15;
-  parameter SI.Temperature T_med_set = 292.7 + 273.15;//289.0 + 273.15;
+  parameter SI.Temperature T_hot_set = 797.4 + 273.15;
+  parameter SI.Temperature T_med_set = 373.9 + 273.15;//289.0 + 273.15;
   
   parameter Real ar = 2.0;
   
@@ -84,10 +84,6 @@ model H2DRI_DesignCase_2b_Dynamic
   
   parameter Real FOB_tank_hot = (CEPCI/500)*2.1*(N_quo_hot*113736.27 + (35.315*V_rem_med)^0.46) "FOB cost of the hot temp Fe2O3 storage tank (USD_year)";
   
-  //parameter Real FOB_tank_hot = (CEPCI/500)*2.1*570.0*(35.315*V_tank_hot)^0.46 "FOB cost of the hot Fe2O3 storage tank (USD_year)";
-  
-  //parameter Real FOB_tank_med = (CEPCI/500)*1.0*570.0*(35.315*V_tank_med)^0.46 "FOB cost of the medium temp Fe2O3 storage tank (USD_year)";
-  
     //Fluidised Bed Heater
   parameter SI.HeatFlux q_flow_heater_max = 60000.0 "Maximum radiant heat flux of the fluidised bed heater (W/m2)"; //Placeholder
   parameter SI.Area A_cs_FB = Q_heater_des/q_flow_heater_max "Minimum cross sectional area of the fluidised bed (m2)";
@@ -122,12 +118,12 @@ model H2DRI_DesignCase_2b_Dynamic
   
   //Fixed-Size Capital Costs
   parameter Real FCI_Reactor = 506546275.0 "Reactor FCI cost (USD_2022)";
-  parameter Real FCI_GGHX = 41675600.0 "GGHX FCI cost (USD_2022)";
+  parameter Real FCI_GGHX = 17409800.0 "GGHX FCI cost (USD_2022)";
   parameter Real FCI_Blower_H2 = 1404500.0 "H2 Blower FCI cost (USD_2022)";
-  parameter Real FCI_Condenser_1 = 483007.0 "Condenser 1 cost (USD_2022)";
-  parameter Real FCI_Condenser_2 = 1298110.0 "Condenser 2 cost (USD_2022)";
-  parameter Real FCI_PGHX1 = 1128020.0 + 595218.0 + 147284.0 "PGHX1 cost (USD_2022)";
-  parameter Real FCI_PGHX2 = 23195900.0 + 6255300.0 + 977190.0 "PGHX2 cost (USD_2022)";
+  parameter Real FCI_Condenser_1 = 1210570.0 "Condenser 1 cost (USD_2022)";
+  parameter Real FCI_Condenser_2 = 913210.0 "Condenser 2 cost (USD_2022)";
+  parameter Real FCI_PGHX1 = 19878400.0 + 9780490.0 + 1420850.0 "PGHX1 cost (USD_2022)";
+  parameter Real FCI_PGHX2 = 23040200.0 + 6957360.0 + 1076290.0 "PGHX2 cost (USD_2022)";
 
   //Variable-Sized Capital Costs
   parameter Real FCI_heating_FB = pri_FB_Heating*P_heater_des;
@@ -158,11 +154,12 @@ model H2DRI_DesignCase_2b_Dynamic
   Real AC_H2 = 218178221.0*0.8530*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to stoichiometric consumption of H2 (USD/yr)"; //0.8530kg of Fe per 1.0kg of DRI
   Real AC_Mining = 23254357.0*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to stoichiometric mining of iron ore (USD/yr)";
   Real AC_Electric = 4183700.0*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to electricity cost of processing iron ore (USD/yr)";
+  Real AC_HeatLoss = pri_Elec*(W_heating_hot_tank + W_heating_med_tank) "Variable annual costs due to electricity needed to compensate for tank heat losses (USD/yr)";
   
   
   //Sum Up Everything
   parameter Real C_capital = FCI_Plant + FCI_PV + FCI_Wind + FCI_Crushing;
-  Real C_annual = AC_Plant + AC_Labour + AC_PV + AC_Wind + AC_H2 + AC_Mining + AC_Electric;
+  Real C_annual = AC_Plant + AC_Labour + AC_PV + AC_Wind + AC_H2 + AC_Mining + AC_Electric + AC_HeatLoss;
   
   //Some Financial Parameters
   parameter Real n = 30.0 "Plant lifetime (years)";
@@ -172,6 +169,12 @@ model H2DRI_DesignCase_2b_Dynamic
   parameter Real r = ((1.0+r_nom)/(1.0+r_inf)) - 1 "Real discount rate (-)";
   parameter Real f = (r*((1.0+r)^n))/(((1.0+r)^n)-1.0) "Annuity factor on LCOD calculation (-)";
   
+  //LCOE of firm electricity
+  //According to HILTCRC RP2.003, the LCOE is 93.1 USD_2021/MWh, need to convert to USD_2022/J (107.18 USD_2022/MWh) CEPCI_2022 = 816.0, CEPCI_2021 = 708.8
+  parameter Real pri_Elec = 2.9772e-8 "LCOE (USD_2022/J)";
+  SI.Energy W_heating_hot_tank(start=0);
+  SI.Energy W_heating_med_tank(start=0); 
+  parameter SI.CoefficientOfHeatTransfer h_conv_amb = 5.0 "Ambient heat loss coefficient (W/m2K)";
   
   
   
@@ -193,7 +196,7 @@ model H2DRI_DesignCase_2b_Dynamic
     Placement(visible = true, transformation(origin = {-10, -14}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink2 Sink(redeclare package Medium = Medium_Ore_Dehydroxylated) annotation(
     Placement(visible = true, transformation(origin = {90, -12}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
-  Modelica.Fluid.Sources.Boundary_pT OreD_source(redeclare package Medium = Medium_Ore_Dehydroxylated, T = 289.0 + 273.15,nPorts = 1, p = 100000, use_T_in = false) annotation(
+  Modelica.Fluid.Sources.Boundary_pT OreD_source(redeclare package Medium = Medium_Ore_Dehydroxylated, T = T_med_set,nPorts = 1, p = 100000, use_T_in = false) annotation(
     Placement(visible = true, transformation(origin = {-88, -12}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple Cold_Lift(redeclare package Medium = Medium_Ore_Dehydroxylated) annotation(
     Placement(visible = true, transformation(origin = {-56, -14}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
@@ -287,6 +290,10 @@ algorithm
   end when;
 
 equation
+  //Tank Heat Loss power consumption
+  der(W_heating_hot_tank) = (1.0/eff_heater)*Hot_Tank.L*A_loss_hot_total*h_conv_amb*(T_hot_set-298.15);
+  der(W_heating_med_tank) = (1.0/eff_heater)*Cold_Tank.L*A_loss_med_total*h_conv_amb*(T_med_set-298.15);
+
   if time > 86400.0*10.0 then //10 days initialisation has finished
     der(E_PV_out) = (Grid_Sum.u1/PV_ref_size)*P_PV_gross;
     der(E_Wind_out) = (Grid_Sum.u2/Wind_ref_size)*P_wind_gross;
@@ -432,4 +439,4 @@ equation
 
 annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false)), experiment(StopTime = 3.24e+07, StartTime = 0, Tolerance = 1.0e-5, Interval = 300, maxStepSize = 60, initialStepSize = 60));
-end H2DRI_DesignCase_2b_Dynamic;
+end H2DRI_DesignCase_2c_Dynamic;

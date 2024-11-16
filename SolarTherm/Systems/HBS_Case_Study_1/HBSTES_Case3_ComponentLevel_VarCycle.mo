@@ -1,6 +1,6 @@
 within SolarTherm.Systems.HBS_Case_Study_1;
 
-model HBSTES_Case1_ComponentLevel_VarCycle "This component analysis allows a variable cycle length depending on t_storage and t_standby"
+model HBSTES_Case3_ComponentLevel_VarCycle "This component analysis allows a variable cycle length depending on t_storage and t_standby"
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -19,12 +19,11 @@ model HBSTES_Case1_ComponentLevel_VarCycle "This component analysis allows a var
   //parameter Integer N_p = 5; //Not used
   //TES Geometric Parameters
   parameter SI.Length d_p = 0.03 "Hole diameter in the filler (m)";
-  parameter Real ar = 4.8 "Tank H/D ratio (m)";
+  parameter Real ar = 4.8/(sqrt(0.5)) "Tank H/D ratio (m)";
   parameter Real eta = 0.53 "Packed-bed porosity";
   //parameter SI.Length s_p = 0.04 "Separation of holes in the filler (m)";
-  parameter SI.Temperature T_tes_ext = 50 + 273.15 "TES external wall temperautre (K)";
-  parameter SI.CoefficientOfHeatTransfer U_loss_top = 10.0*(T_tes_ext-298.15)/(T_max-298.15) "Heat loss coefficient at the top of the tank (W/m2K)";
-  parameter SI.CoefficientOfHeatTransfer U_loss_bot = 10.0*(T_tes_ext-298.15)/(T_max-298.15) "Heat loss coefficient at the bottom of the tank (W/m2K)";
+  parameter SI.CoefficientOfHeatTransfer U_loss_top = 10.0*(323.15-298.15)/(T_max-298.15) "Heat loss coefficient at the top of the tank (W/m2K)";
+  parameter SI.CoefficientOfHeatTransfer U_loss_bot = 10.0*(323.15-298.15)/(T_max-298.15) "Heat loss coefficient at the bottom of the tank (W/m2K)";
   //Temperature Controls
   parameter SI.Temperature T_max = 1100.0 + 273.15 "Maximum temperature (K)";
   parameter SI.Temperature T_process_des = 1000.0 + 273.15 "Design process inlet temperature (K)";
@@ -81,7 +80,7 @@ model HBSTES_Case1_ComponentLevel_VarCycle "This component analysis allows a var
     Placement(visible = true, transformation(origin = {46, 44}, extent = {{-12, -12}, {12, 12}}, rotation = 0)));
   SolarTherm.Models.Fluid.HeatExchangers.mass_loop_breaker mass_loop_breaker annotation(
     Placement(visible = true, transformation(origin = {-2, 50}, extent = {{-24, -24}, {24, 24}}, rotation = -90)));
-  SolarTherm.Models.Storage.Thermocline.Thermocline_HBS_LC_SingleTank_Final TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package = Filler_Package, N_f = N_f, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, ar = ar, d_p = d_p, eta = eta, U_loss_top = U_loss_top, U_loss_bot = U_loss_bot) annotation(
+  SolarTherm.Models.Storage.Thermocline.Parallel.Thermocline_HBS_LC_2P_Sequential TES(redeclare package Medium = Medium, redeclare package Fluid_Package = Fluid_Package, redeclare package Filler_Package_A = Filler_Package, redeclare package Filler_Package_B = Filler_Package, N_f_A = N_f, T_max = T_max, T_min = T_min, Correlation = Correlation, E_max = E_max, ar_A = ar, d_p_A = d_p, eta_A = eta, U_loss_top_A = U_loss_top, U_loss_bot_A = U_loss_bot, T_recv_set = T_heater_max, T_PB_set = T_process_des) annotation(
     Placement(visible = true, transformation(origin = {-2, -4}, extent = {{-30, -30}, {30, 30}}, rotation = 0)));
   //Mass flow Signals starts in charging state //,h_tol=h_tol
   SI.MassFlowRate m_Heater_signal(start = m_charge_des);
@@ -181,12 +180,12 @@ algorithm
 equation
   der(E_stored) = TES.fluid_a.m_flow * (TES.fluid_a.h_outflow - TES.fluid_b.h_outflow);
   if Chg then
-    m_Heater_signal = m_charge_des * (h_f_max - h_f_min) / (h_f_max - TES.h_bot_outlet);
+    m_Heater_signal = max(1.0e-8, m_charge_des * (h_f_max - h_f_min) / (h_f_max - TES.h_bot_outlet));
   else
     m_Heater_signal = 1.0e-8;
   end if;
   if Dis then
-    m_Process_signal = m_discharge_des * (h_f_max - h_f_min) / (TES.h_top_outlet - h_f_min);
+    m_Process_signal = max(1.0e-8, m_discharge_des * (h_f_max - h_f_min) / (TES.h_top_outlet - h_f_min));
   else
     m_Process_signal = 1.0e-8;
   end if;
@@ -277,4 +276,4 @@ equation
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
 
-end HBSTES_Case1_ComponentLevel_VarCycle;
+end HBSTES_Case3_ComponentLevel_VarCycle;
