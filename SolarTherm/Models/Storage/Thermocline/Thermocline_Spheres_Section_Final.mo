@@ -144,7 +144,6 @@ model Thermocline_Spheres_Section_Final
   
   //Measured outlet temperature
   Real T_outlet_degC "Outlet temperature in degrees Celcius";
-
   
 protected  
   //Convection Properties

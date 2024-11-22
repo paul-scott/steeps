@@ -22,8 +22,17 @@ model H2DRI_DesignCase_2c_Dynamic
   parameter SI.Time t_storage = 70.0*3600.0 "Seconds of storage (h)";
   parameter Real PV_fraction = 0.2 "PV_fraction";
   
+  //DRI Properties
+  parameter Real DRI_f_Fe = 0.8530 "Mass fraction of Fe in the DRI (-)";
+  
   parameter SI.HeatFlowRate Q_process_des = 5.889e7;// 6.14926e7;
   parameter SI.MassFlowRate m_flow_ore_des = 137.1903*(Plant_Scale/1.0) "Mass flow of ore out of the hot tank and into the med tank if running at design point (kg/s)";
+  
+  parameter SI.MassFlowRate m_flow_ore_reactor_des = 43.34*(Plant_Scale/1.0) "Mass flow of dehydroxylated ore into the reactor if running at design point (kg/s)";
+  parameter SI.MassFlowRate m_flow_DRI_des = 31.71*(Plant_Scale/1.0) "Mass flow rate of DRI produced by the reactor at design point, this mass includes Al2O3 and SiO2 (kg/s)";
+  parameter SI.MassFlowRate m_flow_Fe_des = DRI_f_Fe*m_flow_DRI_des "Mass flow rate of metallic iron produced by the reactor at design point (kg/s)";
+  parameter SI.MassFlowRate m_flow_H2_consumed_des = 1.5*(m_flow_Fe_des/55.845e-3)*(2.01588e-3) "Mass flow rate of stoichiometric H2 consumed by the reactor at design point (kg/s)"; //1.5 moles of H2 are needed per mol of Fe produced".
+ //1.5 moles of H2 are needed per mol of Fe produced".
   
   parameter Real eff_heater = 0.95 "Electrical-to-heat conversion efficiency of the heater";
   //Renewable Parameters
@@ -151,7 +160,7 @@ model H2DRI_DesignCase_2c_Dynamic
   parameter Real AC_Wind = 0.01868*P_wind_gross "Annual O&M costs for Wind plant (USD/year)";
   
   //Variable Annual Costs
-  Real AC_H2 = 218178221.0*0.8530*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to stoichiometric consumption of H2 (USD/yr)"; //0.8530kg of Fe per 1.0kg of DRI
+  Real AC_H2 = 183801405.0*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to stoichiometric consumption of H2 (USD/yr)"; //0.8530kg of Fe per 1.0kg of DRI
   Real AC_Mining = 23254357.0*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to stoichiometric mining of iron ore (USD/yr)";
   Real AC_Electric = 4183700.0*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to electricity cost of processing iron ore (USD/yr)";
   Real AC_HeatLoss = pri_Elec*(W_heating_hot_tank + W_heating_med_tank) "Variable annual costs due to electricity needed to compensate for tank heat losses (USD/yr)";
@@ -251,6 +260,8 @@ model H2DRI_DesignCase_2c_Dynamic
   Real LCOD_frac_PlantOM = AC_Plant/LCOD_2022_numerator;
   Real LCOD_frac_Labour = AC_Labour/LCOD_2022_numerator;
   
+  Real LCOD_frac_HeatLoss = AC_HeatLoss/LCOD_2022_numerator;
+  
   //These are capital costs
   Real LCOD_frac_Plant = f*FCI_Plant/LCOD_2022_numerator;
   Real LCOD_frac_Crushing = f*FCI_Crushing/LCOD_2022_numerator;
@@ -260,7 +271,7 @@ model H2DRI_DesignCase_2c_Dynamic
   Real LCOD_frac_Wind = (f*FCI_Wind + AC_Wind)/LCOD_2022_numerator;
   
   //Check if they sum to 1.0
-  Real Sum_frac = LCOD_frac_Hydrogen + LCOD_frac_Mining + LCOD_frac_Electricity + LCOD_frac_PlantOM + LCOD_frac_Labour + LCOD_frac_Plant + LCOD_frac_PV + LCOD_frac_Wind + LCOD_frac_Crushing;
+  Real Sum_frac = LCOD_frac_Hydrogen + LCOD_frac_Mining + LCOD_frac_Electricity + LCOD_frac_PlantOM + LCOD_frac_Labour + LCOD_frac_Plant + LCOD_frac_PV + LCOD_frac_Wind + LCOD_frac_Crushing + LCOD_frac_HeatLoss;
   
 algorithm
 
@@ -304,8 +315,8 @@ equation
     der(Q_heater_out) = Heater.Q_out;
 
     der(Q_heater_target) = Q_heater_des;
-    der(m_DRI_target) = m_flow_ore_des*(50.8/154.1)*(0.8924*2.0*55.845/159.6882)*(1.0/0.8530);
-    der(m_DRI_produced) = Sink.port_a.m_flow*(50.8/154.1)*(0.8924*2.0*55.845/159.6882)*(1.0/0.8530);
+    der(m_DRI_target) = m_flow_ore_des*(31.7/137.29);
+    der(m_DRI_produced) = Sink.port_a.m_flow*(31.7/137.29);
   else
     der(E_PV_out) = 0.0;
     der(E_Wind_out) = 0.0;

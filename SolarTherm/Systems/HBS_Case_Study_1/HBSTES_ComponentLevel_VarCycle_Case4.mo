@@ -1,6 +1,6 @@
 within SolarTherm.Systems.HBS_Case_Study_1;
 
-model HBSTES_Case2_ComponentLevel_VarCycle "This component analysis allows a variable cycle length depending on t_storage and t_standby"
+model HBSTES_ComponentLevel_VarCycle_Case4 "This component analysis allows a variable cycle length depending on t_storage and t_standby"
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -95,7 +95,7 @@ model HBSTES_Case2_ComponentLevel_VarCycle "This component analysis allows a var
   SI.Energy E_dis(start = 0) "Discharged energy into storage";
   //SI.Energy E_lost(start = 0) "Externally lost energy from storage";
   //SI.Energy E_pump(start = 0) "Pumping energy consumed";
-  parameter SI.Energy X_max = m_discharge_des * t_discharge * (h_f_max * (1.0 - 298.15 / T_max) - h_f_min * (1.0 - 298.15 / T_min)) "Theoretical Exergetic storage capacity (J)";
+  parameter SI.Energy X_max = m_discharge_des * t_discharge * f_TES_oversize * (h_f_max * (1.0 - 298.15 / T_max) - h_f_min * (1.0 - 298.15 / T_min)) "Theoretical Exergetic storage capacity (J)";
   //SI.Energy X_chg(start = 0.0) "Total exergy charged i3n the last cycle";
   //SI.Energy X_dis(start = 0.0) "Discharged exergy";
   //Utilisation and efficiencies
@@ -131,6 +131,12 @@ model HBSTES_Case2_ComponentLevel_VarCycle "This component analysis allows a var
   Real Level_mid(start = 0.5);
   
   SI.Energy E_stored(start = 0.0);
+  
+  //Exergy Analysis
+  SI.Energy X_chg(start=0.0) "Total exergy charged in the last cycle";
+  SI.Energy X_dis(start=0.0) "Discharged exergy";
+  Real util_exergy(start=0.0) "Exergetic utilisation (2nd law)";
+  Real eff_exergy(start=0.0) "Exergetic efficiency (2nd law)";
 algorithm
 //Mass flow controls
   when rem(time, t_cycle) > 1e-6 then //Start of charging cycle
@@ -220,21 +226,31 @@ equation
 //last charging phase
     der(E_chg) = TES.fluid_a.m_flow * (inStream(TES.fluid_a.h_outflow) - TES.fluid_b.h_outflow);
     der(E_dis) = 0.0;
+    der(X_chg) = TES.fluid_a.m_flow * (inStream(TES.fluid_a.h_outflow)*(1.0 - (298.15/TES.fluid_top.T)) - (TES.fluid_b.h_outflow)*(1.0 - (298.15/TES.fluid_bot.T)));
+    der(X_dis) = 0.0;
   elseif time >= 9.0 * t_cycle + t_charge + t_standby and time < 9.0 * t_cycle + t_charge + t_standby + t_discharge then
 //last discharging phase
     der(E_chg) = 0.0;
     der(E_dis) = TES.fluid_b.m_flow * (TES.fluid_a.h_outflow - inStream(TES.fluid_b.h_outflow));
+    der(X_chg) = 0.0;
+    der(X_dis) = TES.fluid_b.m_flow * ((TES.fluid_a.h_outflow)*(1.0-(298.15/TES.fluid_top.T)) - (inStream(TES.fluid_b.h_outflow)) * (1.0-(298.15/TES.fluid_bot.T)));
   else
     der(E_chg) = 0.0;
     der(E_dis) = 0.0;
+    der(X_chg) = 0.0;
+    der(X_dis) = 0.0;  
   end if;
   if time > 9.0 * t_cycle + t_charge + t_standby then
 //we can calculate utilisation and efficiency because denominator is not zero;
     util_energy = E_dis / E_max;
     eff_energy = E_dis / E_chg;
+    util_exergy = (X_dis) / X_max;
+    eff_exergy = (X_dis) / X_chg;
   else
     util_energy = 0.0;
     eff_energy = 0.0;
+    util_exergy = 0.0;
+    eff_exergy = 0.0;
   end if;
 //Connectors
   connect(thermocline_Splitter2.fluid_b, heater_sink_pump.fluid_a) annotation(
@@ -276,4 +292,4 @@ equation
     Diagram(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)),
     Icon(coordinateSystem(extent = {{-150, -100}, {150, 100}}, preserveAspectRatio = false)));
 
-end HBSTES_Case2_ComponentLevel_VarCycle;
+end HBSTES_ComponentLevel_VarCycle_Case4;

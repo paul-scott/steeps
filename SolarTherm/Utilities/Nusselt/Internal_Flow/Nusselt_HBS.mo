@@ -20,7 +20,7 @@ algorithm
   else //Transition
     f := (0.790*log(4000.0) - 1.64)^(-2.0); //f_max
     
-    Nu := 3.66 + SolarTherm.Utilities.Phis((Re - 2300.0) / 1700.0)*((f/8.0)*(3000.0)*Pr)/(1.0+1.27*((f/8.0)^0.5)*((Pr^(2.0/3.0))-1.0));
+    Nu := 3.66 + SolarTherm.Utilities.Phis((Re - 2300.0) / 1700.0)*(((f/8.0)*(3000.0)*Pr)/(1.0+1.27*((f/8.0)^0.5)*((Pr^(2.0/3.0))-1.0)) - 3.66);
   end if;
 
 annotation(

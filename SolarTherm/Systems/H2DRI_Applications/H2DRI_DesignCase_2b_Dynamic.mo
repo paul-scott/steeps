@@ -16,14 +16,23 @@ model H2DRI_DesignCase_2b_Dynamic
   
   parameter Real CEPCI = 816.0 "CEPCI index of the year used in the study e.g. 816.0 for year 2022";
   
-  //Parameter Inputs
+  //Free Parameter Inputs
   parameter Real RM = 1.2 "Renewable Multiple (pre-transmission oversizing)";
-  parameter Real HM = 1.4 "Heater Multiple";
+  parameter Real HM = 2.0 "Heater Multiple";
   parameter SI.Time t_storage = 70.0*3600.0 "Seconds of storage (h)";
-  parameter Real PV_fraction = 0.2 "PV_fraction";
+  parameter Real PV_fraction = 0.4 "PV_fraction";
+  
+  //DRI Properties
+  parameter Real DRI_f_Fe = 0.8530 "Mass fraction of Fe in the DRI (-)";
   
   parameter SI.HeatFlowRate Q_process_des = 6.105e7;// 6.14926e7;
-  parameter SI.MassFlowRate m_flow_ore_des = 131.4894*(Plant_Scale/1.0) "Mass flow of ore out of the hot tank and into the med tank if running at design point (kg/s)";
+  parameter SI.MassFlowRate m_flow_ore_des = 131.4894*(Plant_Scale/1.0) "Mass flow of dehydroxylated ore out of the hot tank and into the med tank if running at design point (kg/s)";
+  
+  parameter SI.MassFlowRate m_flow_ore_reactor_des = 43.34*(Plant_Scale/1.0) "Mass flow of dehydroxylated ore into the reactor if running at design point (kg/s)";
+  parameter SI.MassFlowRate m_flow_DRI_des = 31.71*(Plant_Scale/1.0) "Mass flow rate of DRI produced by the reactor at design point, this mass includes Al2O3 and SiO2 (kg/s)";
+  parameter SI.MassFlowRate m_flow_Fe_des = DRI_f_Fe*m_flow_DRI_des "Mass flow rate of metallic iron produced by the reactor at design point (kg/s)";
+  parameter SI.MassFlowRate m_flow_H2_consumed_des = 1.5*(m_flow_Fe_des/55.845e-3)*(2.01588e-3) "Mass flow rate of stoichiometric H2 consumed by the reactor at design point (kg/s)"; //1.5 moles of H2 are needed per mol of Fe produced".
+ //1.5 moles of H2 are needed per mol of Fe produced".
   
   parameter Real eff_heater = 0.95 "Electrical-to-heat conversion efficiency of the heater";
   //Renewable Parameters
@@ -155,7 +164,11 @@ model H2DRI_DesignCase_2b_Dynamic
   parameter Real AC_Wind = 0.01868*P_wind_gross "Annual O&M costs for Wind plant (USD/year)";
   
   //Variable Annual Costs
-  Real AC_H2 = 218178221.0*0.8530*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to stoichiometric consumption of H2 (USD/yr)"; //0.8530kg of Fe per 1.0kg of DRI
+  Real AC_H2 = 183801405.0*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to stoichiometric consumption of H2 (USD/yr)";
+  
+  //m_flow_H2_consumed_des*(86400.0*365.0)*CapF_Process*3.50*(816.0/708.8);
+  
+  //218178221.0*0.8530*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to stoichiometric consumption of H2 (USD/yr)"; //0.8530kg of Fe per 1.0kg of DRI
   Real AC_Mining = 23254357.0*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to stoichiometric mining of iron ore (USD/yr)";
   Real AC_Electric = 4183700.0*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to electricity cost of processing iron ore (USD/yr)";
   
@@ -193,7 +206,7 @@ model H2DRI_DesignCase_2b_Dynamic
     Placement(visible = true, transformation(origin = {-10, -14}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
   SolarTherm.Models.Fluid.Sources.FluidSink2 Sink(redeclare package Medium = Medium_Ore_Dehydroxylated) annotation(
     Placement(visible = true, transformation(origin = {90, -12}, extent = {{-14, -14}, {14, 14}}, rotation = 0)));
-  Modelica.Fluid.Sources.Boundary_pT OreD_source(redeclare package Medium = Medium_Ore_Dehydroxylated, T = 289.0 + 273.15,nPorts = 1, p = 100000, use_T_in = false) annotation(
+  Modelica.Fluid.Sources.Boundary_pT OreD_source(redeclare package Medium = Medium_Ore_Dehydroxylated, T = T_med_set, nPorts = 1, p = 100000, use_T_in = false) annotation(
     Placement(visible = true, transformation(origin = {-88, -12}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple Cold_Lift(redeclare package Medium = Medium_Ore_Dehydroxylated) annotation(
     Placement(visible = true, transformation(origin = {-56, -14}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
@@ -297,8 +310,8 @@ equation
     der(Q_heater_out) = Heater.Q_out;
 
     der(Q_heater_target) = Q_heater_des;
-    der(m_DRI_target) = m_flow_ore_des*(50.8/154.1)*(0.8924*2.0*55.845/159.6882)*(1.0/0.8530);
-    der(m_DRI_produced) = Sink.port_a.m_flow*(50.8/154.1)*(0.8924*2.0*55.845/159.6882)*(1.0/0.8530);
+    der(m_DRI_target) = m_flow_ore_des*(50.8/154.1)*(0.8924*2.0*55.845/159.6882)*(1.0/DRI_f_Fe);
+    der(m_DRI_produced) = Sink.port_a.m_flow*(50.8/154.1)*(0.8924*2.0*55.845/159.6882)*(1.0/DRI_f_Fe);
   else
     der(E_PV_out) = 0.0;
     der(E_Wind_out) = 0.0;

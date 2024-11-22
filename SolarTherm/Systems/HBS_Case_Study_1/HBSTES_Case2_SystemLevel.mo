@@ -140,10 +140,10 @@ parameter Medium.ThermodynamicState state_air_min_des = Medium.setState_pTX(Medi
   parameter SI.MassFlowRate m_flow2_max = HM*m_flow1_max*(h_air_max_des-h_air_min_des)/(h_air_process_des-Fluid.h_Tf(T_heater_des,0.0)) "Maximum mass flow rate of blower 2 (kg/s) at 450C";
   parameter SI.VolumeFlowRate V_flow1_max = m_flow1_max/Fluid.rho_Tf(25.0+273.15,0.0);
   parameter SI.VolumeFlowRate V_flow2_max = m_flow2_max/Fluid.rho_Tf(T_heater_des,0.0);
-  parameter SI.Pressure p_high = 122000.0 "Blower outlet pressure assuming pressure drop of ~3psig (Pa)";
+  parameter SI.Pressure p_high = 120000.0 "Blower outlet pressure assuming pressure drop of ~3psig (Pa)";
   parameter SI.Pressure p_amb_des = 100000.0 "Design ambient pressure (Pa)";
-  parameter SI.Power P_C1 = (0.9855*(1.4/0.4)*(V_flow1_max*p_high/0.75)*(((p_high/p_amb_des)^(0.4/1.4))-1) )/0.90 "Sizing power of blower 1 (W)";
-  parameter SI.Power P_C2 = (0.9855*(1.4/0.4)*(V_flow2_max*p_high/0.75)*(((p_high/p_amb_des)^(0.4/1.4))-1) )/0.90 "Sizing power of blower 2 (W)";
+  parameter SI.Power P_C1 = (0.9855*(1.4/0.4)*(V_flow1_max*p_amb_des/0.75)*(((p_high/p_amb_des)^(0.4/1.4))-1) )/0.90 "Sizing power of blower 1 (W)";
+  parameter SI.Power P_C2 = (0.9855*(1.4/0.4)*(V_flow2_max*p_amb_des/0.75)*(((p_high/p_amb_des)^(0.4/1.4))-1) )/0.90 "Sizing power of blower 2 (W)";
   
   parameter SI.Length L_piping1 = max(1.5*TES.Tank_A.D_tank, 50) "Length of piping 1 (m)";
   parameter SI.Length L_piping2 = max(1.5*TES.Tank_A.D_tank + 0.75*TES.Tank_A.H_tank, 50) "Length of piping 2 (m)";

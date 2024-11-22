@@ -1,6 +1,6 @@
 within SolarTherm.Models.Storage.Thermocline;
 
-model Thermocline_HBS_LC_Section_Final
+model Thermocline_HBS_LC_Section_NoVerticalConduction
   //Thermocline tank with spherical fillers - Heat Transfer Model
   //Lumped Capacitance Model, suitable for air fluid - rock filler systems
   //Heat transfer in the checkerwork is dependent on geometrical porosity and hydraulic diameter of checkerwork.
@@ -40,9 +40,8 @@ model Thermocline_HBS_LC_Section_Final
   parameter SI.Area A_loss_tank = CN.pi * D_tank * D_tank * 0.5 + CN.pi * D_tank * H_tank "Heat loss area (m2)";
   parameter SI.CoefficientOfHeatTransfer U_loss_top = 0.698 "Heat loss coeff of surfaces (W/m2K)";
   parameter SI.CoefficientOfHeatTransfer U_loss_bot = 1.22 "Heat loss coeff of surfaces (W/m2K)";
-  parameter SI.CoefficientOfHeatTransfer U_loss_array[N_f] = Set_Linear_Insulation(U_loss_bot,U_loss_top,H_tank,z_f,N_f);
-  
-  parameter SI.Area A_loss_wall_i = CN.pi*D_tank*dz "Surface area of the side of each element for heat loss calculations (m2)";
+  parameter SI.CoefficientOfHeatTransfer U_loss_array[N_f] = Set_Linear_Insulation(U_loss_bot, U_loss_top, H_tank, z_f, N_f);
+  parameter SI.Area A_loss_wall_i = CN.pi * D_tank * dz "Surface area of the side of each element for heat loss calculations (m2)";
   //parameter SI.CoefficientOfHeatTransfer U_loss_tank = 0.1 "Heat loss coeff of surfaces (W/m2K)";
   //parameter SI.CoefficientOfHeatTransfer U_wall = U_loss_tank "Cylinder wall heat loss coeff (W/m2K)";
   //parameter SI.CoefficientOfHeatTransfer U_top = U_loss_tank "Top circle heat loss coeff (W/m2K)";
@@ -99,7 +98,6 @@ model Thermocline_HBS_LC_Section_Final
   SI.Energy E_stored(start = 0.0) "Make sure the tank starts from T_min for this to be correct";
   Real Level(start = 0.0) "Tank energy charging level (0-1)";
   SI.HeatFlowRate Q_loss_total "Heat loss from the entire surface area";
-  
   //Initialise Encapsulation
   //SI.Temperature T_e[N_f](start=T_e_start) "Temperature of encapsulation elements";
   //SI.SpecificEnthalpy h_e[N_f](start = h_e_min) "J/kg";
@@ -108,7 +106,6 @@ model Thermocline_HBS_LC_Section_Final
   parameter Real eff_pump = 1.00 "Pump electricity to work efficiency";
   SI.Pressure p_drop_total "Sum of all pressure drops";
   SI.Power W_loss_pump "losses due to pressure drop";
-  
   //Filler Surface Area Correction
   parameter Real f_surface = 1.0 "Don't touch this";
   //Initialise Filler surface temperature
@@ -117,50 +114,36 @@ model Thermocline_HBS_LC_Section_Final
   SI.CoefficientOfHeatTransfer h_c[N_f] "Convective heat transfer coefficient of internal flow (W/m2K)";
   Real Nu[N_f] "Nusselt";
   Real Re[N_f] "Reynolds";
-  parameter SI.Mass m_p[N_f] = fill((1.0-eta)*CN.pi*D_tank*D_tank*H_tank*rho_p/(4.0*N_f), N_f) "Masses of each particle";
-  
+  parameter SI.Mass m_p[N_f] = fill((1.0 - eta) * CN.pi * D_tank * D_tank * H_tank * rho_p / (4.0 * N_f), N_f) "Masses of each particle";
   //Cost breakdown
   parameter Real C_fluid = 0.0 "Air is free for now...";
   parameter Real C_section = C_fluid + C_filler + C_insulation + C_tank + C_encapsulation "FOB Cost of this individual tank (USD_2022)";
   //parameter Real C_insulation = if U_loss_tank > 1e-3 then (16.72/U_loss_tank + 0.04269)*A_loss_tank else 0.0;
-  parameter Real C_insulation = (816.0/795.1)*(41.13214 + (20.7285/U_loss_top) - 6.57723*(298.15/(U_loss_top*T_max)) - 8.7688*((T_max/298.15)^2.0) + 1.479653*((T_max/298.15)^3.0))*A_insulation "FOB Cost of tank insulation (USD_2022)";
-  
-  parameter SI.Length t_insulation = (0.401802 + (0.202476/U_loss_top) - 0.06425*(298.15/(U_loss_top*T_max)) - 0.08566*((T_max/298.15)^2.0) + 0.014454*((T_max/298.15)^3.0)) "Thickness of insulation (m)";
-  
-  parameter SI.Area A_insulation = 0.5*CN.pi*(D_tank+2.0*t_insulation)^2 + CN.pi*(D_tank+2.0*t_insulation)*(H_tank+2.0*t_insulation) "Outer surface area of insulation (m2)";
-  
-  parameter Real C_tank = (816.0/500.0)*570.0*(35.315*V_vessel)^0.46 "FOB cost of a carbon steel bin based on Seider (USD_2022)";
-  
-  parameter SI.Volume V_vessel = 0.25*CN.pi*((D_tank+2.0*t_insulation)^2)*(H_tank+2.0*t_insulation) "Volume of the metal vessel after considering insulation (m3)";
-  parameter Real C_filler = (816.0/795.1)*sum(m_p)*Filler_Package.cost "FOB cost of checkerbrick material (USD_2022)";
-  
+  parameter Real C_insulation = 816.0 / 795.1 * (41.13214 + 20.7285 / U_loss_top - 6.57723 * (298.15 / (U_loss_top * T_max)) - 8.7688 * (T_max / 298.15) ^ 2.0 + 1.479653 * (T_max / 298.15) ^ 3.0) * A_insulation "FOB Cost of tank insulation (USD_2022)";
+  parameter SI.Length t_insulation = 0.401802 + 0.202476 / U_loss_top - 0.06425 * (298.15 / (U_loss_top * T_max)) - 0.08566 * (T_max / 298.15) ^ 2.0 + 0.014454 * (T_max / 298.15) ^ 3.0 "Thickness of insulation (m)";
+  parameter SI.Area A_insulation = 0.5 * CN.pi * (D_tank + 2.0 * t_insulation) ^ 2 + CN.pi * (D_tank + 2.0 * t_insulation) * (H_tank + 2.0 * t_insulation) "Outer surface area of insulation (m2)";
+  parameter Real C_tank = 816.0 / 500.0 * 570.0 * (35.315 * V_vessel) ^ 0.46 "FOB cost of a carbon steel bin based on Seider (USD_2022)";
+  parameter SI.Volume V_vessel = 0.25 * CN.pi * (D_tank + 2.0 * t_insulation) ^ 2 * (H_tank + 2.0 * t_insulation) "Volume of the metal vessel after considering insulation (m3)";
+  parameter Real C_filler = 816.0 / 795.1 * sum(m_p) * Filler_Package.cost "FOB cost of checkerbrick material (USD_2022)";
   parameter Real C_encapsulation = 0.0;
-  
-  
   SI.SpecificEnthalpy h_p[N_f] "J/kg";
   SI.Temperature T_p[N_f](start = T_p_start) "Temperature of particle elements";
 protected
   //Initialise Particle
- 
   //Filler mass-liquid fraction
   Real f_p[N_f] "Mass liquid fraction of filler";
   Real Bi[N_f] "Biot Number";
   //Convection Properties
-  
   Real Pr[N_f] "Prandtl";
-  
   //Real h_v[N_f] "Volumetric heat transfer coeff (W/m3K)";
-  
   //SI.ThermalConductance U_in[N_f, N_p] "K/W"; //Obsolete
   //SI.ThermalConductance U_out[N_f, N_p] "K/W";
   //SI.ThermalConductance U_out_e[N_f] "K/W";
   SI.ThermalConductance U_up[N_f] "Thermal conductance between a filler element and the one on top of it (K/W)";
   //Filler Properties
-  
   SI.ThermalConductivity k_p[N_f] "W/mK";
   //Filler Geometry
   //parameter Real N_spheres_total = N_f * 6 * (1 - eta) * A * dz / (CN.pi * d_p ^ 3) "Total number of spheres in the tank";
-  
   //parameter SI.Mass m_e = rho_e*(1/6)*CN.pi*((d_p^3)-((d_p-2*t_e)^3)) "Masses of encapsulation in one particle";
   //Pressure Drop
   SI.Pressure p_drop[N_f] "Pressure drop across each mesh element";
@@ -178,26 +161,24 @@ protected
   Filler_Package.State filler[N_f] "Filler object array";
   //.State encapsulation[N_f] "Encapsulation object array";
   Real der_h_f[N_f] "rate of change of h_f calculated explicitly";
-  
 algorithm
 //Fluid Equations
   if State == 1 then
-    der_h_f[1] := ((-2.0 * k_f[1] * k_f[2]) * (T_f[1] - T_f[2]) / ((k_f[1] + k_f[2]) * dz * dz) + rho_f_avg * u_flow * (h_f[1] - h_f[2]) / dz - 4.0 * h_c[1] * (T_f[1] - T_s[1]) / (d_p)) / rho_f_avg;
+    der_h_f[1] := ((-2.0 * k_f[1] * k_f[2]) * (T_f[1] - T_f[2]) / ((k_f[1] + k_f[2]) * dz * dz) + rho_f_avg * u_flow * (h_f[1] - h_f[2]) / dz - 4.0 * h_c[1] * (T_f[1] - T_s[1]) / d_p) / rho_f_avg;
     h_out := h_f[1];
     for i in 2:N_f - 1 loop
-      der_h_f[i] := (2.0 * k_f[i - 1] * k_f[i] * (T_f[i - 1] - T_f[i]) / ((k_f[i - 1] + k_f[i]) * dz * dz) - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) / ((k_f[i] + k_f[i + 1]) * dz * dz) + rho_f_avg * u_flow * (h_f[i] - h_f[i + 1]) / dz - 4.0 * h_c[i] * (T_f[i] - T_s[i]) / (d_p)) / rho_f_avg;
+      der_h_f[i] := (2.0 * k_f[i - 1] * k_f[i] * (T_f[i - 1] - T_f[i]) / ((k_f[i - 1] + k_f[i]) * dz * dz) - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) / ((k_f[i] + k_f[i + 1]) * dz * dz) + rho_f_avg * u_flow * (h_f[i] - h_f[i + 1]) / dz - 4.0 * h_c[i] * (T_f[i] - T_s[i]) / d_p) / rho_f_avg;
     end for;
-    der_h_f[N_f] := (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) / ((k_f[N_f - 1] + k_f[N_f]) * dz * dz) + rho_f_avg * u_flow * (h_f[N_f] - h_in) / dz - 4.0 * h_c[N_f] * (T_f[N_f] - T_s[N_f]) / (d_p)) / rho_f_avg;
+    der_h_f[N_f] := (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) / ((k_f[N_f - 1] + k_f[N_f]) * dz * dz) + rho_f_avg * u_flow * (h_f[N_f] - h_in) / dz - 4.0 * h_c[N_f] * (T_f[N_f] - T_s[N_f]) / d_p) / rho_f_avg;
   else
-    der_h_f[1] := ((-2.0 * k_f[1] * k_f[2] * (T_f[1] - T_f[2]) / ((k_f[1] + k_f[2]) * dz * dz)) + rho_f_avg * u_flow * (h_in - h_f[1]) / dz - 4.0 * h_c[1] * (T_f[1] - T_s[1]) / (d_p)) / rho_f_avg;
+    der_h_f[1] := ((-2.0 * k_f[1] * k_f[2] * (T_f[1] - T_f[2]) / ((k_f[1] + k_f[2]) * dz * dz)) + rho_f_avg * u_flow * (h_in - h_f[1]) / dz - 4.0 * h_c[1] * (T_f[1] - T_s[1]) / d_p) / rho_f_avg;
     for i in 2:N_f - 1 loop
-      der_h_f[i] := (2.0 * k_f[i - 1] * k_f[i] * (T_f[i - 1] - T_f[i]) / ((k_f[i - 1] + k_f[i]) * dz * dz) - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) / ((k_f[i] + k_f[i + 1]) * dz * dz) + rho_f_avg * u_flow * (h_f[i - 1] - h_f[i]) / dz - 4.0 * h_c[i] * (T_f[i] - T_s[i]) / (d_p)) / rho_f_avg;
+      der_h_f[i] := (2.0 * k_f[i - 1] * k_f[i] * (T_f[i - 1] - T_f[i]) / ((k_f[i - 1] + k_f[i]) * dz * dz) - 2.0 * k_f[i] * k_f[i + 1] * (T_f[i] - T_f[i + 1]) / ((k_f[i] + k_f[i + 1]) * dz * dz) + rho_f_avg * u_flow * (h_f[i - 1] - h_f[i]) / dz - 4.0 * h_c[i] * (T_f[i] - T_s[i]) / d_p) / rho_f_avg;
     end for;
-    der_h_f[N_f] := (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) / ((k_f[N_f - 1] + k_f[N_f]) * dz * dz) + rho_f_avg * u_flow * (h_f[N_f - 1] - h_f[N_f]) / dz - 4.0 * h_c[N_f] * (T_f[N_f] - T_s[N_f]) / (d_p)) / rho_f_avg;
+    der_h_f[N_f] := (2.0 * k_f[N_f - 1] * k_f[N_f] * (T_f[N_f - 1] - T_f[N_f]) / ((k_f[N_f - 1] + k_f[N_f]) * dz * dz) + rho_f_avg * u_flow * (h_f[N_f - 1] - h_f[N_f]) / dz - 4.0 * h_c[N_f] * (T_f[N_f] - T_s[N_f]) / d_p) / rho_f_avg;
     h_out := h_f[N_f];
   end if;
-  
-  /*
+/*
   if State == 1 then
     der_h_f[1] := ((-2.0 * k_f[1] * k_f[2]) * (T_f[1] - T_f[2]) / ((k_f[1] + k_f[2]) * dz * dz) + rho_f_avg * u_flow * (h_f[1] - h_f[2]) / dz - 4.0 * h_c[1] * (T_f[1] - T_s[1]) / (eta * d_p)) / rho_f_avg;
     h_out := h_f[1];
@@ -253,7 +234,7 @@ equation
   end if;
   u_flow = m_flow / (eta * rho_f_avg * A);
 //positive if flowing upwards (discharge)
-  //u_0 = u_flow * eta;
+//u_0 = u_flow * eta;
 //Velocity through empty cross-section
 //Fluid inlet and outlet properties
   fluid_in.h = h_in;
@@ -363,37 +344,34 @@ equation
 //There is actually mass flowing
       Re[i] = rho_f_avg * d_p * abs(u_flow) / mu_f[i];
       Pr[i] = c_pf[i] * mu_f[i] / k_f[i];
-      Nu[i] = SolarTherm.Utilities.Nusselt.Internal_Flow.Nusselt_HBS(Re[i],Pr[i]);
+      Nu[i] = SolarTherm.Utilities.Nusselt.Internal_Flow.Nusselt_HBS(Re[i], Pr[i]);
     else
       Re[i] = 0;
       Pr[i] = 0;
       Nu[i] = 3.66;
     end if;
-    //h_v[i] = f_surface * 6.0 * (1.0 - eta) * Nu[i] * k_f[i] / (d_p * d_p);
-    h_c[i] = Nu[i]*k_f[i]/d_p;
-    
+//h_v[i] = f_surface * 6.0 * (1.0 - eta) * Nu[i] * k_f[i] / (d_p * d_p);
+    h_c[i] = Nu[i] * k_f[i] / d_p;
 //Note that filler surface area correction factor is applied elsewhere.
   end for;
 //Particle Equations
-  //Vertical Thermal Conductance
-  for i in 1:N_f-1 loop
-    U_up[i] = 0.5*k_p[i]*k_p[i+1]*(1.0-eta)*CN.pi*D_tank*D_tank/((k_p[i]+k_p[i+1])*dz);
+//Vertical Thermal Conductance
+  for i in 1:N_f - 1 loop
+    U_up[i] = 0.0;//0.5 * k_p[i] * k_p[i + 1] * (1.0 - eta) * CN.pi * D_tank * D_tank / ((k_p[i] + k_p[i + 1]) * dz); //This model assumes no vertical heat conduction
   end for;
-  U_up[N_f] = 0.0; //There is nothing on top of it 
-
-
-  m_p[1] * der(h_p[1]) = -1.0*U_up[1]*(T_p[1]-T_p[2]) +
-    h_c[1] * D_tank * D_tank * eta * CN.pi * dz * (T_f[1] - T_s[1]) / d_p - U_loss_array[1]*A_loss_wall_i*(T_p[1]-T_amb) - U_loss_bot*A*(T_p[1]-T_amb);
-  for i in 2:N_f-1 loop
-    //m_p[i] * der(h_p[i]) = CN.pi * d_p ^ 3 * h_v[i] / (6.0 * (1.0 - eta)) * (T_f[i] - T_s[i]);
-    m_p[i] * der(h_p[i]) = U_up[i-1]*(T_p[i-1]-T_p[i]) - U_up[i]*(T_p[i]-T_p[i+1]) + h_c[i] * D_tank * D_tank * eta* CN.pi * dz * (T_f[i] - T_s[i]) / d_p -U_loss_array[i]*A_loss_wall_i*(T_p[i]-T_amb);
+  U_up[N_f] = 0.0;
+//There is nothing on top of it
+  m_p[1] * der(h_p[1]) = (-1.0 * U_up[1] * (T_p[1] - T_p[2])) + h_c[1] * D_tank * D_tank * eta * CN.pi * dz * (T_f[1] - T_s[1]) / d_p - U_loss_array[1] * A_loss_wall_i * (T_p[1] - T_amb) - U_loss_bot * A * (T_p[1] - T_amb);
+  for i in 2:N_f - 1 loop
+//m_p[i] * der(h_p[i]) = CN.pi * d_p ^ 3 * h_v[i] / (6.0 * (1.0 - eta)) * (T_f[i] - T_s[i]);
+    m_p[i] * der(h_p[i]) = U_up[i - 1] * (T_p[i - 1] - T_p[i]) - U_up[i] * (T_p[i] - T_p[i + 1]) + h_c[i] * D_tank * D_tank * eta * CN.pi * dz * (T_f[i] - T_s[i]) / d_p - U_loss_array[i] * A_loss_wall_i * (T_p[i] - T_amb);
   end for;
-  m_p[N_f] * der(h_p[N_f]) = U_up[N_f-1]*(T_p[N_f-1]-T_p[N_f]) + h_c[N_f] * D_tank * D_tank * eta* CN.pi * dz * (T_f[N_f] - T_s[N_f]) / d_p -U_loss_array[N_f]*A_loss_wall_i*(T_p[N_f]-T_amb) - U_loss_top*A*(T_p[N_f]-T_amb);
+  m_p[N_f] * der(h_p[N_f]) = U_up[N_f - 1] * (T_p[N_f - 1] - T_p[N_f]) + h_c[N_f] * D_tank * D_tank * eta * CN.pi * dz * (T_f[N_f] - T_s[N_f]) / d_p - U_loss_array[N_f] * A_loss_wall_i * (T_p[N_f] - T_amb) - U_loss_top * A * (T_p[N_f] - T_amb);
 //Heat loss calculations, different form than the equations above as they were in terms of rho*dh/dt not m*dh/dt
-  Q_loss_top = U_loss_top*A*(T_p[N_f]-T_amb);
-  Q_loss_bot = U_loss_bot*A*(T_p[1]-T_amb);
+  Q_loss_top = U_loss_top * A * (T_p[N_f] - T_amb);
+  Q_loss_bot = U_loss_bot * A * (T_p[1] - T_amb);
   for i in 1:N_f loop
-    Q_loss_wall[i] = U_loss_array[i]*A_loss_wall_i*(T_p[i]-T_amb);
+    Q_loss_wall[i] = U_loss_array[i] * A_loss_wall_i * (T_p[i] - T_amb);
   end for;
   Q_loss_total = Q_loss_top + sum(Q_loss_wall) + Q_loss_bot;
 //End heat loss calculations
@@ -412,4 +390,4 @@ equation
 		</html>", info = "<html>
 		<p>This model contains the heat-transfer calculations of a thermocline packed bed storage tank with spherical filler geometry. This model does not contain any fluid connectors, for the CSP component with connectors, see Thermocline_Spheres_SingleTank. Variables fluid_top and fluid_bot provides the enthalpy-temperature relationship of the fluid material. Depending on whether m_flow is positive (discharging, fluid flowing upwards) or negative (charging, fluid flowing downwards), the charging/discharging equations are applied. In this iteration of the model, discharging and standby are lumped into one state.</p>
 		</html>"));
-end Thermocline_HBS_LC_Section_Final;
+end Thermocline_HBS_LC_Section_NoVerticalConduction;

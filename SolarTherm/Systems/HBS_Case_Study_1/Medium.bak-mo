@@ -1,3 +1,0 @@
-within SolarTherm.Systems.HBS_Case_Study_1;
-
-package Medium = SolarTherm.Media.Air.Air_CoolProp_1bar;

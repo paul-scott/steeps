@@ -1,3 +1,0 @@
-within SolarTherm.Systems.HBS_Case_Study_1;
-
-package Fluid_Package = SolarTherm.Materials.Air_CoolProp_Table_1bar;
