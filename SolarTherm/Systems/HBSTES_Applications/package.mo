@@ -1,6 +1,6 @@
 within SolarTherm.Systems;
 
-package HBSTES_Reference_Cases
+package HBSTES_Applications
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false)));
-end HBSTES_Reference_Cases;
+end HBSTES_Applications;

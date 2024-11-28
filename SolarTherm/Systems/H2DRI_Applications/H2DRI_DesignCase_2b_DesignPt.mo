@@ -321,8 +321,8 @@ model H2DRI_DesignCase_2b_DesignPt
   //Condenser Q_flow_cooling = U_condenser_des*A_condenser1*(T_condenser1_in_des-T_amb_des)
   parameter SI.CoefficientOfHeatTransfer U_condenser1_des = 700.0 "W/m2K";
   parameter SI.CoefficientOfHeatTransfer U_condenser2_des = 700.0 "W/m2K";
-  SI.Area A_condenser1 = Q_flow_cooling_condenser1/(U_condenser1_des*0.8*(T_condenser1_in_des-T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
-  SI.Area A_condenser2 = Q_flow_cooling_condenser2/(U_condenser2_des*0.8*(T_condenser2_in_des-T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
+  SI.Area A_condenser1 = Q_flow_cooling_condenser1/(U_condenser1_des*0.8*(T_condenser_out_des-T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
+  SI.Area A_condenser2 = Q_flow_cooling_condenser2/(U_condenser2_des*0.8*(T_condenser_out_des-T_amb_des)) "Required heat transfer area of air-cooled condenser (m2)";
   
   Real FOB_condenser1 = (CEPCI/500.0)*10000.0*((10.764*A_condenser1)^0.40);
   Real FOB_condenser2 = (CEPCI/500.0)*10000.0*((10.764*A_condenser2)^0.40);

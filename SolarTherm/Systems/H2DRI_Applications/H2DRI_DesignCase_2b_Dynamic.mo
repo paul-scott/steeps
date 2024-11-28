@@ -89,9 +89,9 @@ model H2DRI_DesignCase_2b_Dynamic
   parameter SI.Length D_rem_hot = ((4.0*V_rem_hot)/(CN.pi*ar))^(1.0/3.0) "Remainder hot tank diameter (m3)";
   parameter SI.Area A_loss_hot_total = N_quo_hot*(CN.pi*D_tank_max*D_tank_max*ar + 0.5*CN.pi*D_tank_max*D_tank_max) + CN.pi*D_rem_hot*D_rem_hot*ar + 0.5*CN.pi*D_rem_hot*D_rem_hot;
   
-  parameter Real FOB_tank_med = (CEPCI/500)*1.0*(N_quo_med*113736.27 + (35.315*V_rem_med)^0.46) "FOB cost of the medium temp Fe2O3 storage tank (USD_year)";
+  parameter Real FOB_tank_med = (CEPCI/500)*1.0*(N_quo_med*113736.27 + 570.0*(35.315*V_rem_med)^0.46) "FOB cost of the medium temp Fe2O3 storage tank (USD_year)";
   
-  parameter Real FOB_tank_hot = (CEPCI/500)*2.1*(N_quo_hot*113736.27 + (35.315*V_rem_med)^0.46) "FOB cost of the hot temp Fe2O3 storage tank (USD_year)";
+  parameter Real FOB_tank_hot = (CEPCI/500)*2.1*(N_quo_hot*113736.27 + 570.0*(35.315*V_rem_med)^0.46) "FOB cost of the hot temp Fe2O3 storage tank (USD_year)";
   
   //parameter Real FOB_tank_hot = (CEPCI/500)*2.1*570.0*(35.315*V_tank_hot)^0.46 "FOB cost of the hot Fe2O3 storage tank (USD_year)";
   
@@ -133,8 +133,8 @@ model H2DRI_DesignCase_2b_Dynamic
   parameter Real FCI_Reactor = 506546275.0 "Reactor FCI cost (USD_2022)";
   parameter Real FCI_GGHX = 41675600.0 "GGHX FCI cost (USD_2022)";
   parameter Real FCI_Blower_H2 = 1404500.0 "H2 Blower FCI cost (USD_2022)";
-  parameter Real FCI_Condenser_1 = 483007.0 "Condenser 1 cost (USD_2022)";
-  parameter Real FCI_Condenser_2 = 1298110.0 "Condenser 2 cost (USD_2022)";
+  parameter Real FCI_Condenser_1 = 702567.0 "Condenser 1 cost (USD_2022)";
+  parameter Real FCI_Condenser_2 = 2178690.0 "Condenser 2 cost (USD_2022)";
   parameter Real FCI_PGHX1 = 1128020.0 + 595218.0 + 147284.0 "PGHX1 cost (USD_2022)";
   parameter Real FCI_PGHX2 = 23195900.0 + 6255300.0 + 977190.0 "PGHX2 cost (USD_2022)";
 

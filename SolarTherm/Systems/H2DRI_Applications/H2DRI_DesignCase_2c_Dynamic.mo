@@ -89,9 +89,9 @@ model H2DRI_DesignCase_2c_Dynamic
   parameter SI.Length D_rem_hot = ((4.0*V_rem_hot)/(CN.pi*ar))^(1.0/3.0) "Remainder hot tank diameter (m3)";
   parameter SI.Area A_loss_hot_total = N_quo_hot*(CN.pi*D_tank_max*D_tank_max*ar + 0.5*CN.pi*D_tank_max*D_tank_max) + CN.pi*D_rem_hot*D_rem_hot*ar + 0.5*CN.pi*D_rem_hot*D_rem_hot;
   
-  parameter Real FOB_tank_med = (CEPCI/500)*1.0*(N_quo_med*113736.27 + (35.315*V_rem_med)^0.46) "FOB cost of the medium temp Fe2O3 storage tank (USD_year)";
+  parameter Real FOB_tank_med = (CEPCI/500)*1.0*(N_quo_med*113736.27 + 570.0*(35.315*V_rem_med)^0.46) "FOB cost of the medium temp Fe2O3 storage tank (USD_year)";
   
-  parameter Real FOB_tank_hot = (CEPCI/500)*2.1*(N_quo_hot*113736.27 + (35.315*V_rem_med)^0.46) "FOB cost of the hot temp Fe2O3 storage tank (USD_year)";
+  parameter Real FOB_tank_hot = (CEPCI/500)*2.1*(N_quo_hot*113736.27 + 570.0*(35.315*V_rem_med)^0.46) "FOB cost of the hot temp Fe2O3 storage tank (USD_year)";
   
     //Fluidised Bed Heater
   parameter SI.HeatFlux q_flow_heater_max = 60000.0 "Maximum radiant heat flux of the fluidised bed heater (W/m2)"; //Placeholder
@@ -124,13 +124,14 @@ model H2DRI_DesignCase_2c_Dynamic
   parameter Real pri_PV = 1.10725 "Cost per W_gross of PV plant, already including 3% contingency (USD_2022/W)";
   parameter Real pri_Wind = 1.50607 "Cost per W_gross of PV plant already including 3% contingency (USD_2022/W)";
   parameter Real pri_FB_Heating = 0.1539 "Cost per W of heater (USD_2022/W)";
+  parameter Real pri_H2 = 3.5*(816.0/708.8) "Cost per kg of H2 (USD_2022/kg)";
   
   //Fixed-Size Capital Costs
   parameter Real FCI_Reactor = 506546275.0 "Reactor FCI cost (USD_2022)";
   parameter Real FCI_GGHX = 17409800.0 "GGHX FCI cost (USD_2022)";
   parameter Real FCI_Blower_H2 = 1404500.0 "H2 Blower FCI cost (USD_2022)";
-  parameter Real FCI_Condenser_1 = 1210570.0 "Condenser 1 cost (USD_2022)";
-  parameter Real FCI_Condenser_2 = 913210.0 "Condenser 2 cost (USD_2022)";
+  parameter Real FCI_Condenser_1 = 1760850.0 "Condenser 1 cost (USD_2022)";
+  parameter Real FCI_Condenser_2 = 1532690.0 "Condenser 2 cost (USD_2022)";
   parameter Real FCI_PGHX1 = 19878400.0 + 9780490.0 + 1420850.0 "PGHX1 cost (USD_2022)";
   parameter Real FCI_PGHX2 = 23040200.0 + 6957360.0 + 1076290.0 "PGHX2 cost (USD_2022)";
 
@@ -160,7 +161,9 @@ model H2DRI_DesignCase_2c_Dynamic
   parameter Real AC_Wind = 0.01868*P_wind_gross "Annual O&M costs for Wind plant (USD/year)";
   
   //Variable Annual Costs
-  Real AC_H2 = 183801405.0*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to stoichiometric consumption of H2 (USD/yr)"; //0.8530kg of Fe per 1.0kg of DRI
+  Real AC_H2 = (CapF_Process*m_flow_H2_consumed_des*86400.0*365.0)*pri_H2 "Variable annual costs due to stoichiometric consumption of H2 (USD/yr)";
+  
+  //183801405.0*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to stoichiometric consumption of H2 (USD/yr)"; //0.8530kg of Fe per 1.0kg of DRI
   Real AC_Mining = 23254357.0*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to stoichiometric mining of iron ore (USD/yr)";
   Real AC_Electric = 4183700.0*CapF_Process*(Plant_Scale/1.0) "Variable annual costs due to electricity cost of processing iron ore (USD/yr)";
   Real AC_HeatLoss = pri_Elec*(W_heating_hot_tank + W_heating_med_tank) "Variable annual costs due to electricity needed to compensate for tank heat losses (USD/yr)";
