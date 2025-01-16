@@ -9,8 +9,8 @@ model HBSTES_ComponentLevel_VarCycle_ISH4_H35m "This component analysis allows a
   package Fluid_Package = SolarTherm.Materials.Air_CoolProp_Table_1bar;
   package Filler_Package = SolarTherm.Materials.Mullite_20pct_porosity;
   //These parameters are varied
-  parameter Real HM = 2.0 "Heater Multiple";
-  parameter SI.Time t_discharge = 20.0 * 3600.0 "Rated discharging period (s)";
+  parameter Real HM = 3.0 "Heater Multiple";
+  parameter SI.Time t_discharge = 4.0 * 3600.0 "Rated discharging period (s)";
   parameter SI.Time t_standby = 2.0*3600.0 "Additional standby time after both charging and discharging cycle (s)";
   //Numerical Discretisation Settings
   parameter Integer N_f = 100;
@@ -19,15 +19,15 @@ model HBSTES_ComponentLevel_VarCycle_ISH4_H35m "This component analysis allows a
   parameter Real t_storage_hours_ideal = t_discharge*f_TES_oversize/3600.0;
   //parameter Integer N_p = 5; //Not used
   //TES Geometric Parameters
-  parameter SI.Length d_p = 0.03 "Hole diameter in the filler (m)";
-  parameter Real ar =  11.336*(N_tanks^0.5)*(2.93731e11/E_max)^0.5  "Tank H/D ratio (m)";
-  parameter Real eta = 0.53 "Packed-bed porosity";
+  parameter SI.Length d_p = 0.018 "Hole diameter in the filler (m)";
+  parameter Real ar =  11.336*(N_tanks^0.5)*((2.93731e11/E_max)^0.5)*((1.0-eta)/0.47)^0.5  "Tank H/D ratio (m)";
+  parameter Real eta = 0.3265 "Packed-bed porosity";
   //parameter SI.Length s_p = 0.04 "Separation of holes in the filler (m)";
   parameter SI.Temperature T_ext_max = 50.0 + 273.15 "Maximum external temperature of the HBS walls under worst-case conditions (K)";
   parameter SI.CoefficientOfHeatTransfer U_loss_top = 10.0*(T_ext_max-298.15)/(T_max-298.15) "Heat loss coefficient at the top of the tank (W/m2K)";
   parameter SI.CoefficientOfHeatTransfer U_loss_bot = 10.0*(T_ext_max-298.15)/(T_max-298.15) "Heat loss coefficient at the bottom of the tank (W/m2K)";
   //Temperature Controls
-  parameter SI.Temperature T_max = 1200.0 + 273.15 "Maximum temperature (K)";
+  parameter SI.Temperature T_max = 1100.0 + 273.15 "Maximum temperature (K)";
   parameter SI.Temperature T_process_des = 1000.0 + 273.15 "Design process inlet temperature (K)";
   parameter SI.Temperature T_high_set = 1000.0 + 273.15 "TES hot blend temperature temperature (K)";
   parameter SI.Temperature T_process_min = 1000.0 + 273.15 "Minimum tolerated outlet temperature to process (K)";
@@ -133,12 +133,16 @@ model HBSTES_ComponentLevel_VarCycle_ISH4_H35m "This component analysis allows a
   Real Level_mid(start = 0.5);
   
   SI.Energy E_stored(start = 0.0);
+  SI.Energy E_pump(start=0.0);
   
   //Exergy Analysis
   SI.Energy X_chg(start=0.0) "Total exergy charged in the last cycle";
   SI.Energy X_dis(start=0.0) "Discharged exergy";
   Real util_exergy(start=0.0) "Exergetic utilisation (2nd law)";
   Real eff_exergy(start=0.0) "Exergetic efficiency (2nd law)";
+  
+  //Pressure drop
+  
 algorithm
 //Mass flow controls
   when rem(time, t_cycle) > 1e-6 then //Start of charging cycle
@@ -230,22 +234,25 @@ equation
     der(E_dis) = 0.0;
     der(X_chg) = TES.fluid_a.m_flow * (inStream(TES.fluid_a.h_outflow)*(1.0 - (298.15/TES.fluid_top.T)) - (TES.fluid_b.h_outflow)*(1.0 - (298.15/TES.fluid_bot.T)));
     der(X_dis) = 0.0;
+    der(E_pump) = TES.Tank_A.W_loss_pump;
   elseif time >= 9.0 * t_cycle + t_charge + t_standby and time < 9.0 * t_cycle + t_charge + t_standby + t_discharge then
 //last discharging phase
     der(E_chg) = 0.0;
     der(E_dis) = TES.fluid_b.m_flow * (TES.fluid_a.h_outflow - inStream(TES.fluid_b.h_outflow));
     der(X_chg) = 0.0;
     der(X_dis) = TES.fluid_b.m_flow * ((TES.fluid_a.h_outflow)*(1.0-(298.15/TES.fluid_top.T)) - (inStream(TES.fluid_b.h_outflow)) * (1.0-(298.15/TES.fluid_bot.T)));
+    der(E_pump) = TES.W_loss_pump;
   else
     der(E_chg) = 0.0;
     der(E_dis) = 0.0;
     der(X_chg) = 0.0;
     der(X_dis) = 0.0;  
+    der(E_pump) = 0.0;
   end if;
   if time > 9.0 * t_cycle + t_charge + t_standby then
 //we can calculate utilisation and efficiency because denominator is not zero;
-    util_energy = E_dis / E_max;
-    eff_energy = E_dis / E_chg;
+    util_energy = (E_dis) / E_max;
+    eff_energy = (E_dis) / E_chg;
     util_exergy = (X_dis) / X_max;
     eff_exergy = (X_dis) / X_chg;
   else

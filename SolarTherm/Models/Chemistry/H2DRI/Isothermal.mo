@@ -381,24 +381,24 @@ package Isothermal
     parameter SI.Pressure p_ref = 1.0e5 "Reference pressure 100000 Pa";
   
     //A = Fe2O3(s)
-    parameter SI.MolarMass M_A = ChemTable.Fe2O3.M "Molar mass (kg/mol)"; 
-    parameter SI.MolarEnthalpy Hf_A = ChemTable.Fe2O3.Hf0 "Molar standard formation enthalpy (J/mol)";
-    parameter SI.MolarEntropy Sf_A = ChemTable.Fe2O3.S0 "Molar absolute entropy (J/molK)";
+    parameter SI.MolarMass M_A = 1.0*ChemTable.Fe2O3.M "Molar mass (kg/mol)"; 
+    parameter SI.MolarEnthalpy Hf_A = 1.0*ChemTable.Fe2O3.Hf0 "Molar standard formation enthalpy (J/mol)";
+    parameter SI.MolarEntropy Sf_A = 1.0*ChemTable.Fe2O3.S0 "Molar absolute entropy (J/molK)";
     
     //B = H2(g)
-    parameter SI.MolarMass M_B = ChemTable.H2.M "Molar mass (kg/mol)"; 
-    parameter SI.MolarEnthalpy Hf_B = ChemTable.H2.Hf0 "Molar standard formation enthalpy (J/mol)";
-    parameter SI.MolarEntropy Sf_B = ChemTable.H2.S0 "Molar absolute entropy (J/molK)";
+    parameter SI.MolarMass M_B = 1.0*ChemTable.H2.M "Molar mass (kg/mol)"; 
+    parameter SI.MolarEnthalpy Hf_B = 1.0*ChemTable.H2.Hf0 "Molar standard formation enthalpy (J/mol)";
+    parameter SI.MolarEntropy Sf_B = 1.0*ChemTable.H2.S0 "Molar absolute entropy (J/molK)";
     
     //C = Fe(s)
-    parameter SI.MolarMass M_C = ChemTable.Fe.M "Molar mass (kg/mol)"; 
-    parameter SI.MolarEnthalpy Hf_C = ChemTable.Fe.Hf0 "Molar standard formation enthalpy (J/mol)";
-    parameter SI.MolarEntropy Sf_C = ChemTable.Fe.S0 "Molar absolute entropy (J/molK)";
+    parameter SI.MolarMass M_C = 1.0*ChemTable.Fe.M "Molar mass (kg/mol)"; 
+    parameter SI.MolarEnthalpy Hf_C = 1.0*ChemTable.Fe.Hf0 "Molar standard formation enthalpy (J/mol)";
+    parameter SI.MolarEntropy Sf_C = 1.0*ChemTable.Fe.S0 "Molar absolute entropy (J/molK)";
     
     //D = H20(l)
-    parameter SI.MolarMass M_D = ChemTable.H2O.M "Molar mass (kg/mol)"; 
-    parameter SI.MolarEnthalpy Hf_D = ChemTable.H2O.Hf0 "Molar standard formation enthalpy (J/mol)";
-    parameter SI.MolarEntropy Sf_D = ChemTable.H2O.S0 "Molar absolute entropy (J/molK)";
+    parameter SI.MolarMass M_D = 1.0*ChemTable.H2O.M "Molar mass (kg/mol)"; 
+    parameter SI.MolarEnthalpy Hf_D = 1.0*ChemTable.H2O.Hf0 "Molar standard formation enthalpy (J/mol)";
+    parameter SI.MolarEntropy Sf_D = 1.0*ChemTable.H2O.S0 "Molar absolute entropy (J/molK)";
     
     //Thermal Aspect (Deviation from standard temperature and pressure)
     //A = Fe2O3(s)

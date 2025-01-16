@@ -4,21 +4,24 @@ package ChemTable
   //Data obtained from FactSage
   //Format M (kg/mol), Hf0 (J/mol), S0 (J/molK)
   //       Molar mass, Standard enthalpy of formation, Absolute entropy at standard conditions
-  final Chemical H2(M=2.01588e-3, Hf0=0.0, S0=130.680);
-  final Chemical H2O(M=18.01528e-3, Hf0=-285.8300e3, S0=69.950);
-  final Chemical Fe(M=55.845e-3, Hf0=0.0, S0=27.280);
-  final Chemical FeO(M=71.8444e-3, Hf0=-265.8322e3, S0=59.496);//HfO changed from -272.04e3 to -265.832e3
-  final Chemical Fe3O4(M=231.5326e-3, Hf0=-1117.4025e3, S0=146.114);
-  final Chemical Fe2O3(M=159.6882e-3, Hf0=-825.7869e3, S0=87.729);
+  final constant Chemical H2(M=2.01588e-3, Hf0=0.0, S0=130.680);
+  final constant Chemical H2O(M=18.01528e-3, Hf0=-285.8300e3, S0=69.950);
+  final constant Chemical Fe(M=55.845e-3, Hf0=0.0, S0=27.280);
+  final constant Chemical FeO(M=71.8444e-3, Hf0=-265.8322e3, S0=59.496);//HfO changed from -272.04e3 to -265.832e3
+  final constant Chemical Fe3O4(M=231.5326e-3, Hf0=-1117.4025e3, S0=146.114);
+  final constant Chemical Fe2O3(M=159.6882e-3, Hf0=-825.7869e3, S0=87.729);
   
-  final Chemical Fe2O3H2O(M=177.70348e-3, Hf0=-1117.998e3, S0=118.826);
-  final Chemical Al2O3(M=101.9612772e-3, Hf0=-1675.7e3, S0=50.820);
-  final Chemical SiO2(M=60.0843e-3, Hf0=-910.6999e3, S0=41.460);
+  final constant Chemical Fe2O3H2O(M=177.70348e-3, Hf0=-1117.998e3, S0=118.826);
+  final constant Chemical Al2O3(M=101.9612772e-3, Hf0=-1675.7e3, S0=50.820);
+  final constant Chemical SiO2(M=60.0843e-3, Hf0=-910.6999e3, S0=41.460);
   
-  final Chemical MgO(M=40.3044e-3, Hf0=-601.500e3, S0=26.951);
-  final Chemical Al6Si2O13(M=426.0524316e-3, Hf0=-6819.210e3, S0=274.9);
-  final Chemical CaO(M=56.0774e-3, Hf0=-635.0900e3, S0=37.750);
-  final Chemical CaCO3(M=100.0869e-3, Hf0=-1206.6656e3, S0=87.990);
+  final constant Chemical MgO(M=40.3044e-3, Hf0=-601.500e3, S0=26.951);
+  final constant Chemical Al6Si2O13(M=426.0524316e-3, Hf0=-6819.210e3, S0=274.9);
+  final constant Chemical CaO(M=56.0774e-3, Hf0=-635.0900e3, S0=37.750);
+  final constant Chemical CaCO3(M=100.0869e-3, Hf0=-1206.6656e3, S0=87.990);
+  
+  final constant Chemical Mn(M=54.938045e-3, Hf0=0.0, S0=30.010);
+  final constant Chemical TiO2(M=79.8658e-3, Hf0=-944.750e3, S0=50.460);
   
   annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false)),

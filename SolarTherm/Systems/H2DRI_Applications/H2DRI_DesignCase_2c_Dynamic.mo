@@ -7,8 +7,9 @@ model H2DRI_DesignCase_2c_Dynamic
   extends Modelica.Icons.Example;
   
   //Material Packages
-  replaceable package Material_IOE_OreD = SolarTherm.Materials.IOE_Dehydroxylated;
-  replaceable package Medium_Ore_Dehydroxylated = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_ph;
+  //replaceable package Material_IOE_OreD = SolarTherm.Materials.IOE_Dehydroxylated;
+  replaceable package Medium_Ore_Dehydroxylated = SolarTherm.Media.SolidParticles.Private.IOE_Dehydroxylated_ph;
+  replaceable package Utilities_OreD = SolarTherm.Media.SolidParticles.Private.IOE_Dehydroxylated_utilities;
   
   parameter Real Plant_Scale = 1.0 "Plant DRI design production rate in (Mt_DRI/yr)";
   parameter String PV_file = Modelica.Utilities.Files.loadResource("modelica://SolarTherm/Data/Renewable/PV_Pilbara_1MW.motab");
@@ -26,7 +27,7 @@ model H2DRI_DesignCase_2c_Dynamic
   parameter Real DRI_f_Fe = 0.8530 "Mass fraction of Fe in the DRI (-)";
   
   parameter SI.HeatFlowRate Q_process_des = 5.889e7;// 6.14926e7;
-  parameter SI.MassFlowRate m_flow_ore_des = 137.1903*(Plant_Scale/1.0) "Mass flow of ore out of the hot tank and into the med tank if running at design point (kg/s)";
+  parameter SI.MassFlowRate m_flow_ore_TES_des = 137.1903*(Plant_Scale/1.0) "Mass flow of ore out of the hot tank and into the med tank if running at design point (kg/s)";
   
   parameter SI.MassFlowRate m_flow_ore_reactor_des = 43.34*(Plant_Scale/1.0) "Mass flow of dehydroxylated ore into the reactor if running at design point (kg/s)";
   parameter SI.MassFlowRate m_flow_DRI_des = 31.71*(Plant_Scale/1.0) "Mass flow rate of DRI produced by the reactor at design point, this mass includes Al2O3 and SiO2 (kg/s)";
@@ -59,11 +60,11 @@ model H2DRI_DesignCase_2c_Dynamic
   parameter Real eps_packing = 0.20;
   parameter Real eps_material = 0.00;
   parameter Real epsilon = eps_packing + eps_material - eps_packing*eps_material "Effective porosity";
-  parameter SI.Density rho_ore_med = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_utilities.rho_T(T_med_set) "Density of pure ore (kg/m3)";
-  parameter SI.Density rho_ore_hot = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_utilities.rho_T(T_hot_set) "Density of pure ore (kg/m3)";
+  parameter SI.Density rho_ore_med = Utilities_OreD.rho_T(T_med_set) "Density of pure ore (kg/m3)";
+  parameter SI.Density rho_ore_hot = Utilities_OreD.rho_T(T_hot_set) "Density of pure ore (kg/m3)";
   
-  parameter SI.Mass m_ore_tank_hot = m_flow_ore_des*t_storage "Maximum mass capacity of the hot tank (kg)";
-  parameter SI.Mass m_ore_tank_med = m_flow_ore_des*t_storage "Maximum mass capacity of the hot tank (kg)";
+  parameter SI.Mass m_ore_tank_hot = m_flow_ore_TES_des*t_storage "Maximum mass capacity of the hot tank (kg)";
+  parameter SI.Mass m_ore_tank_med = m_flow_ore_TES_des*t_storage "Maximum mass capacity of the hot tank (kg)";
   
   parameter SI.Volume V_tank_hot = m_ore_tank_hot/(rho_ore_hot*(1.0-epsilon));
   parameter SI.Volume V_tank_med = m_ore_tank_med/(rho_ore_med*(1.0-epsilon));
@@ -97,7 +98,7 @@ model H2DRI_DesignCase_2c_Dynamic
   parameter SI.HeatFlux q_flow_heater_max = 60000.0 "Maximum radiant heat flux of the fluidised bed heater (W/m2)"; //Placeholder
   parameter SI.Area A_cs_FB = Q_heater_des/q_flow_heater_max "Minimum cross sectional area of the fluidised bed (m2)";
   parameter SI.Diameter d_p = 2.5e-4 "Assumed ore particle diameter (m)"; //250 micrometres
-  parameter SI.Density rho_p_FB = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_utilities.rho_T(0.5*(T_hot_set+T_med_set));
+  parameter SI.Density rho_p_FB = Utilities_OreD.rho_T(0.5*(T_hot_set+T_med_set));
   
   parameter SI.Density rho_g_FB = SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.rho_T(0.5*(T_hot_set+T_med_set));
   parameter SI.DynamicViscosity mu_g_FB = SolarTherm.Media.Air.Air_CoolProp_1bar_utilities.mu_T(0.5*(T_hot_set+T_med_set));
@@ -127,7 +128,7 @@ model H2DRI_DesignCase_2c_Dynamic
   parameter Real pri_H2 = 3.5*(816.0/708.8) "Cost per kg of H2 (USD_2022/kg)";
   
   //Fixed-Size Capital Costs
-  parameter Real FCI_Reactor = 506546275.0 "Reactor FCI cost (USD_2022)";
+  parameter Real FCI_Reactor = 600000000.0 "Reactor FCI cost (USD_2022)";
   parameter Real FCI_GGHX = 17409800.0 "GGHX FCI cost (USD_2022)";
   parameter Real FCI_Blower_H2 = 1404500.0 "H2 Blower FCI cost (USD_2022)";
   parameter Real FCI_Condenser_1 = 1760850.0 "Condenser 1 cost (USD_2022)";
@@ -200,9 +201,9 @@ model H2DRI_DesignCase_2c_Dynamic
     Placement(visible = true, transformation(origin = {-51, 39}, extent = {{-9, -9}, {9, 9}}, rotation = 0)));
   SolarTherm.Models.CSP.CRS.Receivers.Basic_Heater Heater(redeclare package Medium = Medium_Ore_Dehydroxylated, P_heater_des = P_heater_des, Q_heater_des = Q_heater_des, T_cold_set = T_med_set, T_hot_set = T_hot_set, eff_heater = eff_heater) annotation(
     Placement(visible = true, transformation(origin = {14, -6}, extent = {{-10, -10}, {10, 10}}, rotation = 0)));
-  SolarTherm.Models.Storage.Tank.Silo Cold_Tank(redeclare package Medium = Medium_Ore_Dehydroxylated, redeclare package Filler_Package = Material_IOE_OreD, T_min = T_med_set - 10.0, T_max = T_med_set + 10.0, U_loss_tank = 0.0, T_start = T_med_set, T_set = T_med_set - 10.0, L_start = 0.50, epsilon = epsilon, H_tank = H_tank_med, D_tank = D_tank_med) annotation(
+  SolarTherm.Models.Storage.Tank.Silo Cold_Tank(redeclare package Medium = Medium_Ore_Dehydroxylated, T_min = T_med_set - 10.0, T_max = T_med_set + 10.0, U_loss_tank = 0.0, T_start = T_med_set, T_set = T_med_set - 10.0, L_start = 0.50, epsilon = epsilon, H_tank = H_tank_med, D_tank = D_tank_med) annotation(
     Placement(visible = true, transformation(origin = {-32, -8}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
-  SolarTherm.Models.Storage.Tank.Silo Hot_Tank(redeclare package Medium = Medium_Ore_Dehydroxylated, redeclare package Filler_Package = Material_IOE_OreD, T_min = T_hot_set - 10.0, T_max = T_hot_set + 10.0, U_loss_tank = 0.0, T_start = T_hot_set, T_set = T_hot_set - 10.0, L_start = 0.50, epsilon = epsilon, H_tank = H_tank_hot, D_tank = D_tank_hot) annotation(
+  SolarTherm.Models.Storage.Tank.Silo Hot_Tank(redeclare package Medium = Medium_Ore_Dehydroxylated, T_min = T_hot_set - 10.0, T_max = T_hot_set + 10.0, U_loss_tank = 0.0, T_start = T_hot_set, T_set = T_hot_set - 10.0, L_start = 0.50, epsilon = epsilon, H_tank = H_tank_hot, D_tank = D_tank_hot) annotation(
     Placement(visible = true, transformation(origin = {40, -6}, extent = {{-8, -8}, {8, 8}}, rotation = 0)));
   SolarTherm.Models.Fluid.Pumps.PumpSimple Heater_Lift(redeclare package Medium = Medium_Ore_Dehydroxylated) annotation(
     Placement(visible = true, transformation(origin = {-10, -14}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
@@ -280,7 +281,7 @@ algorithm
 
 
   //Boiler Timer Control
-  when Reactor_Lift.m_flow < 0.01 * m_flow_ore_des then //take this as shutdown
+  when Reactor_Lift.m_flow < 0.01 * m_flow_ore_TES_des then //take this as shutdown
     Process := false; //start the cooldown
     t_threshold := time + t_wait;
   end when;
@@ -318,7 +319,7 @@ equation
     der(Q_heater_out) = Heater.Q_out;
 
     der(Q_heater_target) = Q_heater_des;
-    der(m_DRI_target) = m_flow_ore_des*(31.7/137.29);
+    der(m_DRI_target) = m_flow_ore_TES_des*(31.7/137.29);
     der(m_DRI_produced) = Sink.port_a.m_flow*(31.7/137.29);
   else
     der(E_PV_out) = 0.0;
@@ -384,35 +385,35 @@ equation
     end if;
   end if;
   if State == 1 then
-    Heater_Lift.m_flow = Heater.Q_heater_raw / Q_process_des * m_flow_ore_des;
+    Heater_Lift.m_flow = Heater.Q_heater_raw / Q_process_des * m_flow_ore_TES_des;
     Heater.curtail = false;
     Heater.Q_curtail = Q_process_des;
 //Not used anyway
-    Cold_Lift.m_flow = m_flow_ore_des;
-    Reactor_Lift.m_flow = m_flow_ore_des;
+    Cold_Lift.m_flow = m_flow_ore_TES_des;
+    Reactor_Lift.m_flow = m_flow_ore_TES_des;
   elseif State == 2 then
-    Heater_Lift.m_flow = Heater.Q_heater_raw / Q_process_des * m_flow_ore_des;
+    Heater_Lift.m_flow = Heater.Q_heater_raw / Q_process_des * m_flow_ore_TES_des;
     Heater.curtail = false;
     Heater.Q_curtail = Q_process_des;
 //Not used anyway
-    Cold_Lift.m_flow = m_flow_ore_des;
-    Reactor_Lift.m_flow = m_flow_ore_des;
+    Cold_Lift.m_flow = m_flow_ore_TES_des;
+    Reactor_Lift.m_flow = m_flow_ore_TES_des;
   elseif State == 3 then
-    Heater_Lift.m_flow = m_flow_ore_des;
+    Heater_Lift.m_flow = m_flow_ore_TES_des;
     Heater.curtail = true;
     Heater.Q_curtail = Q_process_des;
 //Curtailed
-    Cold_Lift.m_flow = m_flow_ore_des;
-    Reactor_Lift.m_flow = m_flow_ore_des;
+    Cold_Lift.m_flow = m_flow_ore_TES_des;
+    Reactor_Lift.m_flow = m_flow_ore_TES_des;
   elseif State == 4 then
     Heater_Lift.m_flow = 1.0e-9;
     Heater.curtail = false;
     Heater.Q_curtail = Q_process_des;
 //Not used anyway
-    Cold_Lift.m_flow = m_flow_ore_des;
-    Reactor_Lift.m_flow = m_flow_ore_des;
+    Cold_Lift.m_flow = m_flow_ore_TES_des;
+    Reactor_Lift.m_flow = m_flow_ore_TES_des;
   elseif State == 5 then
-    Heater_Lift.m_flow = Heater.Q_heater_raw / Q_process_des * m_flow_ore_des;
+    Heater_Lift.m_flow = Heater.Q_heater_raw / Q_process_des * m_flow_ore_TES_des;
     Heater.curtail = false;
     Heater.Q_curtail = Q_process_des;
 //Not used anyway

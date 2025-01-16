@@ -106,6 +106,8 @@ model Thermocline_HBS_LC_Section_Final
   //SI.ThermalConductivity k_e[N_f] "W/mK";
   //Calculated Pumping Losses
   parameter Real eff_pump = 1.00 "Pump electricity to work efficiency";
+  parameter SI.Length E_roughness = 3.045e-3 "Checkerbrick surface roughness (m)";
+  Real f[N_f] "Friction factor of each element";
   SI.Pressure p_drop_total "Sum of all pressure drops";
   SI.Power W_loss_pump "losses due to pressure drop";
   
@@ -118,6 +120,8 @@ model Thermocline_HBS_LC_Section_Final
   Real Nu[N_f] "Nusselt";
   Real Re[N_f] "Reynolds";
   parameter SI.Mass m_p[N_f] = fill((1.0-eta)*CN.pi*D_tank*D_tank*H_tank*rho_p/(4.0*N_f), N_f) "Masses of each particle";
+  
+
   
   //Cost breakdown
   parameter Real C_fluid = 0.0 "Air is free for now...";
@@ -236,6 +240,12 @@ initial equation
 //encapsulation[i].h = h_p_start[i,N_p];
   end for;
 equation
+  //Pressure drop
+  for i in 1:N_f loop
+    f[i] = SolarTherm.Utilities.Nusselt.Internal_Flow.FrictionFactor_HBS_Rough(Re[i],Pr[i],E_roughness/d_p);
+  end for;
+  
+
   for i in 1:N_f loop
     T_s[i] = T_p[i];
   end for;
@@ -402,10 +412,11 @@ equation
   Level = E_stored / E_max;
 //Calculated Pumping losses
   for i in 1:N_f loop
-    p_drop[i] = dz * (600 * (1 - eta) ^ 2 * mu_f[i] * abs(m_flow) / (eta ^ 3 * d_p ^ 2 * rho_f_avg * CN.pi * D_tank ^ 2) + 28 * (1 - eta) * m_flow ^ 2 / (eta ^ 3 * d_p * rho_f_avg * CN.pi * CN.pi * D_tank ^ 4));
+    //p_drop[i] = dz * (600 * (1 - eta) ^ 2 * mu_f[i] * abs(m_flow) / (eta ^ 3 * d_p ^ 2 * rho_f_avg * CN.pi * D_tank ^ 2) + 28 * (1 - eta) * m_flow ^ 2 / (eta ^ 3 * d_p * rho_f_avg * CN.pi * CN.pi * D_tank ^ 4));
+    p_drop[i] = ((8.0*rho_f_avg*f[i]*dz*((abs(m_flow))^2.0))/(d_p*rho_f_avg*rho_f_avg*CN.pi*CN.pi*((D_tank)^4.0)*eta*eta));
   end for;
   p_drop_total = sum(p_drop);
-  W_loss_pump = abs(m_flow) / rho_f_avg * p_drop_total / eff_pump;
+  W_loss_pump = (abs(m_flow) / rho_f_avg) * (p_drop_total / eff_pump);
   annotation(
     Documentation(revisions = "<html>
 		<p>By Zebedee Kee on 03/12/2020</p>

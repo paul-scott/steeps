@@ -1,6 +1,6 @@
 within SolarTherm.Media.SolidParticles;
 
-package IOE_Hydroxylated_ph
+package IOG_Hydroxylated_ph
 	/* The statement below extends from PartialMedium and sets some
 		package constants. Provide values for these constants
 		that are appropriate for your medium model. Note that other
@@ -10,8 +10,8 @@ package IOE_Hydroxylated_ph
 
 	extends Modelica.Media.Interfaces.PartialMedium(
 		ThermoStates = Modelica.Media.Interfaces.Choices.IndependentVariables.ph,
-		final mediumName="IOE_Hydroxylated",
-		final substanceNames={"IOE_Hydroxylated"},
+		final mediumName="IOG_Hydroxylated",
+		final substanceNames={"IOG_Hydroxylated"},
 		final singleState=false,
 		final reducedX=true,
 		final fixedX=true,
@@ -20,7 +20,7 @@ package IOE_Hydroxylated_ph
 			max=1500.0,
 			start=50.0+273.15));
 
-	import SolarTherm.Media.SolidParticles.IOE_Hydroxylated_utilities.*;
+	import SolarTherm.Media.SolidParticles.IOG_Hydroxylated_utilities.*;
 
 	// Provide medium constants here
 	//constant SpecificHeatCapacity cp_const=123456
@@ -84,7 +84,7 @@ package IOE_Hydroxylated_ph
 	d = rho_T(T);
 	h = state.h;
 	u = h - p / d;
-	MM = 153.467e-3;
+	MM = 154.891e-3;
 	R = 8.3144 / MM;
 
 	end BaseProperties;
@@ -239,7 +239,7 @@ package IOE_Hydroxylated_ph
 			</html>"));
 	end density_derT_p;
 
-	annotation (Documentation(info= "<html><head></head><body><p><span style=\"font-family: Arial,sans-serif;\">Calculation of thermo-physical properties for pure hydroxylated iron ore sample IOE in the temperature region of 298.15 K to 1500 K at its most stable phase at 1 bar. Properties have been extrapolated for temperatures above 400 K. Thermodynamic properties are explicit in terms of enthalpy and pressure. Properties are calculated via linear interpolation of data-tables with 10 K temperature intervals.
-		</span></p><p><b><span style=\"font-family: Arial, sans-serif;\"></span></b></p><div><b style=\"font-family: 'DejaVu Sans Mono';\"><span style=\"font-family: Arial, sans-serif;\">Restrictions</span></b><div style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><span style=\"font-family: Arial, sans-serif;\"><br></span></div><div><span style=\"font-family: Arial, sans-serif; font-weight: normal;\">The functions provided by this package shall be used inside of the restricted limits according to the referenced literature.</span><ul style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><li><b><span style=\"font-family: Arial, sans-serif;\">298.15 K ≤ T ≤ 400 K</span></b></li><li><b><span style=\"font-family: Arial, sans-serif;\">Explicit for pressure and enthalpy.</span></b></li></ul><div style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><font face=\"Arial, sans-serif\">For every kg of IOE hydroxylated ore:</font></div><div><ul><li><font face=\"Arial, sans-serif\"><b>Fe2O3.H2O: 0.8753 kg or 4.926 mol</b></font></li><li><font face=\"Arial, sans-serif\"><b>Fe2O3: 0.0267 kg or 0.167 mol</b></font></li><li><font face=\"Arial, sans-serif\"><b>Al2O3: 0.0304 kg or 0.298 mol</b></font></li><li><font face=\"Arial, sans-serif\"><b>SiO2: 0.0676 kg or 1.125 mol</b></font></li></ul><div style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><font face=\"Arial, sans-serif\">The effective molar mass of IOE hydroxylated ore is:</font></div></div><div style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><ul><li><font face=\"Arial, sans-serif\"><b>0.153467 kg/mol</b></font></li></ul><div><font face=\"Arial, sans-serif\">Specific enthalpy,&nbsp;</font><i style=\"font-family: Arial, sans-serif;\">h</i><span style=\"font-family: Arial, sans-serif;\">(</span><i style=\"font-family: Arial, sans-serif;\">T</i><span style=\"font-family: Arial, sans-serif;\">)</span><span style=\"font-family: Arial, sans-serif;\">&nbsp;[J/kg] measured with respect to most stable phase at 298.15 K.</span></div></div><div style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><font face=\"Arial, sans-serif\">Specific absolute entropy,&nbsp;<i>s</i>(<i>T</i>) [J/kgK] provided as an absolute measurement.</font></div><p style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><b><span style=\"font-family: Arial, sans-serif;\">References</span></b></p><p style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal; margin-left: 30px;\">See the references for the individual chemical components.</p></div></div><div>
+	annotation (Documentation(info= "<html><head></head><body><p><span style=\"font-family: Arial,sans-serif;\">Calculation of thermo-physical properties for pure hydroxylated iron ore sample IOG (Generic) in the temperature region of 298.15 K to 1500 K at its most stable phase at 1 bar. Properties have been extrapolated for temperatures above 400 K. Thermodynamic properties are explicit in terms of enthalpy and pressure. Properties are calculated via linear interpolation of data-tables with 10 K temperature intervals.
+		</span></p><p><b><span style=\"font-family: Arial, sans-serif;\"></span></b></p><div><b style=\"font-family: 'DejaVu Sans Mono';\"><span style=\"font-family: Arial, sans-serif;\">Restrictions</span></b><div style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><span style=\"font-family: Arial, sans-serif;\"><br></span></div><div><span style=\"font-family: Arial, sans-serif; font-weight: normal;\">The functions provided by this package shall be used inside of the restricted limits according to the referenced literature.</span><ul style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><li><b><span style=\"font-family: Arial, sans-serif;\">298.15 K ≤ T ≤ 400 K</span></b></li><li><b><span style=\"font-family: Arial, sans-serif;\">Explicit for pressure and enthalpy.</span></b></li></ul><div style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><font face=\"Arial, sans-serif\">For every kg of IOE hydroxylated ore:</font></div><div><ul><li><font face=\"Arial, sans-serif\"><b>Fe2O3.H2O: 0.5129 kg or 2.886 mol</b></font></li><li><font face=\"Arial, sans-serif\"><b>Fe2O3: 0.4198 kg or 2.629 mol</b></font></li><li><font face=\"Arial, sans-serif\"><b>Al2O3: 0.0262 kg or 0.257 mol</b></font></li><li><font face=\"Arial, sans-serif\"><b>SiO2: 0.0411 kg or 0.684 mol</b></font></li></ul><div style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><font face=\"Arial, sans-serif\">The effective molar mass of IOE hydroxylated ore is:</font></div></div><div style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><ul><li><font face=\"Arial, sans-serif\"><b>0.154891 kg/mol</b></font></li></ul><div><font face=\"Arial, sans-serif\">Specific enthalpy,&nbsp;</font><i style=\"font-family: Arial, sans-serif;\">h</i><span style=\"font-family: Arial, sans-serif;\">(</span><i style=\"font-family: Arial, sans-serif;\">T</i><span style=\"font-family: Arial, sans-serif;\">)</span><span style=\"font-family: Arial, sans-serif;\">&nbsp;[J/kg] measured with respect to most stable phase at 298.15 K.</span></div></div><div style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><font face=\"Arial, sans-serif\">Specific absolute entropy,&nbsp;<i>s</i>(<i>T</i>) [J/kgK] provided as an absolute measurement, no entropy or enthalpy of mixing is considered.</font></div><p style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal;\"><b><span style=\"font-family: Arial, sans-serif;\">References</span></b></p><p style=\"font-family: 'DejaVu Sans Mono'; font-weight: normal; margin-left: 30px;\">See the references for the individual chemical components.</p></div></div><div>
 		</div></body></html>"));
-end IOE_Hydroxylated_ph;
+end IOG_Hydroxylated_ph;

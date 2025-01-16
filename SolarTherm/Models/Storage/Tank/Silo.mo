@@ -2,7 +2,7 @@ within SolarTherm.Models.Storage.Tank;
 
 model Silo "A silo (from Ancient Greek σιρός (sirós) 'pit for holding grain') is a structure for storing bulk materials."
   extends Interfaces.Models.StorageFluid;
-  replaceable package Filler_Package = SolarTherm.Materials.PartialMaterial "Filler Package";
+  //replaceable package Filler_Package = SolarTherm.Materials.PartialMaterial "Filler Package";
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
@@ -19,6 +19,7 @@ model Silo "A silo (from Ancient Greek σιρός (sirós) 'pit for holding grai
   parameter Real L_start = 0.7 "Starting level of the packed bed, in decimal";
   parameter SI.Power P_max= 30e8 "Rating of auxilliary electrical heating (W)";
   parameter Real eff_heater=0.99 "Electrical-to-heat conversion efficieny of auxiliary heater";
+  parameter SI.Pressure p_des = 1.0e5 "Design operating pressure (Pa), default 1 bar";
   
   //Calculated Parameters
   parameter SI.Volume V_tank=0.25*CN.pi*D_tank*D_tank*H_tank "Volume of the cylindrical tank (m3)";
@@ -26,20 +27,34 @@ model Silo "A silo (from Ancient Greek σιρός (sirós) 'pit for holding grai
   parameter SI.Area A_cyl=CN.pi*D_tank*H_tank "Cylindrical area of the tank (m2)";
   
   
-  //Calculated filler properties
-  parameter SI.SpecificEnthalpy h_p_max = Filler_Package.h_Tf(T_max, 1.0);
+  //Calculated filler property states
+  parameter Medium.ThermodynamicState State_T_max = Medium.setState_pTX(p_des,T_max,{1.0}) "Thermodynamic state of medium at T_max";
+  parameter Medium.ThermodynamicState State_T_min = Medium.setState_pTX(p_des,T_min,{1.0}) "Thermodynamic state of medium at T_min";
+  parameter Medium.ThermodynamicState State_T_start = Medium.setState_pTX(p_des,T_start,{1.0}) "Thermodynamic state of medium at T_start";
+  
+  
+  parameter SI.SpecificEnthalpy h_p_max = Medium.specificEnthalpy(State_T_max) "Specific enthalpy of storage medium at T_max (J/kg)";
+  parameter SI.SpecificEnthalpy h_p_min = Medium.specificEnthalpy(State_T_min) "Specific enthalpy of storage medium at T_min (J/kg)";
+  parameter SI.SpecificEnthalpy h_start = Medium.specificEnthalpy(State_T_start) "Specific enthalpy of storage medium at T_state (J/kg)";
+  parameter SI.Density rho_p_max = Medium.density(State_T_max) "Density of storage medium at T_max (kg/m3)";
+  parameter SI.Density rho_p_min = Medium.density(State_T_min) "Density of storage medium at T_min (kg/m3)";
+
+  parameter SI.Density rho_p = min(rho_p_min,rho_p_max) "Worst-case minimum filler density (kg/m3)";
+  /*
+  parameter SI.SpecificEnthalpy h_p_max = Medium.h_T(T_max); //Filler_Package.h_Tf(T_max, 1.0);
   parameter SI.SpecificEnthalpy h_p_min = Filler_Package.h_Tf(T_min, 0.0);
   parameter SI.Density rho_p_min = Filler_Package.rho_Tf(T_min, 0.0);
   parameter SI.Density rho_p_max = Filler_Package.rho_Tf(T_max, 1.0);
   parameter SI.Density rho_p = min(rho_p_min,rho_p_max) "Worst-case min. filler density (kg/m3)";
-  
+  */
   //Variables
   Modelica.Blocks.Interfaces.RealOutput L=H_bed/H_tank "Level in decimals based on height (m/m)" annotation(
     Placement(visible = true, transformation(extent = {{96, 44}, {116, 64}}, rotation = 0), iconTransformation(extent = {{92, 48}, {112, 68}}, rotation = 0)));
   SI.Volume V_bed=V_p/(1.0-epsilon) "Volume of the packed bed, including the voids (m3)";
   SI.Volume V_p=m_p/rho_p "Volume of just the filler material (m3)";
   SI.Mass m_p(start=L_start*V_tank*rho_p*(1.0-epsilon)) "Mass of filler material (kg)";
-  SI.SpecificEnthalpy h_p(start=Filler_Package.h_Tf(T_start, 1.0)) "Specific enthalpy of filler material (kg)";
+  SI.SpecificEnthalpy h_p(start=h_start) "Specific enthalpy of filler material (kg)";
+  //SI.SpecificEnthalpy h_p(start=Filler_Package.h_Tf(T_start, 1.0)) "Specific enthalpy of filler material (kg)";
   SI.Height H_bed=4.0*V_bed/(CN.pi*D_tank*D_tank) "Height of the packed bed (m)";
   
   SI.SpecificEnthalpy h_in "Inlet enthalpy";
@@ -77,7 +92,8 @@ model Silo "A silo (from Ancient Greek σιρός (sirós) 'pit for holding grai
         rotation=-90,
         origin={-41,97})));
   
-  Filler_Package.State Filler_State;
+  //Filler_Package.State Filler_State;
+  Medium.BaseProperties Filler_State;
 algorithm
   when T_fluid < T_set then 
 	P_aux:=min(Q_loss,P_max)*1.05;
@@ -107,6 +123,7 @@ equation
   Q_aux = eff_heater*P_aux;
   
   Filler_State.h = medium.h;
+  Filler_State.p = p;
 
   annotation (Icon(coordinateSystem(preserveAspectRatio = false, initialScale = 0.1), graphics = {Text(origin = {3, -5}, lineColor = {255, 255, 255}, fillColor = {255, 255, 255}, extent = {{-55, 37}, {55, -37}}, textString = "Silo"), Text(origin = {14, 0}, lineColor = {0, 0, 255}, extent = {{-149, -114}, {129, -146}}, textString = "%name")}), Diagram(
         coordinateSystem(preserveAspectRatio=false)),

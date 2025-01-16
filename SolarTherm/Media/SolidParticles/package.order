@@ -12,9 +12,10 @@ SiO2_utilities
 SiO2_ph
 Fe2O3H2O_utilities
 Fe2O3H2O_ph
-IOE_Hydroxylated_utilities
-IOE_Hydroxylated_ph
-IOE_Dehydroxylated_utilities
-IOE_Dehydroxylated_ph
 Fe_utilities
 Fe_ph
+IOG_Hydroxylated_utilities
+IOG_Hydroxylated_ph
+IOG_Dehydroxylated_utilities
+IOG_Dehydroxylated_ph
+Private

@@ -15,16 +15,16 @@ model H2DRI_DesignCase_2c_DesignPt
   replaceable package Material_Fe2O3 = SolarTherm.Materials.Fe2O3;
   //Ore Composition
   //Dehydroxylated Ore after being heated past 400C
-  parameter Real f_mass_Al2O3_D = 0.0333 "Mass fraction of Al2O3 in dehydroxylated iron ore";
-  parameter Real f_mass_SiO2_D = 0.0743 "Mass fraction of SiO2 in dehydroxylated iron ore";
+  parameter Real f_mass_Al2O3_D = 0.0359 "Mass fraction of Al2O3 in dehydroxylated iron ore";
+  parameter Real f_mass_SiO2_D = 0.0798 "Mass fraction of SiO2 in dehydroxylated iron ore";
   parameter Real f_mass_Fe2O3_D = 1.0 - f_mass_Al2O3_D - f_mass_SiO2_D "Mass fraction of Fe2O3 (haematite) in dehydroxylated iron ore";
   //Ore Composition
   //Hydroxylated Feedstock Ore
-  parameter Real f_mass_Al2O3_H = 0.0304 "Mass fraction of Al2O3 in hydroxylated iron ore";
-  parameter Real f_mass_SiO2_H = 0.0677 "Mass fraction of SiO2 in hydroxylated iron ore";
-  parameter Real f_mass_Fe2O3H2O_H = 0.8753 "Mass fraction of Fe2O3.H2O (goethite) in hydroxylated iron ore";
+  parameter Real f_mass_Al2O3_H = 0.0327 "Mass fraction of Al2O3 in hydroxylated iron ore";
+  parameter Real f_mass_SiO2_H = 0.0728 "Mass fraction of SiO2 in hydroxylated iron ore";
+  parameter Real f_mass_Fe2O3H2O_H = 0.8680 "Mass fraction of Fe2O3.H2O (goethite) in hydroxylated iron ore";
   parameter Real f_mass_Fe2O3_H = 1.0 - f_mass_Al2O3_H - f_mass_SiO2_H - f_mass_Fe2O3H2O_H "Mass fraction of Fe2O3 (haematite) in hydroxylated iron ore";
-  parameter Real f_mass_LOI_H = 0.0887 "Mass fraction of the hydroxylated iron ore that is lost due to removal of water";
+  parameter Real f_mass_LOI_H = 0.0880 "Mass fraction of the hydroxylated iron ore that is lost due to removal of water";
   parameter Real f_mass_Gangue_H = f_mass_Al2O3_H + f_mass_SiO2_H "Mass fraction of hydroxylated iron ore that is due to gangue";
   //Chemical Constants
   parameter SI.MolarMass M_Fe2O3H2O = SolarTherm.Models.Chemistry.ChemTable.Fe2O3H2O.M;
@@ -41,16 +41,16 @@ model H2DRI_DesignCase_2c_DesignPt
   parameter SI.Temperature T_OreH_feedstock_des = 25.0 + 273.15 "Design feedstock hydroxylated ore temperature (K)";
   parameter SI.SpecificEnthalpy h_H2_feedstock_des = Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_des, T_H2_feedstock_des) "Specific Enthalpy of feedstock H2 (J/kg)";
   //Iterative solve for this:
-  parameter SI.Temperature T_OreD_hot_des = 797.41 + 273.15 "Actual temperature of dehydroxylated ore entering the GGXH cold stream after being mixed with topup stream (J/kg)";
+  parameter SI.Temperature T_OreD_hot_des = 797.78 + 273.15 "Actual temperature of dehydroxylated ore entering the GGXH cold stream after being mixed with topup stream (J/kg)";
   //Design Inputs
   parameter Real m_flow_DRI_Mtperyr = 1.0 "DRI output in MegaTons per year (Mt/yr) which is inclusive of gangue";
-  parameter Real m_flow_Fe_Mtperyr = 0.8530 * m_flow_DRI_Mtperyr "Iron Output in MegaTons per year (Mt/yr)";
+  parameter Real m_flow_Fe_Mtperyr = 0.8424 * m_flow_DRI_Mtperyr "Iron Output in MegaTons per year (Mt/yr)";
   parameter SI.MassFlowRate m_flow_Fe_des = m_flow_Fe_Mtperyr * 1.0e9 / 31536000.0 "Design maximum mass flow rate output of Iron (kg/s)";
   //We assume a year is 365.0 days
   //47.6
   //parameter SI.Temperature T_reactants_des = 757.0 + 273.15 "Design reactant temperature (K)";
   parameter SI.Temperature T_products_des = 600.0 + 273.15 "Design product temperature (K)";
-  parameter SI.Temperature T_reactants_des = 1.0762 * T_products_des + 54.537 "Design estimated reactant temperature (K)";
+  parameter SI.Temperature T_reactants_des = 1.07606 * T_products_des + 55.512 "Design estimated reactant temperature (K)";
   parameter SI.Temperature T_inlet_des = T_reactants_des "Assuming no heat loss";
   //51.02315 + (1086.761*T_products_des/1000.0) - (0.00838*Q_loss_per_mol_des/1000.0) + 2.16376*(T_products_des*Q_loss_per_mol_des*1.0e-6);
   //Uhhhh figure this out...
@@ -237,7 +237,7 @@ model H2DRI_DesignCase_2c_DesignPt
   //parameter SI.MassFlowRate m_flow_FeO_des = (2.0*m_flow_Fe2O3_des*M_FeO)/(M_Fe2O3);
   parameter Real FOB_reactor = 0.0;
   //(CEPCI/1000.0)*(14.0e6*(3.0*m_flow_OreD_des^0.53)) "FOB Cost of the reactors (USD_year)";
-  parameter Real FCI_reactor = CEPCI / 816.0 * 506546275.0;
+  parameter Real FCI_reactor = CEPCI / 816.0 * 600000000.0;
   //FOB_reactor*1.05*2.0;
   //Heater Cost
   parameter Real pri_heater = 0.1539 "Cost per W of heater in 2022";

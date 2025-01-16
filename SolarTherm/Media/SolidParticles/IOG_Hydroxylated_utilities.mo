@@ -1,7 +1,7 @@
 within SolarTherm.Media.SolidParticles;
-package IOE_Hydroxylated_utilities
+package IOG_Hydroxylated_utilities
  extends Modelica.Icons.UtilitiesPackage;
-  import SolarTherm.Models.Chemistry.Property_Tables.Mixtures.IOE_Hydroxylated.*;
+  import SolarTherm.Models.Chemistry.Property_Tables.Mixtures.IOG_Hydroxylated.*;
   
   function cp_T "Specific heat capacity of as a function of temperature"
 	extends Modelica.Icons.Function;
@@ -89,4 +89,4 @@ package IOE_Hydroxylated_utilities
 	p := 101325.0;
   end p_rho;
 
-end IOE_Hydroxylated_utilities;
+end IOG_Hydroxylated_utilities;

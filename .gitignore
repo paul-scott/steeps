@@ -32,3 +32,6 @@ SolarTherm/Systems/Private
 SolarTherm/Models/Storage/Private
 SolarTherm/Data/Private
 SolarTherm/Materials/Private
+SolarTherm/Chemistry/Property_Tables/Private
+SolarTherm/Models/Reactors/Private
+SolarTherm/Media/SolidParticles/Private

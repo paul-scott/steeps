@@ -1,14 +1,16 @@
 within SolarTherm.Models.Reactors;
 
-model Reactor_H2DRI_Overall_Losses_Gangue "This is the model that considers thermal losses."
+model Reactor_H2DRI_Overall_Losses_IOG "H2DRI reactor for a generic iron ore composition IOG. Thermal losses and Wustite enthalpy correction are considered."
   extends Icons.Reactor;
   //extends Icons.ChemEqn;
   import SI = Modelica.SIunits;
   import CN = Modelica.Constants;
   import CV = Modelica.SIunits.Conversions;
   
-  parameter Real f_mass_Al2O3 = 0.0333 "Mass fraction of ore that consists of Al2O3";
-  parameter Real f_mass_SiO2 = 0.0743 "Mass fraction of ore that consists of SiO2";
+  //Composition of Dehydroxylated Iron Ore IOG is
+  //92.90% Fe2O3, 2.76% Al2O3, 4.34% SiO2 by mass
+  parameter Real f_mass_Al2O3 = 0.0276 "Mass fraction of ore that consists of Al2O3";
+  parameter Real f_mass_SiO2 = 0.0434 "Mass fraction of ore that consists of SiO2";
   //The rest is Fe2O3
   
   //Reactor Pressure Imposed
@@ -22,7 +24,7 @@ model Reactor_H2DRI_Overall_Losses_Gangue "This is the model that considers ther
         rotation= 90)));
         
   //Fluid Inlet Ports
-  Modelica.Fluid.Interfaces.FluidPort_a fluid_Ore_in(redeclare package Medium = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_ph) annotation(
+  Modelica.Fluid.Interfaces.FluidPort_a fluid_Ore_in(redeclare package Medium = SolarTherm.Media.SolidParticles.IOG_Dehydroxylated_ph) annotation(
     Placement(visible = true, transformation(extent = {{-110, 40}, {-90, 60}}, rotation = 0), iconTransformation(origin = {-100, -20}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
   Modelica.Fluid.Interfaces.FluidPort_a fluid_H2_in(redeclare package Medium = Modelica.Media.IdealGases.SingleGases.H2) annotation (Placement(
         visible = true,transformation(extent = {{-110, 40}, {-90, 60}}, rotation = 0), iconTransformation(origin = {-100, 18}, extent = {{-6, -6}, {6, 6}}, rotation = 0)));
@@ -162,10 +164,10 @@ equation
     
     //Pre-reaction reactant mix
     m_flow_Ore_in*inStream(fluid_Ore_in.h_outflow) + m_flow_H2_in*inStream(fluid_H2_in.h_outflow) = m_flow_Ore_in*h_Ore_mix + m_flow_H2_in*h_H2_mix;
-    h_Ore_mix = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_utilities.h_T(T_mix);
+    h_Ore_mix = SolarTherm.Media.SolidParticles.IOG_Dehydroxylated_utilities.h_T(T_mix);
     h_H2_mix = Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_reactor,T_mix);
     
-    h_Ore_reactants = SolarTherm.Media.SolidParticles.IOE_Dehydroxylated_utilities.h_T(T_reactants);
+    h_Ore_reactants = SolarTherm.Media.SolidParticles.IOG_Dehydroxylated_utilities.h_T(T_reactants);
     h_H2_reactants = Modelica.Media.IdealGases.SingleGases.H2.specificEnthalpy_pT(p_reactor,T_reactants);
     
     m_flow_Ore_in*h_Ore_mix + m_flow_H2_in*h_H2_mix - Q_flow_loss = m_flow_Ore_in*h_Ore_reactants + m_flow_H2_in*h_H2_reactants;
@@ -287,4 +289,4 @@ equation
 annotation(
     Diagram(coordinateSystem(preserveAspectRatio = false)),
     Icon(graphics = {Line(origin = {-67, -20}, points = {{-27, 0}, {21, 0}}), Line(origin = {-67, 18}, points = {{-27, 0}, {21, 0}}), Text(origin = {73, -17}, extent = {{-17, 21}, {13, -7}}, textString = "H2O"), Text(origin = {-65, 29}, extent = {{-21, 7}, {13, -13}}, textString = "H2"), Text(origin = {-61, -13}, extent = {{-29, 11}, {13, -7}}, textString = "Ore"), Text(origin = {16, 28}, lineColor = {0, 0, 255}, extent = {{-149, -114}, {125, -140}}, textString = "%name"), Line(origin = {-17.6467, 18}, points = {{65, 0}, {113, 0}}), Text(origin = {77, 29}, extent = {{-21, 7}, {13, -13}}, textString = "H2"), Line(origin = {-18.6404, -20.3312}, points = {{65, 0}, {113, 0}})}, coordinateSystem(initialScale = 0.1)));
-end Reactor_H2DRI_Overall_Losses_Gangue;
+end Reactor_H2DRI_Overall_Losses_IOG;
