@@ -459,7 +459,9 @@ try:
 		import DyMat
 		res=DyMat.DyMatFile(sim.res_fn)
 	else:
-		if system=='FUEL':
+		if system=='PROD':
+			resultclass = postproc.SimResultProd(sim.res_fn)
+		elif system=='FUEL':
 			resultclass = postproc.SimResultFuel(sim.res_fn)
 		else:
 			resultclass = postproc.SimResultElec(sim.res_fn)
@@ -505,7 +507,8 @@ for i, r in enumerate(results.responses()):
 		r.function = solartherm_res[i]
 results.write()
 
-map(os.unlink, glob.glob(sim.res_fn))
+os.system('rm %s'%sim.res_fn)
+#map(os.unlink, glob.glob(sim.res_fn))
 #map(os.unlink, glob.glob(model+'_init_*.xml'))
 """
 	if not os.path.exists(savedir):

@@ -116,6 +116,8 @@ if __name__ == '__main__':
 			help='run the simulation in the test mode, i.e. without post-processing calculations for levelised cost')
 	#parser.add_argument('--framework', type=str, default='soo_min',
 	#		help='soo_min, soo_max or moo, being single objective minimisation, single objective maximisation, or multi-objective optimisation respectively')
+	parser.add_argument('--prod', action='store_true',
+			help='run post-processing calculations for levelised cost of generic product')
 	parser.add_argument('--outfile_f',  type=str, default=None,
 			help='save final optimal solution and objective(s) to outfile_f')
 	parser.add_argument('--outfig',  type=str, default=None,
@@ -155,7 +157,10 @@ if __name__ == '__main__':
 		system='TEST'
 		resultclass=None
 	else:
-		if args.fuel:
+		if args.prod:
+			system='PROD'
+			resultclass = postproc.SimResultProd
+		elif args.fuel:
 			system='FUEL'
 			resultclass = postproc.SimResultFuel
 		else:
