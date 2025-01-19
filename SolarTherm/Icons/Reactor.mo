@@ -1,0 +1,7 @@
+within SolarTherm.Icons;
+partial class Reactor
+  
+  annotation(
+    Icon(graphics = {Rectangle(origin = {1, 76}, fillColor = {185, 185, 185}, fillPattern = FillPattern.Solid, lineThickness = 2, extent = {{-9, -14}, {9, 2}}), Rectangle(origin = {1, -9}, fillColor = {185, 185, 185}, pattern = LinePattern.None, fillPattern = FillPattern.Solid, lineThickness = 5, extent = {{-42, 54}, {42, -54}}), Polygon(origin = {49, -63}, fillColor = {185, 185, 185}, fillPattern = FillPattern.Solid, lineThickness = 2, points = {{-7, 29}, {13, 7}, {13, -13}, {-7, -13}, {-7, 29}}), Ellipse(origin = {9, 42}, fillColor = {185, 185, 185}, fillPattern = FillPattern.Solid, lineThickness = 2, extent = {{37, 22}, {-53, -20}}, endAngle = 360), Polygon(origin = {-55, -63}, fillColor = {185, 185, 185}, fillPattern = FillPattern.Solid, lineThickness = 2, points = {{-5, 7}, {15, 31}, {15, -13}, {-5, -13}, {-5, 7}}), Rectangle(origin = {15, -1}, lineThickness = 2, extent = {{-59, 43}, {31, -65}}), Rectangle(origin = {3, -9}, fillColor = {185, 185, 185}, pattern = LinePattern.None, fillPattern = FillPattern.Solid, lineThickness = 2, extent = {{-46, 52}, {42, -56}}), Rectangle(origin = {3, -66}, fillColor = {185, 185, 185}, fillPattern = FillPattern.Solid, lineThickness = 2, extent = {{-9, -10}, {9, 24}})}, coordinateSystem(initialScale = 0.1)),
+    Diagram(coordinateSystem(preserveAspectRatio = false, initialScale = 0.1)));
+end Reactor;

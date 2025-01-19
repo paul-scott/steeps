@@ -1,0 +1,12 @@
+ThermodynamicState
+BaseProperties
+setState_pTX
+setState_phX
+pressure
+temperature
+specificEnthalpy
+density
+specificInternalEnergy
+dynamicViscosity
+thermalConductivity
+specificHeatCapacityCp

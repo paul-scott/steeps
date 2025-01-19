@@ -2,3 +2,4 @@ EnergyPump
 IdealPump
 PumpSimple
 Pump_PressureLosses
+PumpSimple_EqualPressure

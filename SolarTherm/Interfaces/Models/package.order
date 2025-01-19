@@ -18,3 +18,5 @@ ReceiverFluid_Dish
 Receiver_Dish
 SimpleResistiveHeater
 Boiler
+StorageFluid_Thermocline
+Electric_Heater

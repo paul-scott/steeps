@@ -28,3 +28,10 @@ SolarTherm/Resources
 cscope.*
 *.deb
 wheel
+SolarTherm/Systems/Private
+SolarTherm/Models/Storage/Private
+SolarTherm/Data/Private
+SolarTherm/Materials/Private
+SolarTherm/Models/Chemistry/Property_Tables/Private
+SolarTherm/Models/Reactors/Private
+SolarTherm/Media/SolidParticles/Private

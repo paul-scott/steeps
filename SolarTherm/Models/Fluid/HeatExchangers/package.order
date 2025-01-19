@@ -11,3 +11,6 @@ test_HX
 Utilities
 Boiler
 SimpleResistiveHeater
+mass_loop_breaker
+Boiler_Basic
+H2DRI

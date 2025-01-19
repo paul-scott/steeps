@@ -393,6 +393,38 @@ class SimResultFuel(SimResult):
 
 	perf_n = ['fpy', 'lcof', 'capf', 'srev']
 	perf_u = ['L/year', '$/L', '%', '$']
+	
+class SimResultProd(SimResult):
+	def calc_perf(self, peaker=False):
+		"""Calculate generic production plant performance
+		Some of the metrics will be returned as none if simulation runtime is
+		not a multiple of a year.
+		"""
+		var_names = self.get_names()
+		
+		epy = (self.mat.data('prod'))[-1]
+		lcoe = (self.mat.data('lcop'))[-1]
+		srev = (self.mat.data('srev'))[-1]
+		capf = 100.0*(self.mat.data('capf'))[-1]
+		
+
+		return [epy, lcoe, capf, srev,]
+		
+	def cost_breakdown(self):
+		"""Calculate costs breakdown for the solar power plant"""
+		C_cap_bd_n=0.0
+		C_cap_bd_u=0.0
+		C_cap_bd_v=0.0
+		C_op_bd_n=0.0
+		C_op_bd_u=0.0
+		C_op_bd_v=0.0
+		C_ann_bd_n=0.0
+		C_ann_bd_u=0.0
+		C_ann_bd_v=0.0
+		return C_cap_bd_n, C_cap_bd_u, C_cap_bd_v, C_op_bd_n, C_op_bd_u, C_op_bd_v, C_ann_bd_n, C_ann_bd_u, C_ann_bd_v
+		
+	perf_n = ['epy', 'lcoe', 'capf', 'srev']
+	perf_u = ['MWh/year', '$/MWh', '%', '$']
 
 class DecisionMaker(object):
 	"""
